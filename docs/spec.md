@@ -193,7 +193,9 @@ Privacy rules (the repository and its history are public and permanent):
 
 ## 10. Editor PWA (stage 3)
 
-An installable web app at `/edit/`. People sign in with GitHub, edit forms, see the real page and press "Submit for review". Git stays hidden.
+An installable web app at `/edit/`. People sign in with GitHub, edit forms, see the real page and press "Send for publishing". Git stays hidden.
+
+**As built (16 Nov 2026):** no server and no framework; sign-in is a personal access token; see `docs/decisions/2026-11-16-editor-login.md`, which replaces the Stack and Login points below. The first version posts photos and changes the opening hours.
 
 - **Stack.** Vite, TypeScript, a small UI library (Preact or Svelte, chosen at the start of stage 3), Octokit for the GitHub REST API, a Markdown editor limited to what the site supports. English and German.
 - **Login.** A GitHub App installed only on this repository (contents, pull requests, metadata). GitHub's token endpoints cannot be called from browser code, so a Cloudflare Worker of about 50 lines swaps the login code for a token. It accepts only the site's origins and stores nothing.
@@ -236,7 +238,7 @@ One branch and one pull request per milestone or smaller. Each milestone starts 
 | 4 | Gallery and photo review page (gallery and lightbox done 15 Nov 2026; review page and import built, first real batch still to run) | A batch of group photos is picked and published in one sitting |
 | 5 | German and polish (done 16 Nov 2026) | Both languages complete, Open Graph images, 404, sitemap, link check |
 | 6 | Design system complete (done 16 Nov 2026) | Every component is in the style guide; no style value outside tokens |
-| 7 | Editor MVP | Elias posts a photo and changes the hours from his phone, with the exact preview, without github.com |
+| 7 | Editor MVP (built 16 Nov 2026; first real send by Harry and Elias still to come) | Elias posts a photo and changes the hours from his phone, with the exact preview, without github.com |
 | 8 | Editor complete | Conflict handling, offline drafts, self-update, German interface |
 | 9 | Handover | robins-coffee.ch serves the new site; two approvers have each merged a change |
 | 10 | Google Business Profile | Hours on Google follow `hours.yml` |

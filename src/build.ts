@@ -96,6 +96,27 @@ async function buildOg(files: Files, photos: Record<string, Photo>) {
   }
 }
 
+/**
+ * The editor at /edit/: its script (the renderer and the forms, bundled for the browser),
+ * the site's text files and photo list in one file so the editor can show the real
+ * page without a login, a web app manifest and a small service worker.
+ */
+async function buildEditor(files: Files, photos: Record<string, Photo>, version: string) {
+  const dir = join(OUT, "edit");
+  await mkdir(dir, { recursive: true });
+  const built = await Bun.build({ entrypoints: [join(ROOT, "src", "editor", "main.ts")], target: "browser", minify: true, outdir: dir, naming: "editor.js" });
+  if (!built.success) throw new Error("editor bundle failed:\n" + built.logs.join("\n"));
+  const site = parseYaml(files["data/site.yml"]!);
+  const night = JSON.parse(files["data/tokens.json"]!).color.night;
+  await Bun.write(join(dir, "site.json"), JSON.stringify({ built_at: new Date().toISOString(), base, preview_root: base.replace(/pr-preview\/pr-\d+\/$/, ""), version, repo: site.repo, branch: site.branch, files, photos }));
+  await Bun.write(join(dir, "manifest.webmanifest"), JSON.stringify({
+    name: `${site.name} editor`, short_name: `${site.name} edit`, start_url: "./", scope: "./", display: "standalone",
+    background_color: night.bg, theme_color: night.bg,
+    icons: [192, 512].map((s) => ({ src: `../assets/icons/icon-${s}.png`, sizes: `${s}x${s}`, type: "image/png" })),
+  }, null, 1));
+  await cp(join(ROOT, "src", "editor", "sw.js"), join(dir, "sw.js"));
+}
+
 /** Favicons: the R on the night colour for the small sizes, the roundel for the home screen sizes. Bitmaps until vector logos arrive. */
 async function buildIcons(files: Files) {
   const background = JSON.parse(files["data/tokens.json"]!).color.night.bg;
@@ -107,6 +128,7 @@ async function buildIcons(files: Files) {
   const small = await icon("r-mark-white.png", 32, 30);
   await Bun.write(join(OUT, "assets", "icons", "icon-32.png"), small);
   await Bun.write(join(OUT, "assets", "icons", "icon-192.png"), await icon("logo-roundel-white.png", 192, 168));
+  await Bun.write(join(OUT, "assets", "icons", "icon-512.png"), await icon("logo-roundel-white.png", 512, 448));
   await Bun.write(join(OUT, "assets", "icons", "apple-touch-icon.png"), await icon("logo-roundel-white.png", 180, 156));
   // favicon.ico is a six byte header, one sixteen byte entry and the 32 px PNG itself.
   const head = Buffer.alloc(22);
@@ -186,6 +208,7 @@ files["data/events.json"] = JSON.stringify({ generated_at: now.toISOString(), ev
 await Bun.write(join(OUT, "events.json"), files["data/events.json"]);
 await Bun.write(join(OUT, "events.ics"), toIcs(upcoming(events, now), parseYaml(files["data/site.yml"]!), now));
 const pages = await renderSite(files, { base, photos, version, origin: values.origin, now });
+await buildEditor(files, photos, version);
 for (const page of pages) {
   await mkdir(dirname(join(OUT, page.out)), { recursive: true });
   await Bun.write(join(OUT, page.out), page.html);
@@ -196,5 +219,5 @@ const site = parseYaml(files["data/site.yml"]!);
 // The sitemap needs full addresses, so a relative build (file://, editor preview) has none.
 const abs = (path: string) => (values.origin ?? site.url).replace(/\/$/, "") + resolveUrl(path, base, 0);
 if (base !== "relative") await Bun.write(join(OUT, "sitemap.xml"), sitemapXml(pages, site.languages[0], abs));
-await Bun.write(join(OUT, "robots.txt"), site.preview || base === "relative" ? "User-agent: *\nDisallow: /\n" : `User-agent: *\nAllow: /\nDisallow: ${resolveUrl("/styleguide/", base, 0)}\n\nSitemap: ${abs("/sitemap.xml")}\n`);
+await Bun.write(join(OUT, "robots.txt"), site.preview || base === "relative" ? "User-agent: *\nDisallow: /\n" : `User-agent: *\nAllow: /\nDisallow: ${resolveUrl("/styleguide/", base, 0)}\nDisallow: ${resolveUrl("/edit/", base, 0)}\n\nSitemap: ${abs("/sitemap.xml")}\n`);
 console.log(`built ${pages.length} pages, ${upcoming(events, now).length} upcoming events, ${Object.keys(photos).length} photos into ${values.out}/ (base ${base}) in ${Math.round(performance.now() - started)} ms`);

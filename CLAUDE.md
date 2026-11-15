@@ -13,7 +13,7 @@ Look at the result in a real browser at desktop and 390 px, in both themes (`?th
 
 ## Rules that bite
 
-- **This repository is public and its history is permanent.** Never commit a photo of a person that Harry has not cleared, a phone number of a private person, a WhatsApp sender name or chat text, or any secret. Photos enter only through `scripts/add-photo.ts` or `scripts/import-selection.ts`, which strip metadata; never copy an original into `site/`. Stage files by name.
+- **This repository is public and its history is permanent.** Never commit a photo of a person that Harry has not cleared, a phone number of a private person, a WhatsApp sender name or chat text, or any secret. Photos enter only through `scripts/add-photo.ts`, `scripts/import-selection.ts` or the editor (`src/editor/photo.ts` redraws them on a canvas); all three strip metadata. Never copy an original into `site/`. Stage files by name.
 - **`inbox/` is local and gitignored.** The review page, the chat id and the record of which WhatsApp message became which file live there. No message id, chat id or sender detail goes into a tracked file, a commit message or a pull request.
 - **No moment merges with `TODO` in it.** The import writes `TODO` for every caption and alt text the owner did not write; a test fails until each is replaced in EN and DE.
 - **`src/render.ts` must stay pure and browser-safe**: no `fs`, no `sharp`, no `Bun.*`, no network. The editor will import it to run the real build as its preview. Disk work belongs in `src/build.ts`.
@@ -30,6 +30,7 @@ Look at the result in a real browser at desktop and 390 px, in both themes (`?th
 - **No words from `Intl`.** Date and time labels take their numbers from `wallClock()` and their words from `i18n.yml`; Intl's German names differ between the Mac and the build server, which broke CI once.
 - **The link check must pass.** `scripts/check-links.ts` runs in CI over the built site and fails on a missing file, a wrong case, a missing anchor, a path outside the base or a link relative to its page. `404.html` is shown at any address, which is why relative links are refused.
 - **A page that must not be listed** (style guide, 404) carries `noindex: true`; the sitemap leaves it out. A page that is listed needs both languages; a test checks.
+- **The editor (`src/editor/`) has no server.** It talks only to `api.github.com`, with the person's own token in the Authorization header, and only ever creates an `edit/...` branch and a pull request. Rules that can be decided without a screen live in `changes.ts` and `github.ts` and are tested; `main.ts` only draws. What an editor change may touch is `inEditScope`; CI enforces it. Never log the token, never put it in a URL.
 - No em dashes anywhere: copy, docs, comments, commit messages.
 - Case matters on the live build; a wrongly cased path works on the Mac and 404s live.
 - `main` is protected. Work on a branch, open a pull request, check the preview link, then merge. Never push to `gh-pages` by hand; only the workflows write there.
@@ -49,4 +50,5 @@ Look at the result in a real browser at desktop and 390 px, in both themes (`?th
 | A page | `site/content/en/<slug>.md` and `site/content/de/<slug>.md`; `og_photo:` picks its link preview picture, `permalink:` names its output file (only 404 uses it) |
 | An event by hand | `site/events/<date>-<slug>.md` (format in `site/events/README.md`) |
 | A change to an imported event | an entry in `site/data/event-overrides.yml`; never edit the import |
+| Something the editor can change | A form in `src/editor/main.ts`, its rules and file writing in `src/editor/changes.ts` with tests, and the path inside `inEditScope` |
 | A decision | `docs/decisions/<date>-<slug>.md`, short, and update `docs/spec.md` if it changes the plan |

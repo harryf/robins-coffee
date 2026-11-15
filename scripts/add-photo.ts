@@ -21,8 +21,8 @@ import { parseArgs } from "node:util";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
-export const MAX_EDGE = 2400;
-export const JPEG_QUALITY = 84;
+import { MAX_EDGE, JPEG_QUALITY, momentMarkdown, type MomentText } from "../src/moment";
+export { MAX_EDGE, JPEG_QUALITY, momentMarkdown, type MomentText };
 
 /** Clean one image buffer for publication. Pure: buffer in, buffer out. */
 export async function cleanPhoto(input: Uint8Array): Promise<{ data: Buffer; width: number; height: number }> {
@@ -33,28 +33,6 @@ export async function cleanPhoto(input: Uint8Array): Promise<{ data: Buffer; wid
     .jpeg({ quality: JPEG_QUALITY, progressive: true, mozjpeg: true })
     .toBuffer({ resolveWithObject: true }); // no withMetadata(): everything is stripped
   return { data, width: info.width, height: info.height };
-}
-
-const yamlString = (s: string) => JSON.stringify(s);
-
-export type MomentText = { date: string; album?: string; feed?: boolean; caption: { en: string; de: string }; alt: { en: string; de: string } };
-
-/** The .md file of a moment. `feed` is written only when false; `album` only when set. */
-export function momentMarkdown(m: MomentText): string {
-  return [
-    "---",
-    `date: ${m.date}`,
-    ...(m.album ? [`album: ${m.album}`] : []),
-    ...(m.feed === false ? ["feed: false"] : []),
-    "caption:",
-    `  en: ${yamlString(m.caption.en)}`,
-    `  de: ${yamlString(m.caption.de)}`,
-    "alt:",
-    `  en: ${yamlString(m.alt.en)}`,
-    `  de: ${yamlString(m.alt.de)}`,
-    "---",
-    "",
-  ].join("\n");
 }
 
 if (import.meta.main) {

@@ -29,8 +29,8 @@ The build also writes what a visitor never sees as a page: `404.html`, `sitemap.
 | `site/data/` | Venue facts, opening hours, home page sections, gallery albums, interface words, design tokens |
 | `site/templates/` | Liquid layouts, sections and components |
 | `site/assets/` | CSS, the one script, logo files |
-| `src/` | The generator |
-| `scripts/` | Tools: `add-photo.ts`, `review-photos.ts`, `import-selection.ts`, `check-links.ts` |
+| `src/` | The generator; `src/editor/` is the editor |
+| `scripts/` | Tools: `add-photo.ts`, `review-photos.ts`, `import-selection.ts`, `check-links.ts`, `check-edit-scope.ts` |
 | `inbox/` | Local only, not in git: the photo review page and its records |
 | `docs/` | [The spec](docs/spec.md), [design direction](docs/design-direction.md), decisions, the baseline of the old site |
 
@@ -63,6 +63,12 @@ Everything under `inbox/` stays on the Mac: the review page, the chat id and the
 ## Albums
 
 `site/data/albums.yml` lists the gallery albums: a slug, a title in English and German, and optionally `cover: <moment id>` for the photo shown first. A moment joins an album with `album: <slug>` in its front matter. `feed: false` keeps a moment in the gallery and out of the home feed.
+
+## The editor
+
+`/edit/` on the site is the editor for the people who run the bar: post a photo, change the opening hours, see the real page with the change, send it. It can be added to a phone's home screen. Looking and trying needs no login. Sending needs a GitHub access token, pasted once; the sign-in screen says how to make one. A sent change is a pull request on a branch named `edit/...`; once it has passed the checks the editor offers "Publish now".
+
+The code is in `src/editor/` and is bundled by the normal build into `dist/edit/`. It does not run from a file on disk (`build:local`); use a pull request preview to try it. Why it works this way: [the decision](docs/decisions/2026-11-16-editor-login.md).
 
 ## How a change goes live
 

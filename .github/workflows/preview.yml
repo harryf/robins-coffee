@@ -17,8 +17,11 @@ jobs:
     env:
       DIR: pr-preview/pr-${{ github.event.number }}
       BASE: /${{ github.event.repository.name }}/pr-preview/pr-${{ github.event.number }}/
+      HEAD_REF: ${{ github.head_ref }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: oven-sh/setup-bun@v2
         if: github.event.action != 'closed'
         with:
@@ -26,6 +29,8 @@ jobs:
       - if: github.event.action != 'closed'
         run: |
           bun install --frozen-lockfile
+          # A change sent from the editor may only touch content, photos, events and data.
+          if [[ "$HEAD_REF" == edit/* ]]; then git diff --name-only "origin/${{ github.base_ref }}...HEAD" | bun scripts/check-edit-scope.ts; fi
           bun test
           bun src/build.ts --base "$BASE" --origin "https://${{ github.repository_owner }}.github.io"
           bun scripts/check-links.ts dist --base "$BASE" --origin "https://${{ github.repository_owner }}.github.io"
