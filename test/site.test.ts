@@ -410,6 +410,7 @@ describe("design system", () => {
     const guide = (await renderSite(files, { base: "/", photos })).find((p) => p.out === "styleguide/index.html")!.html;
     const parts = Object.keys(files).filter((p) => /^templates\/(components|sections)\//.test(p));
     expect(parts.length).toBeGreaterThan(15);
+    expect(guide).not.toContain("No example yet");
     for (const p of parts) {
       expect([p, /^\{%-? comment %\}/.test(files[p]!)]).toEqual([p, true]);
       expect(guide).toContain(`data-sg="${p.slice(10, -7)}"`);
