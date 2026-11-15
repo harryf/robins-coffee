@@ -16,6 +16,14 @@ en:
   days: { mo: "Monday", tu: "Tuesday", we: "Wednesday", th: "Thursday", fr: "Friday", sa: "Saturday", su: "Sunday" }
   days_short: { mo: "Mon", tu: "Tue", we: "Wed", th: "Thu", fr: "Fri", sa: "Sat", su: "Sun" }
   range_sep: " to "
+  contact_title: "Write to us"
+  form_name: "Name"
+  form_phone: "Phone"
+  form_message: "Message"
+  form_optional: "optional"
+  form_send: "Write the email"
+  form_hint: "This opens your email app with the message ready to send to {email}."
+  form_subject: "Message from the website"
   ticker: ["Coffee", "Cocktails", "Comedy", "Zähringerstrasse 33", "Zürich Old Town"]
 de:
   nav_home: "Start"
@@ -35,4 +43,12 @@ de:
   days: { mo: "Montag", tu: "Dienstag", we: "Mittwoch", th: "Donnerstag", fr: "Freitag", sa: "Samstag", su: "Sonntag" }
   days_short: { mo: "Mo", tu: "Di", we: "Mi", th: "Do", fr: "Fr", sa: "Sa", su: "So" }
   range_sep: " bis "
+  contact_title: "Schreib uns"
+  form_name: "Name"
+  form_phone: "Telefon"
+  form_message: "Nachricht"
+  form_optional: "freiwillig"
+  form_send: "E-Mail schreiben"
+  form_hint: "Das öffnet dein E-Mail-Programm mit der fertigen Nachricht an {email}."
+  form_subject: "Nachricht von der Website"
   ticker: ["Kaffee", "Cocktails", "Comedy", "Zähringerstrasse 33", "Zürcher Altstadt"]

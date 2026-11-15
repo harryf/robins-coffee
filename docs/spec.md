@@ -43,7 +43,9 @@ Content, all of it:
 - Hours: Mon to Fri 16:00 until late, Sat and Sun 10:00 until late.
 - Phone and email.
 
-No menu, no events, no social links, no structured data, mixed German and English labels. Originals of the logo and the four photos are in `baseline/assets/`.
+No menu, no events, no social links, no structured data, mixed German and English labels. Originals of the logo and the four photos are in `baseline/assets/`; full-page screenshots at 1280 and 390 px are in `baseline/`.
+
+All of it is on the new home page, and `test/site.test.ts` ("content clone of the old site") fails if a fact goes missing.
 
 ## 4. Design direction: "neon over wood"
 
@@ -59,7 +61,7 @@ Open design work is listed in `design-direction.md`.
 
 ## 5. Architecture
 
-Everything lives in one public repository and deploys to GitHub Pages. The only piece outside GitHub will be one small Cloudflare Worker for the editor login (and, if we keep a contact form, for sending its mail).
+Everything lives in one public repository and deploys to GitHub Pages. The only piece outside GitHub will be one small Cloudflare Worker for the editor login (and perhaps for sending the contact form, see `decisions/2026-11-15-contact-form.md`).
 
 **The generator is ours: bun, TypeScript and Liquid templates.** About 400 lines.
 
@@ -83,6 +85,7 @@ robins-coffee/
   site/                  everything an editor may touch
     content/<lang>/      pages: Markdown with front matter
     moments/             the photo feed: <date>-<slug>.jpg + .md
+    photos/              photos used by page sections
     data/                site.yml, hours.yml, home.yml, i18n.yml, tokens.json
     templates/           layouts/, sections/, components/ (Liquid)
     assets/              css/, js/, brand/
@@ -105,6 +108,7 @@ All content is Markdown with front matter or a small YAML file, so every change 
 | Page | `site/content/<lang>/<slug>.md` | title, description, layout, body |
 | Home | `site/content/<lang>/index.md` + `site/data/home.yml` | texts per language; section order, hero photo |
 | Moment | `site/moments/<date>-<slug>.md` + `.jpg` | date, caption and alt text in EN and DE |
+| Section photo | `site/photos/<slug>.jpg` | alt text in EN and DE where it is used (`home.yml`) |
 | Imported event | fetched at build time, never committed (section 7) | generated |
 | Manual event | `site/events/<date>-<slug>.md` | title, start, end, price text, ticket URL, image, category |
 | Event override | `site/data/event-overrides.yml` | event id, hide, featured, replacement image or title |
@@ -148,7 +152,7 @@ Taken from running the comedy site:
 
 The source is the venue's WhatsApp group, read through the WhatsApp explorer on Harry's Mac (`http://127.0.0.1:4747/media/<id>`). That tool and its data never leave the Mac; only chosen, cleaned photos enter this repository.
 
-`bun scripts/add-photo.ts <file-or-url> --date … --slug … --caption-en … --caption-de … --alt-en … --alt-de …` writes one moment: auto-oriented, sRGB, at most 2400 px, re-encoded with every bit of metadata removed. `--dry-run` shows what it would write.
+`bun scripts/add-photo.ts <file-or-url> --date … --slug … --caption-en … --caption-de … --alt-en … --alt-de …` writes one moment: auto-oriented, sRGB, at most 2400 px, re-encoded with every bit of metadata removed. `--dry-run` shows what it would write. With `--plain --slug …` it writes a section photo into `site/photos/` instead.
 
 Privacy rules (the repository and its history are public and permanent):
 
@@ -207,7 +211,7 @@ One branch and one pull request per milestone or smaller. Each milestone starts 
 | # | Milestone | Accepted when |
 |---|---|---|
 | 0 | Repository, generator, pipeline, first page (done 15 Nov 2026) | A push to `main` deploys; a pull request gets a preview; tests run in CI |
-| 1 | Content clone | Every fact and photo of the current site is in the new one; screenshots of the old site are in `baseline/`; contact form decision made |
+| 1 | Content clone (done 15 Nov 2026) | Every fact and photo of the current site is in the new one; screenshots of the old site are in `baseline/`; contact form decision made |
 | 2 | Design pass | Harry has reviewed the direction on his phone; critique fixes are in; Lighthouse mobile 95+ |
 | 3 | Events | The home page and the events page match the comedy calendar for the next 60 days with no duplicates |
 | 4 | Gallery and photo review page | A batch of group photos is picked and published in one sitting |
@@ -232,7 +236,7 @@ One branch and one pull request per milestone or smaller. Each milestone starts 
 Open questions:
 
 - Real closing times per weekday (the "open now" pill treats "until late" as midnight; Google needs a time).
-- Contact form: Harry wants to keep one. A static site needs a sender: the login Worker can take a second route for it, or a form service. Decide in milestone 1; until then the page offers phone, email and Instagram.
+- Contact form sender: the form writes an email in the visitor's mail app for now (`decisions/2026-11-15-contact-form.md`). A real sender (Worker route or form service) is chosen at the cut-over, when DNS control is known.
 - Vector logo files from the owners.
 - Which Eventfrog organiser account lists ROBIN's own events, and who makes the read-only key.
 - Should German be the default language at `/` instead of English?

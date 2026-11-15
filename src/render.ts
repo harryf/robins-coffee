@@ -90,6 +90,7 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
     })
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.id < b.id ? -1 : 1));
   for (const m of moments) if (!opts.photos[m.photo]) throw new Error(`moment ${m.id}: photo ${m.photo} is missing`);
+  for (const p of data.home?.about_photos ?? []) if (!opts.photos[p.photo]) throw new Error(`home.yml about_photos: photo ${p.photo} is missing`);
 
   let current = { depth: 0 };
   const engine = new Liquid({ templates, extname: "", strictFilters: true, strictVariables: false, outputEscape: "escape" });

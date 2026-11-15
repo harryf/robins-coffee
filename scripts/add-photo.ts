@@ -1,10 +1,15 @@
 #!/usr/bin/env bun
-// Add one photo to the "moments" feed.
+// Add one photo to the site.
 //
+// A post in the "moments" feed (writes site/moments/<date>-<slug>.jpg and .md):
 //   bun scripts/add-photo.ts <file-or-url> --date 2026-11-07 --slug elias-at-the-taps \
 //     --caption-en "..." --caption-de "..." --alt-en "..." --alt-de "..." [--dry-run]
 //
-// The source is never changed. The copy written to site/moments/ is auto-oriented,
+// A plain photo for a page section (writes site/photos/<slug>.jpg; its alt text
+// lives where the photo is used, for example site/data/home.yml):
+//   bun scripts/add-photo.ts <file-or-url> --plain --slug barista-at-the-machine [--dry-run]
+//
+// The source is never changed. The copy written is auto-oriented,
 // converted to sRGB, capped at 2400 px on the long edge and re-encoded WITHOUT any
 // metadata (no EXIF, no GPS, no camera or phone details). The repo is public and its
 // history is permanent: only run this for photos that may be published.
@@ -37,18 +42,19 @@ if (import.meta.main) {
       date: { type: "string" }, slug: { type: "string" },
       "caption-en": { type: "string" }, "caption-de": { type: "string" },
       "alt-en": { type: "string" }, "alt-de": { type: "string" },
+      plain: { type: "boolean", default: false },
       "dry-run": { type: "boolean", default: false },
     },
   });
   const src = positionals[0];
-  const need = ["date", "slug", "caption-en", "caption-de", "alt-en", "alt-de"] as const;
+  const need = values.plain ? (["slug"] as const) : (["date", "slug", "caption-en", "caption-de", "alt-en", "alt-de"] as const);
   const missing = need.filter((k) => !values[k]);
   if (!src || missing.length) {
-    console.error(`usage: bun scripts/add-photo.ts <file-or-url> ${need.map((k) => `--${k} …`).join(" ")} [--dry-run]`);
+    console.error(`usage: bun scripts/add-photo.ts <file-or-url> ${values.plain ? "--plain " : ""}${need.map((k) => `--${k} …`).join(" ")} [--dry-run]`);
     if (missing.length) console.error(`missing: ${missing.join(", ")}`);
     process.exit(2);
   }
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(values.date!)) throw new Error("--date must be YYYY-MM-DD");
+  if (!values.plain && !/^\d{4}-\d{2}-\d{2}$/.test(values.date!)) throw new Error("--date must be YYYY-MM-DD");
   if (!/^[a-z0-9-]+$/.test(values.slug!)) throw new Error("--slug must be lowercase letters, digits and hyphens");
 
   const bytes = /^https?:\/\//.test(src)
@@ -56,9 +62,11 @@ if (import.meta.main) {
     : new Uint8Array(await Bun.file(src).arrayBuffer());
   const { data, width, height } = await cleanPhoto(bytes);
 
-  const base = join(import.meta.dir, "..", "site", "moments", `${values.date}-${values.slug}`);
-  if (existsSync(`${base}.md`)) throw new Error(`${base}.md exists already; pick another slug`);
-  const md = [
+  const base = values.plain
+    ? join(import.meta.dir, "..", "site", "photos", values.slug!)
+    : join(import.meta.dir, "..", "site", "moments", `${values.date}-${values.slug}`);
+  if (existsSync(`${base}.jpg`)) throw new Error(`${base}.jpg exists already; pick another slug`);
+  const md = values.plain ? "" : [
     "---",
     `date: ${values.date}`,
     "caption:",
@@ -70,9 +78,9 @@ if (import.meta.main) {
     "---",
     "",
   ].join("\n");
-  console.log(`${values["dry-run"] ? "would write" : "wrote"} ${base}.jpg (${width}x${height}, ${(data.length / 1024).toFixed(0)} KB) and .md`);
+  console.log(`${values["dry-run"] ? "would write" : "wrote"} ${base}.jpg (${width}x${height}, ${(data.length / 1024).toFixed(0)} KB)${values.plain ? "" : " and .md"}`);
   if (!values["dry-run"]) {
     await Bun.write(`${base}.jpg`, data);
-    await Bun.write(`${base}.md`, md);
+    if (!values.plain) await Bun.write(`${base}.md`, md);
   }
 }

@@ -6,4 +6,7 @@
       {{ page.content | raw }}
     </div>
   </div>
+  <div class="wrap about__photos">
+    {% render 'components/photo-strip', items: home.about_photos, photos: photos, lang: page.lang %}
+  </div>
 </section>

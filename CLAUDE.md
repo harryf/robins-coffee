@@ -19,6 +19,7 @@ Look at the result in a real browser at desktop and 390 px, in both themes (`?th
 - **One source per fact.** Hours in `site/data/hours.yml`, venue facts in `site/data/site.yml`, labels in `site/data/i18n.yml`. Never type an address, a time or a label into a template.
 - **Tokens only.** No hex colour, font name or pixel size in templates or CSS outside `site/data/tokens.json` (the hero overlay is the listed exception). A new colour pair that carries text goes into `contrast_pairs`.
 - **Both languages or neither.** A new text needs EN and DE. German uses Swiss spelling: ss, never ß.
+- **The old site's facts stay.** The "content clone" test lists every fact of the 2022 page; if one really changes, change the data file and that list together.
 - **Nothing invented.** Facts about the bar come from the current site, from Harry or from the owners. Unknowns go to "Open questions" in the spec.
 - No em dashes anywhere: copy, docs, comments, commit messages.
 - Case matters on the live build; a wrongly cased path works on the Mac and 404s live.
@@ -30,6 +31,7 @@ Look at the result in a real browser at desktop and 390 px, in both themes (`?th
 | To add | Do |
 |---|---|
 | A photo post | `bun scripts/add-photo.ts …` (see README) |
+| A photo for a page section | `bun scripts/add-photo.ts <file> --plain --slug <name>`, then name it with EN and DE alt text where it is used |
 | A home page section | `site/templates/sections/<name>.liquid`, then its name in `site/data/home.yml`, then a style guide entry |
 | A component | `site/templates/components/<name>.liquid` with its parameters in a top comment, plus a style guide entry in the same pull request |
 | A page | `site/content/en/<slug>.md` and `site/content/de/<slug>.md` |
