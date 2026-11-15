@@ -1,4 +1,4 @@
-{% comment %} header: site, t, home_url, other (the same page in the other language, may be nil), events_url, on_photo (true when the page starts with the hero photo) {% endcomment %}
+{% comment %} header: site, t, home_url, other (the same page in the other language, may be nil), events_url, gallery_url, on_photo (true when the page starts with the hero photo) {% endcomment %}
 <header class="site-header{% if on_photo %} on-photo{% endif %}">
   <div class="wrap site-header__row">
     <a class="brand" href="{{ home_url | url }}" aria-label="{{ site.legal_name }}">
@@ -7,6 +7,7 @@
     </a>
     <div class="site-header__side">
       <a class="nav-link" href="{{ events_url | url }}">{{ t.nav_events }}</a>
+      <a class="nav-link" href="{{ gallery_url | url }}">{{ t.nav_gallery }}</a>
       {% render 'components/open-pill', t: t %}
       {%- if other %}
       <a class="lang" href="{{ other.url | url }}" hreflang="{{ other.lang }}" lang="{{ other.lang }}">{{ t.lang_switch }}</a>

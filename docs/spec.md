@@ -84,13 +84,14 @@ Why not Hugo, as first planned: a browser cannot run Hugo. The first draft neede
 robins-coffee/
   site/                  everything an editor may touch
     content/<lang>/      pages: Markdown with front matter
-    moments/             the photo feed: <date>-<slug>.jpg + .md
+    moments/             every published photo: <date>-<slug>.jpg + .md
     photos/              photos used by page sections
-    data/                site.yml, hours.yml, home.yml, i18n.yml, tokens.json
+    data/                site.yml, hours.yml, home.yml, albums.yml, i18n.yml, tokens.json
     templates/           layouts/, sections/, components/ (Liquid)
     assets/              css/, js/, brand/
   src/                   the generator: render.ts (pure), build.ts, tokens.ts
-  scripts/               one-off and scheduled tools (add-photo.ts, later fetch-events.ts)
+  scripts/               tools: add-photo.ts, review-photos.ts, import-selection.ts
+  inbox/                 local only, gitignored: the review page, the chat id, the import record
   editor/                the PWA (stage 3)
   test/                  bun tests
   docs/                  spec, design direction, decisions, baseline, archive
@@ -107,12 +108,12 @@ All content is Markdown with front matter or a small YAML file, so every change 
 |---|---|---|
 | Page | `site/content/<lang>/<slug>.md` | title, description, layout, body |
 | Home | `site/content/<lang>/index.md` + `site/data/home.yml` | texts per language; section order, hero photo |
-| Moment | `site/moments/<date>-<slug>.md` + `.jpg` | date, caption and alt text in EN and DE |
+| Moment | `site/moments/<date>-<slug>.md` + `.jpg` | date, caption and alt text in EN and DE; optional `album: <slug>`; optional `feed: false` (gallery only) |
 | Section photo | `site/photos/<slug>.jpg` | alt text in EN and DE where it is used (`home.yml`) |
 | Imported event | fetched at build time, never committed (section 7) | generated |
 | Manual event | `site/events/<date>-<slug>.md` (format in `site/events/README.md`) | title, start, end, price_chf, ticket_url, category |
 | Event override | `site/data/event-overrides.yml` | event id, hide, featured, replacement image or title |
-| Gallery album | `site/gallery/<album>/` | title, date, cover, photos with captions |
+| Gallery album | `site/data/albums.yml` | slug, title in EN and DE, optional cover (a moment id) |
 | Opening hours | `site/data/hours.yml` | regular hours per weekday, dated exceptions |
 | Venue facts | `site/data/site.yml` | address, phone, email, map link, Instagram, preview flag |
 | Interface words | `site/data/i18n.yml` | every fixed label in EN and DE |
@@ -122,6 +123,8 @@ Rules:
 - **One source per fact.** Hours, address and phone live in one file each; the page, the footer, the "open now" pill and the structured data read them. Nothing is typed twice.
 - **Derived things are never edited by hand.** Photo sizes, the generated CSS and imported events come from a script.
 - **Moments are the easy path.** One photo plus one line of text is a complete post. Posting one is the first thing the editor will learn to do.
+- **One model for photos.** Every photo in the feed or the gallery is a moment. An album is a line in `albums.yml` plus `album: <slug>` on its moments; there are no album folders. A moment that names an album missing from `albums.yml` fails the build.
+- **No unfinished text.** An imported photo starts with `TODO` as caption and alt text; a test fails while any moment contains `TODO`.
 - **The home page is a stack of sections** named in `home.yml`. A new section is one Liquid file in `templates/sections/` plus one line.
 - English is the default language at `/`; German is at `/de/` with the same slugs. German uses Swiss spelling (ss, never ß); a test checks it.
 - Photos are capped at 2400 px and carry no metadata; a test checks every committed photo.
@@ -160,7 +163,22 @@ Privacy rules (the repository and its history are public and permanent):
 - Captions use first names only. No sender names, phone numbers or chat text.
 - Removing a photo later does not remove it from git history, so the choice is made before the commit.
 
-Later in stage 1: a gallery page with albums and a lightbox, and a local review page that lists recent group photos from the explorer so a batch can be picked in one sitting.
+**Gallery.** `/gallery/` and `/de/gallery/` show every moment on one page. Albums are sections, newest first by their newest photo; photos with no album follow under "More from the bar". An album's optional `cover` puts that photo first. The home feed shows the newest moments (not the hero photo, not `feed: false`) and links to the gallery. The header carries "Photos" / "Fotos".
+
+**Lightbox.** Each moment photo is a plain link to its largest JPEG, so it works without JavaScript. With JavaScript, `site.js` opens the photo in a native `<dialog>`: caption and date, previous and next inside the same grid, arrow keys, a swipe, Esc, a close button. The dialog traps focus, the page behind does not scroll, and focus returns to the photo. It always wears the night colours (`on-photo`). It picks a file by the width the photo takes on the screen, so a phone never loads the widest one.
+
+**A batch in one sitting.** Two local tools, both talking to the explorer on Harry's Mac:
+
+| Step | Command | Result |
+|---|---|---|
+| 1. Review | `bun scripts/review-photos.ts --chat <id> [--days 90]` | `inbox/review.html`: the group's photos, newest first by day. Tick photos, pick an album or "feed only", type a rough caption or a note, press "Save selection" |
+| 2. Import | `bun scripts/import-selection.ts <robins-selection.json> [--dry-run]` | One moment per photo: cleaned like `add-photo.ts`, dated from the sent time in Zürich time, with album and feed flag. New albums are added to `albums.yml` |
+| 3. Finish | Replace every `TODO`, then `bun run check` | Caption and alt text in EN and DE; the tests pass again |
+
+- The chat id is given once and kept in `inbox/config.json`. The import refuses a message from any other chat, a video, and a photo its sender deleted.
+- The review page shows a sender's first name and the time. It holds no phone number, no id, no chat name and no chat text. Ticks live in the browser's localStorage, so a reload keeps them.
+- Photos already published are marked on the review page and cannot be ticked again. `inbox/imported.json` records which message became which file.
+- `inbox/` is gitignored. Message ids, the chat id and notes never enter the repository.
 
 ## 9. Design system
 
@@ -183,7 +201,7 @@ An installable web app at `/edit/`. People sign in with GitHub, edit forms, see 
 - **Editing.** Forms are built from `editor/schema.yml`, so a new field is a pull request, not an editor release. Hours, venue facts, pages, moments, events.
 - **Preview.** The editor runs `src/render.ts` on the repository's files plus the unsaved change and shows the result in a frame at phone, tablet and desktop width. Photos appear at their original size; everything else is exact. Approvers also get the pull request preview link, which is the built site.
 - **Save and review.** Save creates a branch `edit/<login>/<slug>-<date>`, one commit through the Git Data API and a draft pull request. Submit marks it ready with a plain summary. Approvers see before and after, then "Approve and publish" (approve plus squash merge) or "Request changes".
-- **Guard rails.** Validation from the schema before any commit. Unsaved work kept in IndexedDB. If `main` changed the same file the editor shows both versions; it never force-pushes. A CI check fails any `edit/*` pull request that touches anything outside `site/content/`, `site/moments/`, `site/events/`, `site/gallery/` and `site/data/` (minus `tokens.json`).
+- **Guard rails.** Validation from the schema before any commit. Unsaved work kept in IndexedDB. If `main` changed the same file the editor shows both versions; it never force-pushes. A CI check fails any `edit/*` pull request that touches anything outside `site/content/`, `site/moments/`, `site/events/` and `site/data/` (minus `tokens.json`).
 - **Self-update.** The editor is built with the site, so a merge to `main` is the release. `/edit/version.json` carries version, commit and `min_supported`; the app checks it on start, on focus and every 15 minutes, offers "Update now", and refuses to commit when below `min_supported`.
 
 ## 11. Governance
@@ -214,7 +232,7 @@ One branch and one pull request per milestone or smaller. Each milestone starts 
 | 1 | Content clone (done 15 Nov 2026) | Every fact and photo of the current site is in the new one; screenshots of the old site are in `baseline/`; contact form decision made |
 | 2 | Design pass (critique and Lighthouse done 15 Nov 2026) | Harry has reviewed the direction on his phone; critique fixes are in; Lighthouse mobile 95+ for performance and accessibility |
 | 3 | Events (comedy feed done 15 Nov 2026; Eventfrog source still to come) | The home page and the events page match the comedy calendar for the next 60 days with no duplicates |
-| 4 | Gallery and photo review page | A batch of group photos is picked and published in one sitting |
+| 4 | Gallery and photo review page (gallery and lightbox done 15 Nov 2026; review page and import built, first real batch still to run) | A batch of group photos is picked and published in one sitting |
 | 5 | German and polish | Both languages complete, Open Graph images, 404, sitemap, link check |
 | 6 | Design system complete | Every component is in the style guide; no style value outside tokens |
 | 7 | Editor MVP | Elias posts a photo and changes the hours from his phone, with the exact preview, without github.com |

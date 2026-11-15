@@ -1,0 +1,17 @@
+{% layout 'layouts/base' %}
+{% block content %}
+<section class="section">
+  <div class="wrap">
+    <h1 class="h-xl">{{ page.heading }}</h1>
+    <div class="prose">{{ page.content | raw }}</div>
+    {%- for album in gallery.albums %}
+    <h2 class="h-lg" id="{{ album.slug }}">{{ album.title }}</h2>
+    {% render 'components/moments-grid', moments: album.moments, t: t %}
+    {%- endfor %}
+    {%- if gallery.loose.size > 0 %}
+    <h2 class="h-lg">{{ t.gallery_loose }}</h2>
+    {% render 'components/moments-grid', moments: gallery.loose, t: t %}
+    {%- endif %}
+  </div>
+</section>
+{% endblock %}

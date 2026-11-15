@@ -1,5 +1,6 @@
 ---
 date: 2026-10-22
+album: halloween-2026
 caption:
   en: "Our quietest guest took the window seat."
   de: "Unser stillster Gast sitzt am Fenster."

@@ -13,11 +13,14 @@ Look at the result in a real browser at desktop and 390 px, in both themes (`?th
 
 ## Rules that bite
 
-- **This repository is public and its history is permanent.** Never commit a photo of a person that Harry has not cleared, a phone number of a private person, a WhatsApp sender name or chat text, or any secret. Photos enter only through `scripts/add-photo.ts`, which strips metadata; never copy an original into `site/`. Stage files by name.
+- **This repository is public and its history is permanent.** Never commit a photo of a person that Harry has not cleared, a phone number of a private person, a WhatsApp sender name or chat text, or any secret. Photos enter only through `scripts/add-photo.ts` or `scripts/import-selection.ts`, which strip metadata; never copy an original into `site/`. Stage files by name.
+- **`inbox/` is local and gitignored.** The review page, the chat id and the record of which WhatsApp message became which file live there. No message id, chat id or sender detail goes into a tracked file, a commit message or a pull request.
+- **No moment merges with `TODO` in it.** The import writes `TODO` for every caption and alt text the owner did not write; a test fails until each is replaced in EN and DE.
 - **`src/render.ts` must stay pure and browser-safe**: no `fs`, no `sharp`, no `Bun.*`, no network. The editor will import it to run the real build as its preview. Disk work belongs in `src/build.ts`.
 - **Every link in a template goes through the `url` or `asset` filter.** The site is served from `/robins-coffee/`, later from `/`, and from relative paths in the editor preview. A bare `/path` works in one of the three.
 - **One source per fact.** Hours in `site/data/hours.yml`, venue facts in `site/data/site.yml`, labels in `site/data/i18n.yml`. Never type an address, a time or a label into a template.
 - **Tokens only.** No raw colour or font name in templates or CSS outside `site/data/tokens.json`. A new colour pair that carries text goes into `contrast_pairs`. Anything placed on a dark photo gets the class `on-photo` (night colours in both themes).
+- **Every published photo is a moment.** The feed and the gallery read the same files; an album is `album: <slug>` plus a line in `site/data/albums.yml`, and `feed: false` keeps a photo in the gallery only.
 - **Nothing moves for ever without a pause** (WCAG 2.2.2). The ticker has its button; any new looping motion needs the same or a finite count.
 - **No review texts copied from Google Maps by hand.** Rating and hours are typed facts with a date; review texts come only through the Business Profile API (`docs/decisions/2026-11-15-google-listing.md`). Never add `Review` or `AggregateRating` structured data.
 - **Both languages or neither.** A new text needs EN and DE. German uses Swiss spelling: ss, never ß.
@@ -34,7 +37,9 @@ Look at the result in a real browser at desktop and 390 px, in both themes (`?th
 
 | To add | Do |
 |---|---|
-| A photo post | `bun scripts/add-photo.ts …` (see README) |
+| A photo post | `bun scripts/add-photo.ts …` (see README); `--album <slug>` and `--gallery-only` are optional |
+| A batch of photos from the group | `bun scripts/review-photos.ts`, tick and save on `inbox/review.html`, `bun scripts/import-selection.ts <robins-selection.json>`, then replace every `TODO` (see README) |
+| An album | An entry in `site/data/albums.yml` (slug, title in EN and DE, optional cover), then `album: <slug>` on its moments |
 | A photo for a page section | `bun scripts/add-photo.ts <file> --plain --slug <name>`, then name it with EN and DE alt text where it is used |
 | A home page section | `site/templates/sections/<name>.liquid`, then its name in `site/data/home.yml`, then a style guide entry |
 | A component | `site/templates/components/<name>.liquid` with its parameters in a top comment, plus a style guide entry in the same pull request |

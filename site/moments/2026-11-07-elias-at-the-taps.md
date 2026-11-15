@@ -1,5 +1,6 @@
 ---
 date: 2026-11-07
+album: behind-the-bar
 caption:
   en: "Elias, behind the taps."
   de: "Elias hinter dem Zapfhahn."

@@ -1,5 +1,8 @@
-{% comment %} moment-card: m (a moment with img, alt, caption, date_label) {% endcomment %}
+{% comment %} moment-card: m (a moment with img, alt, caption, date_label), t. The photo is a plain link to its largest JPEG; with JavaScript, site.js opens it in the lightbox instead (data-lightbox), sized from data-srcset. {% endcomment %}
 <figure class="moment">
-  {% render 'components/photo', img: m.img, alt: m.alt, sizes: '(min-width: 60rem) 30vw, (min-width: 36rem) 46vw, 92vw' %}
+  <a class="moment__link" href="{{ m.img.jpg | largest }}" data-lightbox data-srcset="{{ m.img.webp | srcset }}">
+    {% render 'components/photo', img: m.img, alt: m.alt, sizes: '(min-width: 60rem) 30vw, (min-width: 36rem) 46vw, 92vw' %}
+    <span class="visually-hidden">{{ t.photo_enlarge }}</span>
+  </a>
   <figcaption><span class="moment__caption">{{ m.caption }}</span> <time datetime="{{ m.date }}">{{ m.date_label }}</time></figcaption>
 </figure>

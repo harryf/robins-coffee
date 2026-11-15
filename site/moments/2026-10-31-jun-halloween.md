@@ -1,5 +1,6 @@
 ---
 date: 2026-10-31
+album: halloween-2026
 caption:
   en: "Jun dressed up for Halloween. Fully."
   de: "Jun hat sich für Halloween verkleidet. Komplett."

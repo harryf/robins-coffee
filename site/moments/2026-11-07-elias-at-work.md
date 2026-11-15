@@ -1,5 +1,6 @@
 ---
 date: 2026-11-07
+album: behind-the-bar
 caption:
   en: "Friday night, heads down."
   de: "Freitagnacht, voll konzentriert."

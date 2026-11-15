@@ -1,0 +1,9 @@
+# Gallery albums. A moment joins one with `album: <slug>` in its front matter.
+# The gallery shows albums newest first, by their newest photo; this list's order does
+# not matter. Optional `cover: <moment id>` (the file name without .md) puts that
+# photo first in its album; without it the newest photo leads.
+albums:
+  - slug: halloween-2026
+    title: { en: "Halloween 2026", de: "Halloween 2026" }
+  - slug: behind-the-bar
+    title: { en: "Behind the bar", de: "Hinter der Bar" }

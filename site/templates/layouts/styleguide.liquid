@@ -43,12 +43,12 @@
     <h2 class="h-lg">Contact form</h2>
     <div style="max-width: 36rem">{% render 'components/contact-form', site: site, t: t %}</div>
 
-    <h2 class="h-lg">Moment card</h2>
-    <div class="moments">
-      {%- for m in moments limit: 3 %}
-      {% render 'components/moment-card', m: m %}
-      {%- endfor %}
-    </div>
+    <h2 class="h-lg">Moments grid and moment card</h2>
+    <p>Columns that keep each photo's own shape; used by the home feed and by every album of the gallery. Each photo is a link to its largest JPEG.</p>
+    {% render 'components/moments-grid', moments: moments, t: t, count: 3 %}
+
+    <h2 class="h-lg">Lightbox</h2>
+    <p>Select a photo above. It opens large in a native <code>dialog</code> built by <code>site.js</code>, always in night colours (<code>on-photo</code>), with its caption and date. Previous and next stay inside one grid; arrow keys and a swipe step, Esc or the close button closes, and focus goes back to the photo. Without JavaScript the link opens the JPEG.</p>
   </div>
 </section>
 <div style="margin-top: 3rem">{% render 'sections/ticker', t: t %}</div>

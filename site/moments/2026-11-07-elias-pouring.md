@@ -1,5 +1,6 @@
 ---
 date: 2026-11-07
+album: behind-the-bar
 caption:
   en: "A good pour takes a second longer."
   de: "Ein guter Schluck braucht eine Sekunde länger."
