@@ -64,6 +64,88 @@
     });
   });
 
+  // Lightbox. Every moment photo is a plain link to its largest JPEG; here a click
+  // opens it in a native <dialog> instead (which traps focus, closes on Esc and makes
+  // the page behind inert). Previous and next stay inside the photo's own grid.
+  // A browser without <dialog> keeps the plain links.
+  var photoLinks = document.querySelectorAll("a[data-lightbox]");
+  if (photoLinks.length && window.HTMLDialogElement && HTMLDialogElement.prototype.showModal) {
+    var el = function (tag, cls, parent) { var n = document.createElement(tag); n.className = cls; parent.appendChild(n); return n; };
+    var button = function (parent, label, sign, onClick) {
+      var b = el("button", "lightbox__btn", parent);
+      b.type = "button"; b.textContent = sign; b.setAttribute("aria-label", label);
+      b.addEventListener("click", onClick);
+      return b;
+    };
+    var dialog = el("dialog", "lightbox on-photo", document.body);
+    dialog.setAttribute("aria-label", t.lightbox_label);
+    button(el("div", "lightbox__top", dialog), t.lightbox_close, "×", function () { shut(); });
+    var stage = el("div", "lightbox__stage", dialog);
+    var bar = el("div", "lightbox__bar", dialog);
+    var prev = button(bar, t.lightbox_prev, "‹", function () { step(-1); });
+    var caption = el("p", "lightbox__caption", bar);
+    caption.setAttribute("aria-live", "polite");
+    var next = button(bar, t.lightbox_next, "›", function () { step(1); });
+    var group = [], at = 0;
+
+    var show = function (i) {
+      at = (i + group.length) % group.length;
+      var link = group[at], thumb = link.querySelector("img"), card = link.closest("figure");
+      var box = stage.getBoundingClientRect();
+      var img = new Image();
+      img.alt = thumb.alt;
+      img.width = thumb.getAttribute("width");
+      img.height = thumb.getAttribute("height");
+      // The width the photo will really take on this screen, so the browser picks the
+      // smallest file that is sharp enough (a phone never loads the widest one).
+      img.sizes = Math.max(1, Math.round(Math.min(box.width, box.height * thumb.getAttribute("width") / thumb.getAttribute("height")))) + "px";
+      img.srcset = link.getAttribute("data-srcset");
+      img.src = link.href;
+      stage.replaceChildren(img);
+      var time = card.querySelector("time");
+      caption.replaceChildren(card.querySelector(".moment__caption").textContent, " ", time.cloneNode(true));
+    };
+    var step = function (by) { if (group.length > 1) show(at + by); };
+
+    photoLinks.forEach(function (link) {
+      link.addEventListener("click", function (event) {
+        // A click with a modifier key still opens the JPEG in a new tab or window.
+        if (event.button || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        group = Array.prototype.slice.call((link.closest("[data-lightbox-group]") || document).querySelectorAll("a[data-lightbox]"));
+        prev.hidden = next.hidden = group.length < 2;
+        document.documentElement.classList.add("is-lightbox-open");
+        dialog.showModal();
+        show(group.indexOf(link));
+      });
+    });
+    // Every way out ends here: the close button, a click beside the photo, Esc (the
+    // dialog's "cancel") and the dialog's own "close". Runs once per opening.
+    var shut = function () {
+      var root = document.documentElement;
+      if (!root.classList.contains("is-lightbox-open")) return;
+      root.classList.remove("is-lightbox-open");
+      if (dialog.open) dialog.close();
+      stage.replaceChildren();
+      group[at].focus(); // back to the photo that was last shown
+    };
+    dialog.addEventListener("cancel", function (event) { event.preventDefault(); shut(); });
+    dialog.addEventListener("close", shut);
+    dialog.addEventListener("keydown", function (event) {
+      if (event.key === "ArrowLeft") step(-1);
+      if (event.key === "ArrowRight") step(1);
+    });
+    stage.addEventListener("click", function (event) { if (event.target === stage) shut(); });
+    var touchX = null;
+    stage.addEventListener("touchstart", function (event) { touchX = event.touches.length === 1 ? event.touches[0].clientX : null; }, { passive: true });
+    stage.addEventListener("touchend", function (event) {
+      if (touchX === null) return;
+      var dx = event.changedTouches[0].clientX - touchX;
+      touchX = null;
+      if (Math.abs(dx) > 50) step(dx < 0 ? 1 : -1);
+    }, { passive: true });
+  }
+
   // Contact form. There is no server behind this site yet, so "send" writes the
   // email for the visitor: it opens their mail app with everything filled in.
   // (See docs/decisions/2026-11-15-contact-form.md.)
