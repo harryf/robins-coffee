@@ -1,0 +1,528 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//robins-coffee.ch//events//EN
+CALSCALE:GREGORIAN
+X-WR-CALNAME:ROBIN's Bar & Coffee
+BEGIN:VEVENT
+UID:iyf-jokesjokesjokes-2026-11-17@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20261117T190000Z
+DTEND:20261117T210000Z
+SUMMARY:Jokes\, Jokes\, Jokes - English Stand-up comedy show
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=jokesjokesjokes&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-promessi-spassi-2026-11-18@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20261118T190000Z
+DTEND:20261118T210000Z
+SUMMARY:PROMESSI SPASSI - Stand-up comedy italiana a Zurigo
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=promessi-spassi&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2026-11-19@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20261119T183000Z
+DTEND:20261119T210000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-gratis-zum-mitnehmen-2026-11-22@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20261122T190000Z
+DTEND:20261122T210000Z
+SUMMARY:Gratis Comedy Zum Mitnehmen - Free Entry Stand Up Comedy
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=gratis-zum-mitnehmen&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-jokesjokesjokes-2026-11-24@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20261124T190000Z
+DTEND:20261124T210000Z
+SUMMARY:Jokes\, Jokes\, Jokes - English Stand-up comedy show
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=jokesjokesjokes&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2026-11-26@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20261126T183000Z
+DTEND:20261126T210000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-nerdycomedyshow-2026-11-28@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20261128T183000Z
+DTEND:20261128T210000Z
+SUMMARY:The NERDY COMEDY Show - English Standup Comedy in ZURICH
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=nerdycomedyshow&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-jokesjokesjokes-2026-12-01@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20261201T190000Z
+DTEND:20261201T210000Z
+SUMMARY:Jokes\, Jokes\, Jokes - English Stand-up comedy show
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=jokesjokesjokes&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-mike-casa-2026-12-02@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20261202T183000Z
+DTEND:20261202T203000Z
+SUMMARY:Mike Casa • Stand-up Comedy Show at ROBIN's Zürich • 2 December 2026
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=mike-casa&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2026-12-03@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20261203T183000Z
+DTEND:20261203T210000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-pulpnonfiction-2026-12-06@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20261206T180000Z
+DTEND:20261206T200000Z
+SUMMARY:Pulp Non-Fiction - Storytelling Open Mic Zürich
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=pulpnonfiction&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-jokesjokesjokes-2026-12-08@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20261208T190000Z
+DTEND:20261208T210000Z
+SUMMARY:Jokes\, Jokes\, Jokes - English Stand-up comedy show
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=jokesjokesjokes&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2026-12-10@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20261210T183000Z
+DTEND:20261210T210000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-jokesjokesjokes-2026-12-15@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20261215T190000Z
+DTEND:20261215T210000Z
+SUMMARY:Jokes\, Jokes\, Jokes - English Stand-up comedy show
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=jokesjokesjokes&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-promessi-spassi-2026-12-16@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20261216T190000Z
+DTEND:20261216T210000Z
+SUMMARY:PROMESSI SPASSI - Stand-up comedy italiana a Zurigo
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=promessi-spassi&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2026-12-17@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20261217T183000Z
+DTEND:20261217T210000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-jokesjokesjokes-2026-12-22@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20261222T190000Z
+DTEND:20261222T210000Z
+SUMMARY:Jokes\, Jokes\, Jokes - English Stand-up comedy show
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=jokesjokesjokes&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2026-12-24@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20261224T183000Z
+DTEND:20261224T210000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-nerdycomedyshow-2026-12-26@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20261226T190000Z
+DTEND:20261226T210000Z
+SUMMARY:The NERDY COMEDY Show - English Standup Comedy in ZURICH
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=nerdycomedyshow&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2026-12-31@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20261231T183000Z
+DTEND:20261231T210000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-01-07@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270107T183000Z
+DTEND:20270107T210000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-01-14@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270114T183000Z
+DTEND:20270114T210000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-promessi-spassi-2027-01-20@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270120T190000Z
+DTEND:20270120T210000Z
+SUMMARY:PROMESSI SPASSI - Stand-up comedy italiana a Zurigo
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=promessi-spassi&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-01-21@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270121T183000Z
+DTEND:20270121T210000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-01-28@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270128T183000Z
+DTEND:20270128T210000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-digital-daddy-in-english-2027-01-29@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270129T190000Z
+DTEND:20270129T210000Z
+SUMMARY:Digital Daddy (in English)
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=digital-daddy-in-english&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-mike-casa-schwiizerduetsch-2027-01-30@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270130T190000Z
+DTEND:20270130T210000Z
+SUMMARY:Mike Casa uf Schwiizerdütsch
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=mike-casa-schwiizerduetsch&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-02-04@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270204T183000Z
+DTEND:20270204T210000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-02-11@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270211T183000Z
+DTEND:20270211T210000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-promessi-spassi-2027-02-17@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270217T190000Z
+DTEND:20270217T210000Z
+SUMMARY:PROMESSI SPASSI - Stand-up comedy italiana a Zurigo
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=promessi-spassi&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-02-18@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270218T183000Z
+DTEND:20270218T210000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-02-25@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270225T183000Z
+DTEND:20270225T210000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-03-04@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270304T183000Z
+DTEND:20270304T210000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-03-11@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270311T183000Z
+DTEND:20270311T210000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-digital-daddy-en-francais-2027-03-12@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270312T190000Z
+DTEND:20270312T210000Z
+SUMMARY:Digital Daddy (en français)
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=digital-daddy-en-francais&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-promessi-spassi-2027-03-17@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270317T190000Z
+DTEND:20270317T210000Z
+SUMMARY:PROMESSI SPASSI - Stand-up comedy italiana a Zurigo
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=promessi-spassi&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-03-18@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270318T183000Z
+DTEND:20270318T210000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-03-25@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270325T183000Z
+DTEND:20270325T210000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-04-01@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270401T173000Z
+DTEND:20270401T200000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-digital-daddy-auf-deutsch-2027-04-03@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270403T180000Z
+DTEND:20270403T200000Z
+SUMMARY:Digital Daddy (auf Deutsch)
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=digital-daddy-auf-deutsch&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-04-08@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270408T173000Z
+DTEND:20270408T200000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-04-15@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270415T173000Z
+DTEND:20270415T200000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-promessi-spassi-2027-04-21@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270421T180000Z
+DTEND:20270421T200000Z
+SUMMARY:PROMESSI SPASSI - Stand-up comedy italiana a Zurigo
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=promessi-spassi&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-04-22@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270422T173000Z
+DTEND:20270422T200000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-04-29@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270429T173000Z
+DTEND:20270429T200000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-05-06@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270506T173000Z
+DTEND:20270506T200000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-05-13@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270513T173000Z
+DTEND:20270513T200000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-05-20@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270520T173000Z
+DTEND:20270520T200000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-05-27@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270527T173000Z
+DTEND:20270527T200000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-06-03@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270603T173000Z
+DTEND:20270603T200000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-06-10@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270610T173000Z
+DTEND:20270610T200000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-06-17@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270617T173000Z
+DTEND:20270617T200000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-06-24@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270624T173000Z
+DTEND:20270624T200000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-07-01@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270701T173000Z
+DTEND:20270701T200000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-07-08@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270708T173000Z
+DTEND:20270708T200000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-07-15@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270715T173000Z
+DTEND:20270715T200000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-07-22@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270722T173000Z
+DTEND:20270722T200000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+BEGIN:VEVENT
+UID:iyf-comedybrew-2027-07-29@robins-coffee.ch
+DTSTAMP:20261115T221937Z
+DTSTART:20270729T173000Z
+DTEND:20270729T200000Z
+SUMMARY:Comedy Brew: Open Mic Zürich\, English Stand-Up Every Thursday
+LOCATION:ROBIN's Bar & Coffee\, Zähringerstrasse 33\, 8001 Zürich
+URL:https://inyourfacecomedy.ch/go/?show=comedybrew&utm_source=robins&utm_medium=referral&utm_campaign=website
+END:VEVENT
+END:VCALENDAR
