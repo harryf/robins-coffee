@@ -38,6 +38,9 @@
 <link rel="icon" href="{{ '/favicon.ico' | url }}" sizes="32x32">
 <link rel="icon" type="image/png" sizes="192x192" href="{{ '/assets/icons/icon-192.png' | asset }}">
 <link rel="apple-touch-icon" href="{{ '/assets/icons/apple-touch-icon.png' | asset }}">
+{%- if page.layout == 'editor' %}
+<link rel="manifest" href="{{ '/edit/manifest.webmanifest' | url }}">
+{%- endif %}
 <link rel="preload" href="{{ '/assets/fonts/alfa-slab-one.woff2' | url }}" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{{ '/assets/site.css' | asset }}">
 <script>

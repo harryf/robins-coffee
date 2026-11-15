@@ -20,7 +20,7 @@ const tokens = JSON.parse(files["data/tokens.json"]!);
 describe("renderer", () => {
   test("renders home in both languages plus the style guide", async () => {
     const pages = await renderSite(files, { base: "/robins-coffee/", photos });
-    expect(pages.map((p) => p.out).sort()).toEqual(["404.html", "de/events/index.html", "de/gallery/index.html", "de/index.html", "events/index.html", "gallery/index.html", "index.html", "styleguide/index.html"]);
+    expect(pages.map((p) => p.out).sort()).toEqual(["404.html", "de/events/index.html", "de/gallery/index.html", "de/index.html", "edit/index.html", "events/index.html", "gallery/index.html", "index.html", "styleguide/index.html"]);
     const en = pages.find((p) => p.out === "index.html")!.html;
     const de = pages.find((p) => p.out === "de/index.html")!.html;
     expect(en).toContain('<html lang="en">');

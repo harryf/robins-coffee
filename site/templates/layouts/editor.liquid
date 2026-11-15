@@ -1,0 +1,12 @@
+{% layout 'layouts/base' %}
+{% comment %} editor: the frame of the editor at /edit/. The screens are drawn by edit/editor.js (src/editor/); it reads the site's files from edit/site.json. English only for now, noindex. {% endcomment %}
+{% block content %}
+<section class="section">
+  <div class="wrap editor" id="editor" data-bundle="{{ '/edit/site.json' | url }}" data-sw="{{ '/edit/sw.js' | url }}">
+    <h1 class="h-xl">{{ page.heading }}</h1>
+    <p class="ed-note">{{ page.loading }}</p>
+    <noscript><p>{{ page.noscript }}</p></noscript>
+  </div>
+</section>
+<script type="module" src="{{ '/edit/editor.js' | asset }}"></script>
+{% endblock %}

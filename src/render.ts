@@ -161,8 +161,10 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
   // hreflang and canonical must be absolute; in a relative build there is no address, so the path is kept.
   const origin = (opts.origin ?? site.url).replace(/\/$/, "");
   engine.registerFilter("absolute", (p: string) => (opts.base === "relative" ? url(p) : origin + url(p)));
-  engine.registerFilter("srcset", (vs: Variant[]) => (vs ?? []).map((v) => `${url("/" + v.path)} ${v.w}w`).join(", "));
-  engine.registerFilter("largest", (vs: Variant[]) => url("/" + vs.at(-1)!.path));
+  // A photo the editor has not sent yet has no file on the site: its path is a blob: address, used as it is.
+  const photoUrl = (path: string) => (/^(blob|data|https?):/.test(path) ? path : url("/" + path));
+  engine.registerFilter("srcset", (vs: Variant[]) => (vs ?? []).map((v) => `${photoUrl(v.path)} ${v.w}w`).join(", "));
+  engine.registerFilter("largest", (vs: Variant[]) => photoUrl(vs.at(-1)!.path));
   engine.registerFilter("json", (v: unknown) => JSON.stringify(v).replace(/</g, "\\u003c"));
   const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" })[c]!);
   // "Coffee by day. Cocktails by night." -> the last sentence becomes the neon sign.
