@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { renderSite, resolveUrl, hoursRows, parseFrontMatter, type Files, type Photo } from "../src/render";
 import { contrast, tokensCss } from "../src/tokens";
 import { cleanPhoto, MAX_EDGE } from "../scripts/add-photo";
+import { fromIyfFeed, fromManual, mergeEvents, upcoming, toIcs, type SiteEvent } from "../src/events";
 
 const SITE = join(import.meta.dir, "..", "site");
 const files: Files = {};
@@ -16,7 +17,7 @@ const tokens = JSON.parse(files["data/tokens.json"]!);
 describe("renderer", () => {
   test("renders home in both languages plus the style guide", async () => {
     const pages = await renderSite(files, { base: "/robins-coffee/", photos });
-    expect(pages.map((p) => p.out).sort()).toEqual(["de/index.html", "index.html", "styleguide/index.html"]);
+    expect(pages.map((p) => p.out).sort()).toEqual(["de/events/index.html", "de/index.html", "events/index.html", "index.html", "styleguide/index.html"]);
     const en = pages.find((p) => p.out === "index.html")!.html;
     const de = pages.find((p) => p.out === "de/index.html")!.html;
     expect(en).toContain('<html lang="en">');
@@ -100,6 +101,88 @@ describe("content clone of the old site", () => {
   test("there is a contact form with name, phone and message that writes to the bar", async () => {
     const html = (await renderSite(files, { base: "/", photos })).find((p) => p.out === "index.html")!.html;
     for (const field of ['name="name"', 'name="phone"', 'name="message"', 'data-to="info@robins-coffee.ch"']) expect(html).toContain(field);
+  });
+});
+
+describe("events", () => {
+  // A real copy of the comedy site feed, trimmed to ten weeks.
+  const feed = JSON.parse(require("node:fs").readFileSync(join(import.meta.dir, "fixtures/iyf-events.json"), "utf8"));
+  const NOW = new Date("2026-11-15T22:00:00+01:00");
+  const imported = fromIyfFeed(feed);
+  const withEvents = (events: SiteEvent[]) => ({ ...files, "data/events.json": JSON.stringify({ events }) });
+
+  test("only dates at ROBIN's are kept, and ticket links go through the tracked /go/ link", () => {
+    expect(imported.length).toBe(feed.events.filter((e: any) => e.venue === "robins").length);
+    expect(imported.length).toBeGreaterThan(10);
+    for (const e of imported) {
+      expect(e.ticket_url).toMatch(/^https:\/\/inyourfacecomedy\.ch\/go\/\?show=[a-z0-9-]+&utm_source=robins&utm_medium=referral/);
+      expect(e.organiser).toBe("IN YOUR FACE Comedy");
+    }
+  });
+
+  test("the same event from two sources appears once, and the first source wins", () => {
+    const first = imported[0]!;
+    const twinByName: SiteEvent = { ...first, id: "eventfrog-1", source: "eventfrog", name: first.name.toUpperCase() + "!", ticket_url: "https://eventfrog.ch/x" };
+    const twinByLink: SiteEvent = { ...first, id: "eventfrog-2", source: "eventfrog", name: "Another name" };
+    const other: SiteEvent = { ...first, id: "manual-dj", source: "manual", name: "DJ night", ticket_url: "", start: first.start, end: first.end };
+    const merged = mergeEvents([imported, [twinByName, twinByLink, other]]);
+    expect(merged.length).toBe(imported.length + 1);
+    expect(merged.filter((e) => e.start === first.start).map((e) => e.id).sort()).toEqual([first.id, "manual-dj"].sort());
+    expect(new Set(merged.map((e) => e.id)).size).toBe(merged.length);
+  });
+
+  test("overrides hide, rename and feature", () => {
+    const [a, b] = imported;
+    const merged = mergeEvents([imported], [{ id: a!.id, hide: true }, { id: b!.id, name: "Renamed", featured: true }]);
+    expect(merged.find((e) => e.id === a!.id)).toBeUndefined();
+    expect(merged.find((e) => e.id === b!.id)).toMatchObject({ name: "Renamed", featured: true });
+  });
+
+  test("upcoming keeps an event until it ends and respects the window", () => {
+    const e = imported[0]!;
+    expect(upcoming([e], new Date(new Date(e.end).getTime() - 60_000)).length).toBe(1);
+    expect(upcoming([e], new Date(new Date(e.end).getTime() + 60_000)).length).toBe(0);
+    expect(upcoming(imported, NOW, 60).every((x) => new Date(x.start).getTime() <= NOW.getTime() + 60 * 864e5)).toBe(true);
+  });
+
+  test("hand-written events are read from site/events and need title, start and end", () => {
+    const md = "---\ntitle: \"New Year's Eve\"\nstart: 2026-12-31T21:00:00+01:00\nend: 2027-01-01T03:00:00+01:00\nprice_chf: 0\n---\n";
+    const got = fromManual({ "events/2026-12-31-nye.md": md, "events/README.md": "no front matter" });
+    expect(got).toHaveLength(1);
+    expect(got[0]).toMatchObject({ id: "manual-2026-12-31-nye", source: "manual", price_chf: 0, ticket_url: "" });
+    expect(() => fromManual({ "events/x.md": "---\ntitle: T\n---\n" })).toThrow(/"start" is missing/);
+  });
+
+  test("the events page lists every date of the next 60 days once, in both languages, in Zürich time", async () => {
+    const want = upcoming(imported, NOW, 60);
+    const pages = await renderSite(withEvents(imported), { base: "/", photos, now: NOW });
+    for (const out of ["events/index.html", "de/events/index.html"]) {
+      const html = pages.find((p) => p.out === out)!.html;
+      const ends = [...html.matchAll(/class="event" data-end="([^"]+)"/g)].map((m) => m[1]);
+      expect(ends.length).toBe(want.length);
+      expect(ends).toEqual(want.map((e) => e.end));
+      const ld = JSON.parse(/<script type="application\/ld\+json">(\{"@context":"https:\/\/schema.org","@graph".*?)<\/script>/s.exec(html)![1]!);
+      expect(ld["@graph"].length).toBe(want.length);
+    }
+    const en = pages.find((p) => p.out === "events/index.html")!.html;
+    expect(en).toContain("Tue 17 Nov, 20:00");
+    expect(en).toContain("CHF 5");
+    expect(en).not.toMatch(/·\s*<\/p>/); // no dangling separator when a show is in the page language
+    expect(pages.find((p) => p.out === "de/events/index.html")!.html).toContain("Di. 17. Nov., 20:00");
+  });
+
+  test("the home page shows the next four, and no events section when there are none", async () => {
+    const home = async (events: SiteEvent[]) => (await renderSite(withEvents(events), { base: "/", photos, now: NOW })).find((p) => p.out === "index.html")!.html;
+    expect((await home(imported)).match(/class="event"/g)?.length).toBe(4);
+    expect(await home([])).not.toContain('id="events"');
+  });
+
+  test("the calendar feed has one entry per event with UTC times", () => {
+    const ics = toIcs(imported.slice(0, 3), { legal_name: "ROBIN's Bar & Coffee", street: "Zähringerstrasse 33", postal_code: "8001", city: "Zürich" }, NOW);
+    expect(ics.match(/BEGIN:VEVENT/g)?.length).toBe(3);
+    expect(ics).toContain("DTSTART:20261117T190000Z");
+    expect(ics).toContain("LOCATION:ROBIN's Bar & Coffee\\, Zähringerstrasse 33\\, 8001 Zürich");
+    expect(ics.endsWith("END:VCALENDAR\r\n")).toBe(true);
   });
 });
 

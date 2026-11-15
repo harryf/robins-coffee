@@ -23,6 +23,7 @@ Look at the result in a real browser at desktop and 390 px, in both themes (`?th
 - **Both languages or neither.** A new text needs EN and DE. German uses Swiss spelling: ss, never ß.
 - **The old site's facts stay.** The "content clone" test lists every fact of the 2022 page; if one really changes, change the data file and that list together.
 - **Nothing invented.** Facts about the bar come from the current site, from Harry or from the owners. Unknowns go to "Open questions" in the spec.
+- **Imported events are never committed.** The build fetches the comedy feed (`events_feed` in `site.yml`), merges and publishes `/events.json`. To build offline or against a test feed: `bun src/build.ts --events <file or URL>`. Event times are shown in Zürich time whatever the build machine's zone.
 - No em dashes anywhere: copy, docs, comments, commit messages.
 - Case matters on the live build; a wrongly cased path works on the Mac and 404s live.
 - `main` is protected. Work on a branch, open a pull request, check the preview link, then merge. Never push to `gh-pages` by hand; only the workflows write there.
@@ -37,4 +38,6 @@ Look at the result in a real browser at desktop and 390 px, in both themes (`?th
 | A home page section | `site/templates/sections/<name>.liquid`, then its name in `site/data/home.yml`, then a style guide entry |
 | A component | `site/templates/components/<name>.liquid` with its parameters in a top comment, plus a style guide entry in the same pull request |
 | A page | `site/content/en/<slug>.md` and `site/content/de/<slug>.md` |
+| An event by hand | `site/events/<date>-<slug>.md` (format in `site/events/README.md`) |
+| A change to an imported event | an entry in `site/data/event-overrides.yml`; never edit the import |
 | A decision | `docs/decisions/<date>-<slug>.md`, short, and update `docs/spec.md` if it changes the plan |

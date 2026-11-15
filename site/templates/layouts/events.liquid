@@ -1,0 +1,22 @@
+{% layout 'layouts/base' %}
+{% block content %}
+<section class="section">
+  <div class="wrap">
+    <h1 class="h-xl">{{ page.heading }}</h1>
+    <div class="prose">{{ page.content | raw }}</div>
+    {%- if events_months.size == 0 %}
+    <p class="lead">{{ t.events_none }}</p>
+    {%- endif %}
+    {%- for month in events_months %}
+    <h2 class="h-lg">{{ month.label }}</h2>
+    <div class="events">
+      {%- for e in month.events %}
+      {% render 'components/event-card', e: e, t: t %}
+      {%- endfor %}
+    </div>
+    {%- endfor %}
+    <p><a class="btn" href="{{ '/events.ics' | url }}">{{ t.events_subscribe }}</a></p>
+  </div>
+</section>
+<script type="application/ld+json">{{ events_json_ld | json | raw }}</script>
+{% endblock %}

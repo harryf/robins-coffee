@@ -1,9 +1,11 @@
 name: Deploy
 # Every push to main is built, tested and published to the gh-pages branch.
-# A daily run will later refresh imported events without a commit.
+# A run every morning refreshes the imported events and drops past ones, with no commit.
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: "40 4 * * *" # 05:40 or 06:40 in Zürich, after nothing and before everyone
   workflow_dispatch:
 permissions:
   contents: write

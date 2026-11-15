@@ -32,7 +32,7 @@
 <body>
 <a class="skip" href="#main">{{ t.skip }}</a>
 {% assign on_photo = false %}{% if page.layout == 'home' %}{% assign on_photo = true %}{% endif %}
-{% render 'components/header', site: site, t: t, home_url: home_url, other: other, on_photo: on_photo %}
+{% render 'components/header', site: site, t: t, home_url: home_url, other: other, events_url: events_url, on_photo: on_photo %}
 <main id="main">
 {% block content %}{% endblock %}
 </main>

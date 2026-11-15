@@ -50,6 +50,12 @@
     el.hidden = false;
   });
 
+  // Events are baked in at build time (at least once a day). In between, an event
+  // that has ended is taken off the page here.
+  document.querySelectorAll(".event[data-end]").forEach(function (el) {
+    if (new Date(el.getAttribute("data-end")).getTime() < Date.now()) el.hidden = true;
+  });
+
   // Ticker: one button pauses and restarts the moving text.
   document.querySelectorAll("[data-ticker-pause]").forEach(function (button) {
     button.addEventListener("click", function () {

@@ -1,0 +1,14 @@
+{% comment %} Home: the next few events. The whole section is left out when nothing is announced. {% endcomment %}
+{%- if events_next.size > 0 %}
+<section class="section" id="events">
+  <div class="wrap">
+    <h2 class="h-xl">{{ t.events_title }}</h2>
+    <div class="events">
+      {%- for e in events_next %}
+      {% render 'components/event-card', e: e, t: t %}
+      {%- endfor %}
+    </div>
+    <p><a class="btn" href="{{ events_url | url }}">{{ t.events_all }}</a></p>
+  </div>
+</section>
+{%- endif %}

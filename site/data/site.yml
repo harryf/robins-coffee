@@ -23,6 +23,9 @@ google_rating:
   as_of: 2026-11-15
 instagram: "robinsbarandcoffee"
 timezone: "Europe/Zurich"
+# The comedy club's calendar feed; the build keeps the dates at this venue.
+events_feed: "https://inyourfacecomedy.ch/events.json"
+events_feed_venue: "robins"
 # While true every page carries noindex, so the preview never competes with the
 # live WordPress site. Set to false in the DNS cut-over pull request.
 preview: true
