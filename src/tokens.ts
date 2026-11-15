@@ -18,6 +18,12 @@ ${scales}
 ${vars("c-", t.color.day)}
   color-scheme: light;
 }
+/* Anything that sits on a dark photo keeps the night colours in both themes. */
+.on-photo {
+${vars("c-", t.color.night)}
+  color: var(--c-text);
+  color-scheme: dark;
+}
 `;
 }
 

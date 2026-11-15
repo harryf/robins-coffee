@@ -9,8 +9,9 @@
 <meta name="robots" content="noindex, nofollow">
 {%- endif %}
 {%- for a in alternates %}
-<link rel="alternate" hreflang="{{ a.lang }}" href="{{ a.url | url }}">
+<link rel="alternate" hreflang="{{ a.lang }}" href="{{ a.url | absolute }}">
 {%- endfor %}
+<link rel="canonical" href="{{ page.url | absolute }}">
 <meta name="theme-color" content="{{ tokens.color.night.bg }}">
 <link rel="icon" type="image/png" href="{{ '/assets/brand/logo-roundel-black.png' | asset }}">
 <link rel="preload" href="{{ '/assets/fonts/alfa-slab-one.woff2' | url }}" as="font" type="font/woff2" crossorigin>
@@ -30,7 +31,8 @@
 </head>
 <body>
 <a class="skip" href="#main">{{ t.skip }}</a>
-{% render 'components/header', site: site, t: t, home_url: home_url, other: other %}
+{% assign on_photo = false %}{% if page.layout == 'home' %}{% assign on_photo = true %}{% endif %}
+{% render 'components/header', site: site, t: t, home_url: home_url, other: other, on_photo: on_photo %}
 <main id="main">
 {% block content %}{% endblock %}
 </main>

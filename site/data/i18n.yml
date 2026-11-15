@@ -16,6 +16,9 @@ en:
   days: { mo: "Monday", tu: "Tuesday", we: "Wednesday", th: "Thursday", fr: "Friday", sa: "Saturday", su: "Sunday" }
   days_short: { mo: "Mon", tu: "Tue", we: "Wed", th: "Thu", fr: "Fri", sa: "Sat", su: "Sun" }
   range_sep: " to "
+  open_until: "Open until {time}"
+  ticker_pause: "Pause the moving text"
+  google_rating: "{value} out of 5 on Google, from {count} reviews"
   contact_title: "Write to us"
   form_name: "Name"
   form_phone: "Phone"
@@ -43,6 +46,9 @@ de:
   days: { mo: "Montag", tu: "Dienstag", we: "Mittwoch", th: "Donnerstag", fr: "Freitag", sa: "Samstag", su: "Sonntag" }
   days_short: { mo: "Mo", tu: "Di", we: "Mi", th: "Do", fr: "Fr", sa: "Sa", su: "So" }
   range_sep: " bis "
+  open_until: "Offen bis {time}"
+  ticker_pause: "Lauftext anhalten"
+  google_rating: "{value} von 5 auf Google, aus {count} Bewertungen"
   contact_title: "Schreib uns"
   form_name: "Name"
   form_phone: "Telefon"

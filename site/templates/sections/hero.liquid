@@ -1,10 +1,11 @@
-<section class="hero">
+<section class="hero on-photo">
   <div class="hero__photo">
-    {% render 'components/photo', img: photos[home.hero_photo], alt: '', sizes: '100vw', eager: true %}
+    {% render 'components/photo', img: photos[home.hero_photo], alt: '', sizes: 'max(100vw, 138vh)', eager: true %}
   </div>
   <div class="wrap hero__body">
     <p class="eyebrow">{{ page.kicker }}</p>
     <h1 class="hero__title">{{ page.headline | neon_last | raw }}</h1>
+    <p class="hero__status">{% render 'components/open-pill', t: t %}</p>
     <p class="hero__actions">
       <a class="btn btn--neon" href="#visit">{{ page.visit_title }}</a>
       <a class="btn" href="{{ site.phone | tel }}">{{ t.call }}</a>

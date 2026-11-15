@@ -26,6 +26,15 @@ describe("renderer", () => {
     expect(de).toContain('href="/robins-coffee/"');
   });
 
+  test("hreflang and canonical links are absolute", async () => {
+    const pages = await renderSite(files, { base: "/robins-coffee/", photos, origin: "https://example.org" });
+    const de = pages.find((p) => p.out === "de/index.html")!.html;
+    expect(de).toContain('<link rel="alternate" hreflang="en" href="https://example.org/robins-coffee/">');
+    expect(de).toContain('<link rel="canonical" href="https://example.org/robins-coffee/de/">');
+    const fallback = (await renderSite(files, { base: "/", photos })).find((p) => p.out === "index.html")!.html;
+    expect(fallback).toContain('<link rel="canonical" href="https://robins-coffee.ch/">');
+  });
+
   test("every page is noindex while site.yml says preview: true", async () => {
     const pages = await renderSite(files, { base: "/", photos });
     for (const p of pages) expect(p.html).toContain('name="robots" content="noindex');
@@ -73,7 +82,7 @@ describe("renderer", () => {
 // Milestone 1: everything the 2022 WordPress page said (docs/spec.md, section 3)
 // must be on the new home page. If a fact changes, change the data file and this list.
 describe("content clone of the old site", () => {
-  const facts = ["2022", "Dennis Cobarrubias", "Sallahi", "Zähringerstrasse 33", "8001", "Zürich", "16:00", "10:00", "+41 79 176 74 46", "info@robins-coffee.ch", "https://maps.app.goo.gl/"];
+  const facts = ["2022", "Dennis Cobarrubias", "Sallahi", "Zähringerstrasse 33", "8001", "Zürich", "16:00", "10:00", "+41 79 176 74 46", "info@robins-coffee.ch", "https://maps.app.goo.gl/pUvDQa4cqUcahSdu6"];
   test("every fact of the old page is on the new home page, in both languages", async () => {
     const pages = await renderSite(files, { base: "/", photos });
     for (const out of ["index.html", "de/index.html"]) {
@@ -115,6 +124,22 @@ describe("hours", () => {
     const rows = hoursRows({ regular: [{ days: ["mo", "tu", "we", "th", "fr"], open: "16:00", close: null }, { days: ["sa", "su"], open: "10:00", close: null }] }, t);
     expect(rows.map((r: any) => r.label)).toEqual(["Mon to Fri", "Sat, Sun"]);
   });
+  test("midnight closes a range as 24:00; single days and real hours come through", () => {
+    const t = { days_short: { mo: "Mon", tu: "Tue", we: "Wed", th: "Thu", fr: "Fri", sa: "Sat", su: "Sun" }, range_sep: " to " };
+    const rows = hoursRows(parseFrontMatter("---\n" + files["data/hours.yml"] + "\n---\n").data, t);
+    expect(rows.map((r: any) => `${r.label} ${r.open}-${r.close}`)).toEqual(["Mon to Thu 16:00-24:00", "Fri 16:00-02:00", "Sat 10:00-02:00", "Sun 10:00-24:00"]);
+  });
+  test("structured data carries the opening hours and never a rating", async () => {
+    const html = (await renderSite(files, { base: "/", photos })).find((p) => p.out === "index.html")!.html;
+    const ld = JSON.parse(/<script type="application\/ld\+json">(.*?)<\/script>/s.exec(html)![1]!);
+    expect(ld.openingHoursSpecification.length).toBe(4);
+    expect(ld.openingHoursSpecification[1]).toEqual({ "@type": "OpeningHoursSpecification", dayOfWeek: ["Friday"], opens: "16:00", closes: "02:00" });
+    expect(JSON.stringify(ld)).not.toMatch(/AggregateRating|Review/);
+  });
+  test("the hero photo is not repeated in the feed", async () => {
+    const html = (await renderSite(files, { base: "/", photos })).find((p) => p.out === "index.html")!.html;
+    expect(html.match(/class="moment"/g)?.length).toBe(momentPhotos.length - 1);
+  });
 });
 
 describe("design tokens", () => {
@@ -127,10 +152,11 @@ describe("design tokens", () => {
   test("both themes define the same colour names", () => {
     expect(Object.keys(tokens.color.day).sort()).toEqual(Object.keys(tokens.color.night).sort());
   });
-  test("the stylesheet uses tokens only: no hex colours outside the hero photo overlay", async () => {
+  test("the stylesheet uses tokens only: no raw colours at all", async () => {
     const css = await Bun.file(join(SITE, "assets/css/site.css")).text();
-    const outside = css.split("\n").filter((l) => /#[0-9a-f]{3,8}\b/i.test(l) && !/^\.(hero|neon-word|site-header:has)/.test(l.trim()));
-    expect(outside).toEqual([]);
+    const raw = css.split("\n").filter((l) => /#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(/i.test(l));
+    expect(raw).toEqual([]);
+    expect(tokensCss(tokens)).toContain(".on-photo {");
     expect(tokensCss(tokens)).toContain("--c-neon: #ff4fa8");
   });
 });

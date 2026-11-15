@@ -17,6 +17,8 @@ export type RenderOptions = {
   /** "/" on the domain, "/robins-coffee/" on GitHub Pages, or "relative" for file:// and the editor preview. */
   base: string;
   photos: Record<string, Photo>;
+  /** Scheme and host the build is served from, for absolute URLs (hreflang, canonical). Defaults to site.url. */
+  origin?: string;
   /** Appended to asset URLs so a deploy busts caches. */
   version?: string;
 };
@@ -46,13 +48,18 @@ export function hoursRows(hours: any, t: any) {
     const consecutive = idx.every((v, i) => i === 0 || v === idx[i - 1]! + 1);
     const name = (i: number) => t.days_short[DAYS[i]!];
     const label = idx.length > 2 && consecutive ? `${name(idx[0]!)}${t.range_sep}${name(idx.at(-1)!)}` : idx.map(name).join(", ");
-    return { label, open: r.open, close: r.close ?? null, closed: !!r.closed };
+    // Midnight reads better as 24:00 at the end of a range ("16:00 to 24:00").
+    return { label, open: r.open, close: r.close === "00:00" ? "24:00" : (r.close ?? null), closed: !!r.closed };
   });
 }
 
-function jsonLd(site: any, lang: string, pageUrl: string) {
-  // No openingHoursSpecification yet: schema.org needs a closing time and the venue
-  // only publishes "until late". No Review or AggregateRating, ever (self-serving).
+const SCHEMA_DAYS: Record<string, string> = { mo: "Monday", tu: "Tuesday", we: "Wednesday", th: "Thursday", fr: "Friday", sa: "Saturday", su: "Sunday" };
+
+function jsonLd(site: any, hours: any, lang: string, pageUrl: string) {
+  // No Review or AggregateRating, ever: Google calls a business's own reviews self-serving.
+  const spec = (hours.regular ?? []).filter((r: any) => r.close && !r.closed).map((r: any) => ({
+    "@type": "OpeningHoursSpecification", dayOfWeek: r.days.map((d: string) => SCHEMA_DAYS[d]), opens: r.open, closes: r.close,
+  }));
   return {
     "@context": "https://schema.org",
     "@type": ["CafeOrCoffeeShop", "BarOrPub"],
@@ -66,6 +73,7 @@ function jsonLd(site: any, lang: string, pageUrl: string) {
     hasMap: site.maps_url,
     sameAs: [`https://www.instagram.com/${site.instagram}/`],
     inLanguage: lang,
+    ...(spec.length ? { openingHoursSpecification: spec } : {}),
   };
 }
 
@@ -97,6 +105,9 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
   const url = (p: string) => resolveUrl(String(p), opts.base, current.depth);
   engine.registerFilter("url", url);
   engine.registerFilter("asset", (p: string) => url(p) + (opts.version && opts.base !== "relative" ? `?v=${opts.version}` : ""));
+  // hreflang and canonical must be absolute; in a relative build there is no address, so the path is kept.
+  const origin = (opts.origin ?? site.url).replace(/\/$/, "");
+  engine.registerFilter("absolute", (p: string) => (opts.base === "relative" ? url(p) : origin + url(p)));
   engine.registerFilter("srcset", (vs: Variant[]) => (vs ?? []).map((v) => `${url("/" + v.path)} ${v.w}w`).join(", "));
   engine.registerFilter("largest", (vs: Variant[]) => url("/" + vs.at(-1)!.path));
   engine.registerFilter("json", (v: unknown) => JSON.stringify(v).replace(/</g, "\\u003c"));
@@ -132,9 +143,10 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
       home_url: page.lang === defaultLang ? "/" : `/${page.lang}/`,
       alternates, other,
       photos: opts.photos,
-      moments: moments.map((m: any) => ({ ...m, caption: m.caption?.[page.lang] ?? m.caption?.[defaultLang], alt: m.alt?.[page.lang] ?? m.alt?.[defaultLang], date_label: fmtDate.format(new Date(m.date + "T00:00:00Z")), img: opts.photos[m.photo] })),
+      // The hero photo is not repeated as the first card of the feed.
+      moments: moments.filter((m: any) => m.photo !== data.home?.hero_photo).map((m: any) => ({ ...m, caption: m.caption?.[page.lang] ?? m.caption?.[defaultLang], alt: m.alt?.[page.lang] ?? m.alt?.[defaultLang], date_label: fmtDate.format(new Date(m.date + "T00:00:00Z")), img: opts.photos[m.photo] })),
       noindex: site.preview || page.data.noindex,
-      json_ld: jsonLd(site, page.lang, site.url + page.url),
+      json_ld: jsonLd(site, data.hours, page.lang, site.url + page.url),
     };
     const html = await engine.renderFile(`layouts/${page.data.layout ?? "page"}`, scope);
     out.push({ ...page, html });

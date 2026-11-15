@@ -17,7 +17,9 @@ Look at the result in a real browser at desktop and 390 px, in both themes (`?th
 - **`src/render.ts` must stay pure and browser-safe**: no `fs`, no `sharp`, no `Bun.*`, no network. The editor will import it to run the real build as its preview. Disk work belongs in `src/build.ts`.
 - **Every link in a template goes through the `url` or `asset` filter.** The site is served from `/robins-coffee/`, later from `/`, and from relative paths in the editor preview. A bare `/path` works in one of the three.
 - **One source per fact.** Hours in `site/data/hours.yml`, venue facts in `site/data/site.yml`, labels in `site/data/i18n.yml`. Never type an address, a time or a label into a template.
-- **Tokens only.** No hex colour, font name or pixel size in templates or CSS outside `site/data/tokens.json` (the hero overlay is the listed exception). A new colour pair that carries text goes into `contrast_pairs`.
+- **Tokens only.** No raw colour or font name in templates or CSS outside `site/data/tokens.json`. A new colour pair that carries text goes into `contrast_pairs`. Anything placed on a dark photo gets the class `on-photo` (night colours in both themes).
+- **Nothing moves for ever without a pause** (WCAG 2.2.2). The ticker has its button; any new looping motion needs the same or a finite count.
+- **No review texts copied from Google Maps by hand.** Rating and hours are typed facts with a date; review texts come only through the Business Profile API (`docs/decisions/2026-11-15-google-listing.md`). Never add `Review` or `AggregateRating` structured data.
 - **Both languages or neither.** A new text needs EN and DE. German uses Swiss spelling: ss, never ß.
 - **The old site's facts stay.** The "content clone" test lists every fact of the 2022 page; if one really changes, change the data file and that list together.
 - **Nothing invented.** Facts about the bar come from the current site, from Harry or from the owners. Unknowns go to "Open questions" in the spec.

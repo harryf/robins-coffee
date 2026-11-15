@@ -1,5 +1,5 @@
 /* ROBIN's site styles. Only tokens (var(--…)) for colour, type, space and motion;
-   see site/data/tokens.json. Sections in order: base, layout, type, components,
+   see site/data/tokens.json (no raw colours here; a test checks it). Sections in order: base, layout, type, components,
    sections, style guide. */
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -49,15 +49,14 @@ code { font-size: 0.9em; color: var(--c-amber); }
 .brand__mark { width: 44px; height: 44px; }
 .brand__word { width: auto; height: 34px; }
 .lang { display: inline-flex; align-items: center; min-height: 44px; padding-inline: var(--space-2); font-weight: 600; font-size: var(--size-sm); color: var(--c-text); }
-/* On the home page the header sits on the hero photo, which is dark in both themes. */
-.site-header:has(+ main > .hero) { --c-text: #f7efe3; }
-:root[data-theme="day"] .site-header:has(+ main > .hero) .theme-invert { filter: none; }
+/* On a dark photo (the hero and the header above it) the white logos stay white. */
+:root[data-theme="day"] .on-photo .theme-invert { filter: none; }
 main > :first-child:not(.hero) { padding-top: var(--space-24); }
 
 /* pill */
 .pill { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-radius: var(--radius-pill); background: var(--c-raised); border: 1px solid var(--c-line); color: var(--c-text); font-weight: 600; font-size: var(--size-xs); white-space: nowrap; }
 .pill__dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--c-muted); }
-.pill.is-open .pill__dot { background: var(--c-green); box-shadow: 0 0 0 0 var(--c-green); animation: pulse 2.4s var(--motion-ease) infinite; }
+.pill.is-open .pill__dot { background: var(--c-green); box-shadow: 0 0 0 0 var(--c-green); animation: pulse 2.4s var(--motion-ease) 3; }
 @keyframes pulse { 70% { box-shadow: 0 0 0 0.5rem transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
 @media (max-width: 30rem) { .site-header .pill { display: none; } }
 
@@ -78,25 +77,38 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 .hours dt { font-weight: 700; }
 
 /* hero: always "night", because the photo is */
-.hero { position: relative; min-height: min(92svh, 56rem); display: grid; align-items: end; isolation: isolate; color: #f7efe3; --c-text: #f7efe3; --c-amber: #ffb65c; --c-neon: #ff4fa8; --c-on-neon: #1c0717; }
-.hero__photo { position: absolute; inset: 0; z-index: -1; background: #150a17; }
+.hero { position: relative; min-height: min(92svh, 56rem); display: grid; align-items: end; isolation: isolate; overflow: hidden; --scrim: var(--c-bg); }
+.hero__photo { position: absolute; inset: 0; z-index: -1; background: var(--c-bg); }
 .hero__photo picture, .hero__photo img { width: 100%; height: 100%; object-fit: cover; object-position: 60% 30%; }
-.hero__photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(21 10 23 / 0.55) 0%, rgb(21 10 23 / 0.1) 30%, rgb(21 10 23 / 0.75) 68%, var(--c-bg) 100%); }
-.hero__body { padding-block: var(--space-24) var(--space-16); }
+/* Two scrims: one under the header, one that follows the text block at any height. */
+.hero__photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, color-mix(in srgb, var(--scrim) 85%, transparent) 0%, color-mix(in srgb, var(--scrim) 70%, transparent) 9%, color-mix(in srgb, var(--scrim) 10%, transparent) 32%, transparent 55%); }
+.hero__body { position: relative; padding-block: var(--space-24) var(--space-16); }
+.hero__body::before { content: ""; position: absolute; z-index: -1; inset: var(--space-8) auto 0 50%; width: 100vw; translate: -50% 0; background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--scrim) 22%, transparent) 6%, color-mix(in srgb, var(--scrim) 48%, transparent) 12%, color-mix(in srgb, var(--scrim) 70%, transparent) 20%, color-mix(in srgb, var(--scrim) 84%, transparent) 42%, var(--scrim) 100%); }
+.hero__status { display: none; }
+@media (max-width: 30rem) {
+  .hero { min-height: min(80svh, 56rem); }
+  .hero__status { display: block; }
+}
 .hero__body > * + * { margin-top: var(--space-4); }
-.hero__title { font-size: var(--size-xxl); max-width: 11em; text-shadow: 0 2px 1.5rem rgb(21 10 23 / 0.6); }
+.hero__title { font-size: var(--size-xxl); max-width: 11em; text-shadow: 0 2px 1.5rem color-mix(in srgb, var(--scrim) 60%, transparent); }
 .hero__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; margin-top: var(--space-6) !important; }
-:root[data-theme="day"] .hero__photo::after { background: linear-gradient(180deg, rgb(21 10 23 / 0.55) 0%, rgb(21 10 23 / 0.1) 30%, rgb(21 10 23 / 0.8) 75%, rgb(21 10 23 / 0.9) 100%); }
 
 /* neon sign: the last sentence of the headline glows and flickers once on load */
-.neon-word { display: block; color: #ff4fa8; text-shadow: 0 0 0.08em #fff3, 0 0 0.35em #ff4fa8, 0 0 1.1em #ff4fa8aa; animation: flicker 2.8s linear 0.4s 1 both; }
+.neon-word { display: block; color: var(--c-neon); text-shadow: 0 0 0.35em var(--c-neon), 0 0 1.1em color-mix(in srgb, var(--c-neon) 65%, transparent); animation: flicker 2.8s linear 0.4s 1 both; }
 @keyframes flicker { 0%, 12%, 16%, 24% { opacity: 0.35; text-shadow: none; } 10%, 14%, 22%, 30%, 100% { opacity: 1; } }
 
 /* ticker */
-.ticker { overflow: hidden; background: var(--c-neon); color: var(--c-on-neon); border-block: 2px solid var(--c-on-neon); transform: rotate(-1deg) scale(1.02); margin-block: var(--space-4); }
-.ticker__track { display: flex; align-items: center; gap: var(--space-6); width: max-content; padding-block: var(--space-3); font: 400 var(--size-lg)/1 var(--font-display); text-transform: uppercase; animation: ticker 40s linear infinite; }
-.ticker__track i { width: 0.5em; height: 0.5em; border-radius: 50%; background: currentColor; flex: none; }
-@keyframes ticker { to { transform: translateX(-50%); } }
+/* Two identical groups sit side by side; each slides left by its own width plus the
+   gap, so when the first has left, the second is exactly where the first began. */
+.ticker { --gap: var(--space-6); position: relative; z-index: 1; overflow: hidden; background: var(--c-neon); color: var(--c-on-neon); border-block: 2px solid var(--c-on-neon); transform: rotate(-1deg) scale(1.02); margin-block: calc(var(--space-6) * -1) var(--space-4); }
+.ticker__view { display: flex; gap: var(--gap); }
+.ticker__group { display: flex; flex: none; align-items: center; justify-content: space-around; gap: var(--gap); min-width: 100%; padding-block: var(--space-3); font: 400 var(--size-lg)/1 var(--font-display); text-transform: uppercase; white-space: nowrap; animation: ticker 36s linear infinite; }
+.ticker__group i { width: 0.5em; height: 0.5em; border-radius: 50%; background: currentColor; flex: none; }
+@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(calc(-100% - var(--gap))); } }
+.ticker.is-paused .ticker__group { animation-play-state: paused; }
+.ticker__pause { position: absolute; inset: 0 0 0 auto; width: 60px; display: grid; place-items: center; padding: 0 var(--space-4) 0 0; border: 0; background: var(--c-neon); color: var(--c-on-neon); cursor: pointer; }
+.ticker__pause::before { content: ""; width: 12px; height: 14px; border-inline: 4px solid currentColor; }
+.ticker.is-paused .ticker__pause::before { width: 0; height: 0; border-block: 8px solid transparent; border-inline: 13px solid currentColor; border-inline-end-width: 0; }
 
 /* moments: a feed, newest first, in columns that keep each photo's own shape */
 .moments { columns: 3 17rem; column-gap: var(--space-4); }
@@ -106,12 +118,18 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 .moment figcaption { padding: var(--space-3) var(--space-4) var(--space-4); font-size: var(--size-sm); line-height: 1.4; }
 .moment__caption { font-weight: 600; }
 .moment time { display: block; margin-top: var(--space-1); color: var(--c-muted); font-size: var(--size-xs); }
+@media (max-width: 30rem) {
+  .moments { columns: 2; column-gap: var(--space-3); }
+  .moment { margin-bottom: var(--space-3); }
+  .moment figcaption { padding: var(--space-2) var(--space-3) var(--space-3); font-size: var(--size-xs); }
+}
 
 /* about */
 .about { display: grid; gap: var(--space-8); align-items: center; }
-.about__roundel { width: clamp(7rem, 22vw, 11rem); height: auto; animation: turn 90s linear infinite; }
-@keyframes turn { to { transform: rotate(360deg); } }
+.about__roundel { width: clamp(4rem, 22vw, 11rem); height: auto; }
 @media (min-width: 48rem) { .about { grid-template-columns: auto 1fr; gap: var(--space-16); } }
+/* On a phone the roundel is already in the header; here it would only push the text down. */
+@media (max-width: 47.99rem) { .about__roundel { display: none; } }
 
 .about__photos { margin-top: var(--space-12); }
 
@@ -130,10 +148,16 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 .form input:focus-visible, .form textarea:focus-visible { outline-offset: 1px; border-color: var(--c-amber); }
 .form__hint { color: var(--c-muted); font-size: var(--size-sm); }
 .form .btn { justify-self: start; cursor: pointer; font: inherit; font-weight: 700; }
-.contact { max-width: 40rem; }
+.contact > * { max-width: 40rem; }
 
 /* visit */
 .visit { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+@media (min-width: 40rem) and (max-width: 61.99rem) { .visit { grid-template-columns: 1fr 1fr; } .visit .card:last-child { grid-column: 1 / -1; } }
+/* phone, email and Instagram links: one per line, each a full 44 px tap target */
+.taps { display: grid; justify-items: start; }
+.taps a { display: flex; align-items: center; min-height: 44px; }
+.rating a { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; color: var(--c-text); font-size: var(--size-sm); }
+.rating__star { color: var(--c-amber); font-size: var(--size-lg); }
 
 /* footer */
 .site-footer { background: var(--c-surface); border-top: 1px solid var(--c-line); padding-block: var(--space-12); font-size: var(--size-sm); }
@@ -148,5 +172,6 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
+  .ticker__pause { display: none; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }

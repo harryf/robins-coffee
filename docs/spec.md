@@ -54,7 +54,7 @@ The first draft planned style tiles before any page. We skipped that: the photos
 - **Colour.** Night: aubergine black, neon pink as the one loud colour, violet and amber as support, cream text. Day: the same hues on cream. Pink is the brand's light, used for the headline, the main button and the ticker, never for body text.
 - **Day and night.** The page follows the Zürich clock: a cream day theme from 06:00 to 17:00, the night theme otherwise. `?theme=day` or `?theme=night` pins one. Without JavaScript the page is night.
 - **Type.** Alfa Slab One for headings (close to the logo's slab), DM Sans for text. Both self-hosted, two families only.
-- **Signs of life.** An "open now" pill worked out from `hours.yml`; a headline that lights up like the sign; a slow ticker; the roundel turning slowly; the newest photos first on the home page. All motion stops under `prefers-reduced-motion`.
+- **Signs of life.** An "open until" pill worked out from `hours.yml`; a headline that lights up like the sign; a slow ticker with a pause button; the newest photos first on the home page. All motion stops under `prefers-reduced-motion`.
 - **Photography first.** Real photos from the bar lead every page. No stock, no illustrations.
 
 Open design work is listed in `design-direction.md`.
@@ -168,7 +168,7 @@ Later in stage 1: a gallery page with albums and a lightbox, and a local review 
 
 - Each component is one Liquid file in `templates/components/` or `templates/sections/` with its parameters named in a comment at the top.
 - `/styleguide/` renders every token and component. It is built with the site and kept out of search engines.
-- Layouts and CSS use tokens only. A test fails on a hex colour in the stylesheet (the hero overlay is the one listed exception, because the hero photo is dark in both themes).
+- Layouts and CSS use tokens only. A test fails on any raw colour in the stylesheet. Things that sit on a dark photo (the hero, the header above it) carry the class `on-photo`, which gives them the night colours in both themes.
 - Every text and surface pair listed in `tokens.json` must reach WCAG AA contrast in both themes; a test checks it.
 - A new component arrives with its style guide entry in the same pull request.
 
@@ -202,7 +202,7 @@ An installable web app at `/edit/`. People sign in with GitHub, edit forms, see 
 
 ## 12. Google Business Profile (stage 5)
 
-The comedy site already writes opening hours and event posts to a Business Profile through the API: validate first, write only on a difference, read back after. ROBIN's listing gets the same treatment from this repository, in this order: hours from `hours.yml`, then photos from moments, then a menu when one exists. `hours.yml` is shaped for it (weekday periods plus dated exceptions). One gap to close first: Google needs real closing times, and the bar publishes "until late".
+The comedy site already writes opening hours and event posts to a Business Profile through the API: validate first, write only on a difference, read back after. ROBIN's listing gets the same treatment from this repository, in this order: hours from `hours.yml`, then photos from moments, then a menu when one exists. `hours.yml` is shaped for it (weekday periods plus dated exceptions). The hours in `hours.yml` were copied from the listing on 15 Nov 2026, so the two agree today. The site also shows the listing's rating with a link; review texts wait for API access (`decisions/2026-11-15-google-listing.md`).
 
 ## 13. Build plan
 
@@ -212,7 +212,7 @@ One branch and one pull request per milestone or smaller. Each milestone starts 
 |---|---|---|
 | 0 | Repository, generator, pipeline, first page (done 15 Nov 2026) | A push to `main` deploys; a pull request gets a preview; tests run in CI |
 | 1 | Content clone (done 15 Nov 2026) | Every fact and photo of the current site is in the new one; screenshots of the old site are in `baseline/`; contact form decision made |
-| 2 | Design pass | Harry has reviewed the direction on his phone; critique fixes are in; Lighthouse mobile 95+ |
+| 2 | Design pass (critique and Lighthouse done 15 Nov 2026) | Harry has reviewed the direction on his phone; critique fixes are in; Lighthouse mobile 95+ for performance and accessibility |
 | 3 | Events | The home page and the events page match the comedy calendar for the next 60 days with no duplicates |
 | 4 | Gallery and photo review page | A batch of group photos is picked and published in one sitting |
 | 5 | German and polish | Both languages complete, Open Graph images, 404, sitemap, link check |
@@ -235,7 +235,8 @@ One branch and one pull request per milestone or smaller. Each milestone starts 
 
 Open questions:
 
-- Real closing times per weekday (the "open now" pill treats "until late" as midnight; Google needs a time).
+- Which phone number is right: the old website says +41 79 176 74 46, the Google entry 044 253 62 02.
+- Access to the bar's Google listing (owner or manager login) for review texts and for stage 5; see `decisions/2026-11-15-google-listing.md`.
 - Contact form sender: the form writes an email in the visitor's mail app for now (`decisions/2026-11-15-contact-form.md`). A real sender (Worker route or form service) is chosen at the cut-over, when DNS control is known.
 - Vector logo files from the owners.
 - Which Eventfrog organiser account lists ROBIN's own events, and who makes the read-only key.

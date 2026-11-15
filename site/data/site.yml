@@ -13,7 +13,14 @@ latitude: 47.3757403
 longitude: 8.5444532
 phone: "+41 79 176 74 46"
 email: "info@robins-coffee.ch"
-maps_url: "https://maps.app.goo.gl/aac8sjwkZjsTQaAT8"
+# The bar's own Google Maps entry (not the comedy club's entry at the same address).
+maps_url: "https://maps.app.goo.gl/pUvDQa4cqUcahSdu6"
+# Shown under "Find us" with a link to the entry. Typed by hand from the entry; update
+# the three values together. A script will keep it fresh once the listing API is in reach.
+google_rating:
+  value: "4.8"
+  count: 299
+  as_of: 2026-11-15
 instagram: "robinsbarandcoffee"
 timezone: "Europe/Zurich"
 # While true every page carries noindex, so the preview never competes with the
