@@ -8,12 +8,35 @@
 {%- if noindex %}
 <meta name="robots" content="noindex, nofollow">
 {%- endif %}
+{%- unless page.permalink %}
 {%- for a in alternates %}
 <link rel="alternate" hreflang="{{ a.lang }}" href="{{ a.url | absolute }}">
 {%- endfor %}
+{%- if x_default %}
+<link rel="alternate" hreflang="x-default" href="{{ x_default | absolute }}">
+{%- endif %}
 <link rel="canonical" href="{{ page.url | absolute }}">
+<meta property="og:url" content="{{ page.url | absolute }}">
+{%- endunless %}
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{{ site.legal_name }}">
+<meta property="og:title" content="{{ page.title }}">
+<meta property="og:description" content="{{ page.description }}">
+<meta property="og:locale" content="{{ t.og_locale }}">
+{%- for locale in og_locales_other %}
+<meta property="og:locale:alternate" content="{{ locale }}">
+{%- endfor %}
+{%- if og %}
+<meta property="og:image" content="{{ og.path | absolute }}">
+<meta property="og:image:width" content="{{ og.width }}">
+<meta property="og:image:height" content="{{ og.height }}">
+<meta property="og:image:alt" content="{{ og.alt }}">
+<meta name="twitter:card" content="summary_large_image">
+{%- endif %}
 <meta name="theme-color" content="{{ tokens.color.night.bg }}">
-<link rel="icon" type="image/png" href="{{ '/assets/brand/logo-roundel-black.png' | asset }}">
+<link rel="icon" href="{{ '/favicon.ico' | url }}" sizes="32x32">
+<link rel="icon" type="image/png" sizes="192x192" href="{{ '/assets/icons/icon-192.png' | asset }}">
+<link rel="apple-touch-icon" href="{{ '/assets/icons/apple-touch-icon.png' | asset }}">
 <link rel="preload" href="{{ '/assets/fonts/alfa-slab-one.woff2' | url }}" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{{ '/assets/site.css' | asset }}">
 <script>

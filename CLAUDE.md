@@ -6,7 +6,7 @@ The new robins-coffee.ch: a static site from our own generator (bun, TypeScript,
 
 ```
 bun run build:local    # dist/ with relative links, opens from file://
-bun run check          # build + tests; run before saying you are done
+bun run check          # build + link check + tests; run before saying you are done
 ```
 
 Look at the result in a real browser at desktop and 390 px, in both themes (`?theme=day`, `?theme=night`).
@@ -28,6 +28,8 @@ Look at the result in a real browser at desktop and 390 px, in both themes (`?th
 - **Nothing invented.** Facts about the bar come from the current site, from Harry or from the owners. Unknowns go to "Open questions" in the spec.
 - **Imported events are never committed.** The build fetches the comedy feed (`events_feed` in `site.yml`), merges and publishes `/events.json`. To build offline or against a test feed: `bun src/build.ts --events <file or URL>`. Event times are shown in Zürich time whatever the build machine's zone.
 - **No words from `Intl`.** Date and time labels take their numbers from `wallClock()` and their words from `i18n.yml`; Intl's German names differ between the Mac and the build server, which broke CI once.
+- **The link check must pass.** `scripts/check-links.ts` runs in CI over the built site and fails on a missing file, a wrong case, a missing anchor, a path outside the base or a link relative to its page. `404.html` is shown at any address, which is why relative links are refused.
+- **A page that must not be listed** (style guide, 404) carries `noindex: true`; the sitemap leaves it out. A page that is listed needs both languages; a test checks.
 - No em dashes anywhere: copy, docs, comments, commit messages.
 - Case matters on the live build; a wrongly cased path works on the Mac and 404s live.
 - `main` is protected. Work on a branch, open a pull request, check the preview link, then merge. Never push to `gh-pages` by hand; only the workflows write there.
@@ -43,7 +45,7 @@ Look at the result in a real browser at desktop and 390 px, in both themes (`?th
 | A photo for a page section | `bun scripts/add-photo.ts <file> --plain --slug <name>`, then name it with EN and DE alt text where it is used |
 | A home page section | `site/templates/sections/<name>.liquid`, then its name in `site/data/home.yml`, then a style guide entry |
 | A component | `site/templates/components/<name>.liquid` with its parameters in a top comment, plus a style guide entry in the same pull request |
-| A page | `site/content/en/<slug>.md` and `site/content/de/<slug>.md` |
+| A page | `site/content/en/<slug>.md` and `site/content/de/<slug>.md`; `og_photo:` picks its link preview picture, `permalink:` names its output file (only 404 uses it) |
 | An event by hand | `site/events/<date>-<slug>.md` (format in `site/events/README.md`) |
 | A change to an imported event | an entry in `site/data/event-overrides.yml`; never edit the import |
 | A decision | `docs/decisions/<date>-<slug>.md`, short, and update `docs/spec.md` if it changes the plan |

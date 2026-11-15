@@ -1,0 +1,19 @@
+{% layout 'layouts/base' %}
+{% comment %} The 404 page. It is shown at any address, so it cannot know the visitor's language: every language gets its block, and site.js moves the right one to the top when the address says which. {% endcomment %}
+{% block content %}
+<section class="section">
+  <div class="wrap notfound" data-notfound>
+    {%- for l in all_langs %}
+    <div class="notfound__block prose" lang="{{ l.lang }}" data-lang="{{ l.lang }}">
+      {% if forloop.first %}<h1 class="h-xl">{{ l.t.notfound_title }}</h1>{% else %}<h2 class="h-xl">{{ l.t.notfound_title }}</h2>{% endif %}
+      <p>{{ l.t.notfound_text }}</p>
+      <p class="hero__actions">
+        <a class="btn btn--neon" href="{{ l.home_url | url }}">{{ l.t.notfound_home }}</a>
+        <a class="btn" href="{{ l.events_url | url }}">{{ l.t.events_title }}</a>
+        <a class="btn" href="{{ l.gallery_url | url }}">{{ l.t.nav_gallery }}</a>
+      </p>
+    </div>
+    {%- endfor %}
+  </div>
+</section>
+{% endblock %}

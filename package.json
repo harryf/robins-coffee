@@ -6,7 +6,8 @@
     "build": "bun src/build.ts",
     "build:local": "bun src/build.ts --base relative",
     "test": "bun test",
-    "check": "bun src/build.ts && bun test",
+    "check": "bun src/build.ts && bun scripts/check-links.ts dist && bun test",
+    "links": "bun scripts/check-links.ts dist",
     "photo": "bun scripts/add-photo.ts"
   },
   "dependencies": {

@@ -1,7 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import sharp from "sharp";
 import { join } from "node:path";
-import { renderSite, resolveUrl, hoursRows, parseFrontMatter, wallClock, groupGallery, type Files, type Photo } from "../src/render";
+import { renderSite, sitemapXml, resolveUrl, hoursRows, parseFrontMatter, wallClock, groupGallery, type Files, type Photo } from "../src/render";
+import { checkLinks } from "../scripts/check-links";
+import { mkdtemp, mkdir, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { contrast, tokensCss } from "../src/tokens";
 import { cleanPhoto, MAX_EDGE } from "../scripts/add-photo";
 import { fromIyfFeed, fromManual, mergeEvents, upcoming, toIcs, type SiteEvent } from "../src/events";
@@ -17,7 +20,7 @@ const tokens = JSON.parse(files["data/tokens.json"]!);
 describe("renderer", () => {
   test("renders home in both languages plus the style guide", async () => {
     const pages = await renderSite(files, { base: "/robins-coffee/", photos });
-    expect(pages.map((p) => p.out).sort()).toEqual(["de/events/index.html", "de/gallery/index.html", "de/index.html", "events/index.html", "gallery/index.html", "index.html", "styleguide/index.html"]);
+    expect(pages.map((p) => p.out).sort()).toEqual(["404.html", "de/events/index.html", "de/gallery/index.html", "de/index.html", "events/index.html", "gallery/index.html", "index.html", "styleguide/index.html"]);
     const en = pages.find((p) => p.out === "index.html")!.html;
     const de = pages.find((p) => p.out === "de/index.html")!.html;
     expect(en).toContain('<html lang="en">');
@@ -374,5 +377,121 @@ describe("photo cleaning", () => {
       expect(`${p} exif:${!!meta.exif} xmp:${!!meta.xmp} iptc:${!!meta.iptc}`).toBe(`${p} exif:false xmp:false iptc:false`);
       expect(Math.max(meta.width!, meta.height!)).toBeLessThanOrEqual(MAX_EDGE);
     }
+  });
+});
+
+// Milestone 5: the things a visitor never asks for and notices when they are missing.
+describe("polish", () => {
+  const hero = parseFrontMatter("---\n" + files["data/home.yml"] + "\n---\n").data.hero_photo as string;
+  const withOg = { ...photos, [hero]: { ...photos[hero]!, og: "og/hero-abc.jpg" } };
+
+  test("every page a search engine may list exists in every language", async () => {
+    const pages = await renderSite(files, { base: "/", photos });
+    const listed = pages.filter((p) => !p.data.noindex);
+    for (const p of listed) expect(listed.filter((o) => o.slug === p.slug).map((o) => o.lang).sort()).toEqual(["de", "en"]);
+  });
+
+  test("the 404 page sits at the root, speaks both languages and uses no link relative to itself", async () => {
+    const page = (await renderSite(files, { base: "/robins-coffee/", photos, origin: "https://example.org" })).find((p) => p.out === "404.html")!;
+    expect(page.html).toContain("This page is not here");
+    expect(page.html).toContain('<div class="notfound__block prose" lang="de"');
+    expect(page.html).toContain('href="/robins-coffee/de/"');
+    expect(page.html).toContain('name="robots" content="noindex');
+    expect(page.html).not.toContain('rel="canonical"');
+    for (const m of page.html.matchAll(/\s(?:href|src)="([^"]*)"/g)) expect(m[1]).toMatch(/^(\/robins-coffee\/|https?:|mailto:|tel:|#)/);
+  });
+
+  test("the sitemap lists the public pages with full addresses and their language versions", async () => {
+    const pages = await renderSite(files, { base: "/robins-coffee/", photos });
+    const xml = sitemapXml(pages, "en", (p) => "https://example.org/robins-coffee" + p);
+    expect([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])).toEqual(["/", "/de/", "/de/events/", "/de/gallery/", "/events/", "/gallery/"].map((p) => "https://example.org/robins-coffee" + p));
+    expect(xml).not.toContain("styleguide");
+    expect(xml).not.toContain("404");
+    expect(xml.match(/hreflang="x-default" href="https:\/\/example.org\/robins-coffee\/events\/"/g)!.length).toBe(2);
+  });
+
+  test("every page carries link preview data; the picture is absolute and described in the page language", async () => {
+    const pages = await renderSite(files, { base: "/robins-coffee/", photos: withOg, origin: "https://example.org" });
+    for (const p of pages) {
+      expect(p.html).toContain('<meta property="og:title" content="');
+      expect(p.html).toContain('<meta property="og:image" content="https://example.org/robins-coffee/og/hero-abc.jpg">');
+      expect(p.html).toContain('<meta property="og:image:width" content="1200">');
+      expect(p.html).toContain('<meta name="twitter:card" content="summary_large_image">');
+    }
+    const de = pages.find((p) => p.out === "de/index.html")!.html;
+    expect(de).toContain('<meta property="og:locale" content="de_CH">');
+    expect(de).toContain('<meta property="og:locale:alternate" content="en_GB">');
+    expect(de).toContain('<meta property="og:url" content="https://example.org/robins-coffee/de/">');
+    expect(de).toContain('<link rel="alternate" hreflang="x-default" href="https://example.org/robins-coffee/">');
+    const alt = /og:image:alt" content="([^"]+)"/.exec(de)![1]!;
+    const en = /og:image:alt" content="([^"]+)"/.exec(pages.find((p) => p.out === "index.html")!.html)![1]!;
+    expect(alt.length).toBeGreaterThan(10);
+    expect(alt).not.toBe(en);
+  });
+
+  test("without a preview picture the page says nothing about one", async () => {
+    const html = (await renderSite(files, { base: "/", photos })).find((p) => p.out === "index.html")!.html;
+    expect(html).not.toContain("og:image");
+    expect(html).not.toContain("twitter:card");
+  });
+
+  test("favicons are linked through the base", async () => {
+    const html = (await renderSite(files, { base: "/robins-coffee/", photos })).find((p) => p.out === "de/events/index.html")!.html;
+    expect(html).toContain('<link rel="icon" href="/robins-coffee/favicon.ico" sizes="32x32">');
+    expect(html).toContain('<link rel="apple-touch-icon" href="/robins-coffee/assets/icons/apple-touch-icon.png');
+  });
+
+  test("a closed day in the hours table reads Closed, not Closed today", () => {
+    const { en } = parseFrontMatter("---\n" + files["data/i18n.yml"] + "\n---\n").data;
+    expect(files["templates/components/hours.liquid"]).toContain("t.closed }}");
+    expect(en.closed).toBe("Closed");
+  });
+});
+
+describe("link check", () => {
+  const site = async (pages: Record<string, string>) => {
+    const dir = await mkdtemp(join(tmpdir(), "robins-links-"));
+    for (const [name, body] of Object.entries(pages)) {
+      await mkdir(join(dir, name, ".."), { recursive: true });
+      await Bun.write(join(dir, name), body);
+    }
+    return dir;
+  };
+
+  test("a sound site passes: pages, folders, anchors, images, queries, its own full address", async () => {
+    const dir = await site({
+      "index.html": '<a href="/shop/de/">de</a> <a href="/shop/de/#top">top</a> <a href="#here">here</a> <p id="here"></p> <img src="/shop/photos/A.jpg?v=1" srcset="/shop/photos/A.jpg 480w, /shop/photos/A.jpg 800w"> <a href="https://elsewhere.example/">out</a> <link rel="canonical" href="https://example.org/shop/"> <meta property="og:image" content="https://example.org/shop/photos/A.jpg">',
+      "de/index.html": '<h1 id="top">x</h1><a href="/shop/">home</a>',
+      "photos/A.jpg": "x",
+      "site.css": "@font-face { src: url(\"photos/A.jpg\") }",
+    });
+    const report = await checkLinks(dir, "/shop/", "https://example.org");
+    expect(report.problems).toEqual([]);
+    expect(report.external).toBe(1);
+    await rm(dir, { recursive: true });
+  });
+
+  test("it names a missing page, a wrong case, a missing anchor, a link outside the base and a relative link", async () => {
+    const dir = await site({
+      "index.html": '<a href="/shop/nope/">1</a> <img src="/shop/photos/a.jpg"> <a href="/shop/de/#gone">3</a> <a href="/de/">4</a> <a href="de/">5</a>',
+      "de/index.html": "<p>x</p>",
+      "photos/A.jpg": "x",
+    });
+    const { problems } = await checkLinks(dir, "/shop/");
+    expect(problems.length).toBe(5);
+    expect(problems[0]).toContain("does not exist");
+    expect(problems[1]).toContain("spelled photos/A.jpg");
+    expect(problems[2]).toContain("#gone");
+    expect(problems[3]).toContain("does not start with the base");
+    expect(problems[4]).toContain("is relative");
+    await rm(dir, { recursive: true });
+  });
+
+  test("a relative build is checked from each page's own folder", async () => {
+    const dir = await site({ "index.html": '<a href="./de/index.html">de</a>', "de/index.html": '<a href="../index.html">home</a> <a href="../missing.html">x</a>' });
+    const { problems } = await checkLinks(dir, "relative");
+    expect(problems.length).toBe(1);
+    expect(problems[0]).toContain("missing.html");
+    await rm(dir, { recursive: true });
   });
 });

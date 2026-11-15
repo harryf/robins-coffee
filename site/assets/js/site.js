@@ -56,6 +56,11 @@
     if (new Date(el.getAttribute("data-end")).getTime() < Date.now()) el.hidden = true;
   });
 
+  // 404 page: when the address names a language, that language's block goes first.
+  document.querySelectorAll("[data-notfound] [data-lang]").forEach(function (block) {
+    if (location.pathname.indexOf("/" + block.getAttribute("data-lang") + "/") >= 0) block.parentNode.prepend(block);
+  });
+
   // Ticker: one button pauses and restarts the moving text.
   document.querySelectorAll("[data-ticker-pause]").forEach(function (button) {
     button.addEventListener("click", function () {
