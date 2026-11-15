@@ -1,0 +1,9 @@
+{% comment %} contact-form: site, t. No server yet: site.js turns the fields into an email in the visitor's mail app. {% endcomment %}
+<form class="form" data-contact-form data-to="{{ site.email }}" data-subject="{{ t.form_subject }}" action="mailto:{{ site.email }}" method="post" enctype="text/plain">
+  <label>{{ t.form_name }} <input type="text" name="name" autocomplete="name" required></label>
+  <label><span>{{ t.form_phone }} <small>({{ t.form_optional }})</small></span> <input type="tel" name="phone" autocomplete="tel"></label>
+  <label>{{ t.form_message }} <textarea name="message" required></textarea></label>
+  <button class="btn btn--neon" type="submit">{{ t.form_send }}</button>
+  <p class="form__hint">{{ t.form_hint | replace: '{email}', site.email }}</p>
+  <a data-mailto hidden></a>
+</form>

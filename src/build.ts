@@ -26,16 +26,16 @@ async function readSite(): Promise<Files> {
   return files;
 }
 
-/** Resize every moments photo into webp and jpg at a few widths; cached by content hash. */
+/** Resize every photo (the moments feed and plain section photos) into webp and jpg at a few widths; cached by content hash. */
 async function buildPhotos(): Promise<Record<string, Photo>> {
   const photos: Record<string, Photo> = {};
   await mkdir(CACHE, { recursive: true });
   await mkdir(join(OUT, "photos"), { recursive: true });
-  for await (const p of new Bun.Glob("moments/*.jpg").scan({ cwd: SITE })) {
+  for await (const p of new Bun.Glob("{moments,photos}/*.jpg").scan({ cwd: SITE })) {
     const bytes = new Uint8Array(await Bun.file(join(SITE, p)).arrayBuffer());
     const hash = Bun.hash(bytes).toString(36).slice(0, 8);
     const meta = await sharp(bytes).metadata();
-    const name = p.slice(8, -4);
+    const name = p.slice(p.indexOf("/") + 1, -4);
     const widths = WIDTHS.filter((w) => w < meta.width!).concat(meta.width! <= WIDTHS.at(-1)! ? [meta.width!] : []);
     const photo: Photo = { width: meta.width!, height: meta.height!, jpg: [], webp: [] };
     for (const w of widths) for (const ext of ["jpg", "webp"] as const) {

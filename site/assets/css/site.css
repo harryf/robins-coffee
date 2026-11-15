@@ -113,6 +113,25 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 @keyframes turn { to { transform: rotate(360deg); } }
 @media (min-width: 48rem) { .about { grid-template-columns: auto 1fr; gap: var(--space-16); } }
 
+.about__photos { margin-top: var(--space-12); }
+
+/* photo strip: same-shape photos side by side, two per row on a phone */
+.photo-strip { display: grid; gap: var(--space-3); grid-template-columns: repeat(2, 1fr); }
+.photo-strip picture { display: block; aspect-ratio: 4 / 5; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--c-line); }
+.photo-strip img { width: 100%; height: 100%; object-fit: cover; }
+@media (min-width: 48rem) { .photo-strip { grid-template-columns: repeat(4, 1fr); gap: var(--space-4); } }
+
+/* form */
+.form { display: grid; gap: var(--space-4); }
+.form label { display: grid; gap: var(--space-2); font-weight: 700; font-size: var(--size-sm); }
+.form label small { font-weight: 400; color: var(--c-muted); }
+.form input, .form textarea { width: 100%; min-height: 48px; padding: var(--space-3) var(--space-4); border-radius: var(--radius-sm); border: 2px solid var(--c-muted); background: var(--c-raised); color: var(--c-text); font: inherit; }
+.form textarea { min-height: 9rem; resize: vertical; }
+.form input:focus-visible, .form textarea:focus-visible { outline-offset: 1px; border-color: var(--c-amber); }
+.form__hint { color: var(--c-muted); font-size: var(--size-sm); }
+.form .btn { justify-self: start; cursor: pointer; font: inherit; font-weight: 700; }
+.contact { max-width: 40rem; }
+
 /* visit */
 .visit { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
 

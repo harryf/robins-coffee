@@ -37,4 +37,19 @@
     el.classList.toggle("is-open", open);
     el.hidden = false;
   });
+
+  // Contact form. There is no server behind this site yet, so "send" writes the
+  // email for the visitor: it opens their mail app with everything filled in.
+  // (See docs/decisions/2026-11-15-contact-form.md.)
+  document.querySelectorAll("[data-contact-form]").forEach(function (form) {
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var f = form.elements;
+      var lines = [f.message.value.trim(), "", f.name.value.trim()];
+      if (f.phone.value.trim()) lines.push(f.phone.value.trim());
+      var link = form.querySelector("[data-mailto]");
+      link.href = "mailto:" + form.dataset.to + "?subject=" + encodeURIComponent(form.dataset.subject) + "&body=" + encodeURIComponent(lines.join("\n"));
+      link.click();
+    });
+  });
 })();

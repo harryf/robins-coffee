@@ -30,6 +30,12 @@
     <h2 class="h-lg">Opening hours</h2>
     <div class="card" style="max-width: 24rem">{% render 'components/hours', hours_rows: hours_rows, t: t %}</div>
 
+    <h2 class="h-lg">Photo strip</h2>
+    {% render 'components/photo-strip', items: home.about_photos, photos: photos, lang: page.lang %}
+
+    <h2 class="h-lg">Contact form</h2>
+    <div style="max-width: 36rem">{% render 'components/contact-form', site: site, t: t %}</div>
+
     <h2 class="h-lg">Moment card</h2>
     <div class="moments">
       {%- for m in moments limit: 3 %}

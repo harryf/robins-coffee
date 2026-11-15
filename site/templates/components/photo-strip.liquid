@@ -1,0 +1,6 @@
+{% comment %} photo-strip: items (list of {photo, alt: {en, de}}), photos, lang. Four same-shape photos in a row. {% endcomment %}
+<div class="photo-strip">
+  {%- for p in items %}
+  {% render 'components/photo', img: photos[p.photo], alt: p.alt[lang], sizes: '(min-width: 48rem) 22vw, 46vw' %}
+  {%- endfor %}
+</div>

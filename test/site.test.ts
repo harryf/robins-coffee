@@ -8,7 +8,8 @@ import { cleanPhoto, MAX_EDGE } from "../scripts/add-photo";
 const SITE = join(import.meta.dir, "..", "site");
 const files: Files = {};
 for (const p of new Bun.Glob("**/*.{md,yml,json,liquid}").scanSync({ cwd: SITE })) files[p] = await Bun.file(join(SITE, p)).text();
-const photoPaths = [...new Bun.Glob("moments/*.jpg").scanSync({ cwd: SITE })];
+const momentPhotos = [...new Bun.Glob("moments/*.jpg").scanSync({ cwd: SITE })];
+const photoPaths = [...momentPhotos, ...new Bun.Glob("photos/*.jpg").scanSync({ cwd: SITE })];
 const photos: Record<string, Photo> = Object.fromEntries(photoPaths.map((p) => [p, { width: 1200, height: 800, jpg: [{ w: 480, path: "photos/x-480.jpg" }], webp: [{ w: 480, path: "photos/x-480.webp" }] }]));
 const tokens = JSON.parse(files["data/tokens.json"]!);
 
@@ -42,7 +43,7 @@ describe("renderer", () => {
 
   test("moments are newest first and each has alt text and a caption in both languages", () => {
     const moments = Object.entries(files).filter(([p]) => p.startsWith("moments/"));
-    expect(moments.length).toBe(photoPaths.length);
+    expect(moments.length).toBe(momentPhotos.length);
     for (const [, text] of moments) {
       const { data } = parseFrontMatter(text);
       for (const lang of ["en", "de"]) {
@@ -50,6 +51,12 @@ describe("renderer", () => {
         expect(data.alt[lang].length).toBeGreaterThan(10);
       }
     }
+  });
+
+  test("section photos have alt text in both languages", () => {
+    const home = parseFrontMatter("---\n" + files["data/home.yml"] + "\n---\n").data;
+    expect(home.about_photos.length).toBe(4);
+    for (const p of home.about_photos) for (const lang of ["en", "de"]) expect(p.alt[lang].length).toBeGreaterThan(10);
   });
 
   test("a moment without its photo fails the build", async () => {
@@ -60,6 +67,30 @@ describe("renderer", () => {
     const evil = { ...files, "content/en/index.md": files["content/en/index.md"]!.replace(/^headline:.*$/m, 'headline: "<script>x</script>. Night."') };
     const html = (await renderSite(evil, { base: "/", photos })).find((p) => p.out === "index.html")!.html;
     expect(html).not.toContain("<script>x</script>");
+  });
+});
+
+// Milestone 1: everything the 2022 WordPress page said (docs/spec.md, section 3)
+// must be on the new home page. If a fact changes, change the data file and this list.
+describe("content clone of the old site", () => {
+  const facts = ["2022", "Dennis Cobarrubias", "Sallahi", "Zähringerstrasse 33", "8001", "Zürich", "16:00", "10:00", "+41 79 176 74 46", "info@robins-coffee.ch", "https://maps.app.goo.gl/"];
+  test("every fact of the old page is on the new home page, in both languages", async () => {
+    const pages = await renderSite(files, { base: "/", photos });
+    for (const out of ["index.html", "de/index.html"]) {
+      const html = pages.find((p) => p.out === out)!.html;
+      for (const fact of facts) expect(`${out} has ${fact}: ${html.includes(fact)}`).toBe(`${out} has ${fact}: true`);
+      expect(html).toMatch(/cocktails/i);
+    }
+  });
+  test("the four old photos are on the home page with the logo wordmark", async () => {
+    const html = (await renderSite(files, { base: "/", photos })).find((p) => p.out === "index.html")!.html;
+    expect(html.match(/class="photo-strip"/g)?.length).toBe(1);
+    expect(html.split('class="photo-strip"')[1]!.split("</div>")[0]!.match(/<picture>/g)?.length).toBe(4);
+    expect(html).toContain("wordmark-white.png");
+  });
+  test("there is a contact form with name, phone and message that writes to the bar", async () => {
+    const html = (await renderSite(files, { base: "/", photos })).find((p) => p.out === "index.html")!.html;
+    for (const field of ['name="name"', 'name="phone"', 'name="message"', 'data-to="info@robins-coffee.ch"']) expect(html).toContain(field);
   });
 });
 

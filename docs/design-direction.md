@@ -15,6 +15,7 @@ Seven photos from the bar's group (October and November 2026) and the two logo f
 | Green cabinets behind the bar | `green`, used for the "open" dot only |
 | Heavy slab-serif "R" and wordmark | Alfa Slab One for every heading |
 | Patterned roundel, matching the espresso cups | The roundel in the header and, turning slowly, in the About section |
+| Daylight coffee photos of the 2022 site (cobblestones, patterned cups) | The photo strip under the About text: the "coffee by day" half |
 | A pink neon sign on the wall | The second sentence of the headline glows and flickers once on load |
 
 ## Fixed
@@ -30,5 +31,4 @@ Seven photos from the bar's group (October and November 2026) and the two logo f
 - The roundel (173 px) and wordmark (512 px) are small bitmaps. Vector originals would let the roundel pattern become a section divider and a favicon set.
 - A manual day and night switch for visitors (today only `?theme=`).
 - Whether the day theme should start with the bar's weekend opening (10:00) rather than 06:00.
-- The four photos of the current site (barista, patterned cups) are not placed yet; they belong in an "about" strip or the first gallery album.
 - A Designer critique at desktop and 390 px before milestone 2 closes.
