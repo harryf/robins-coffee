@@ -290,6 +290,9 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 .site-footer__grid > div > * + * { margin-top: var(--space-3); }
 .site-footer a { color: var(--c-text); }
 
+/* 404: one block per language */
+.notfound__block + .notfound__block { margin-top: var(--space-12); padding-top: var(--space-12); border-top: 1px solid var(--c-line); }
+
 /* style guide */
 .sg-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: var(--space-3); margin-top: var(--space-3) !important; }
 .sg-swatch { display: grid; gap: var(--space-1); font-size: var(--size-xs); }

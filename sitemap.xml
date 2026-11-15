@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://harryf.github.io/robins-coffee/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://harryf.github.io/robins-coffee/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://harryf.github.io/robins-coffee/de/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://harryf.github.io/robins-coffee/"/>
+  </url>
+  <url>
+    <loc>https://harryf.github.io/robins-coffee/de/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://harryf.github.io/robins-coffee/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://harryf.github.io/robins-coffee/de/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://harryf.github.io/robins-coffee/"/>
+  </url>
+  <url>
+    <loc>https://harryf.github.io/robins-coffee/de/events/</loc>
+    <xhtml:link rel="alternate" hreflang="de" href="https://harryf.github.io/robins-coffee/de/events/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://harryf.github.io/robins-coffee/events/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://harryf.github.io/robins-coffee/events/"/>
+  </url>
+  <url>
+    <loc>https://harryf.github.io/robins-coffee/de/gallery/</loc>
+    <xhtml:link rel="alternate" hreflang="de" href="https://harryf.github.io/robins-coffee/de/gallery/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://harryf.github.io/robins-coffee/gallery/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://harryf.github.io/robins-coffee/gallery/"/>
+  </url>
+  <url>
+    <loc>https://harryf.github.io/robins-coffee/events/</loc>
+    <xhtml:link rel="alternate" hreflang="de" href="https://harryf.github.io/robins-coffee/de/events/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://harryf.github.io/robins-coffee/events/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://harryf.github.io/robins-coffee/events/"/>
+  </url>
+  <url>
+    <loc>https://harryf.github.io/robins-coffee/gallery/</loc>
+    <xhtml:link rel="alternate" hreflang="de" href="https://harryf.github.io/robins-coffee/de/gallery/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://harryf.github.io/robins-coffee/gallery/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://harryf.github.io/robins-coffee/gallery/"/>
+  </url>
+</urlset>
