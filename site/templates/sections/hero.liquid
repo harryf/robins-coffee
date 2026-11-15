@@ -1,3 +1,4 @@
+{% comment %} hero: page (kicker, headline, visit_title), home (hero_photo), photos, site, t. Full-height photo with the headline; always night-coloured (on-photo). The last sentence of the headline becomes the neon sign. {% endcomment %}
 <section class="hero on-photo">
   <div class="hero__photo">
     {% render 'components/photo', img: photos[home.hero_photo], alt: '', sizes: 'max(100vw, 138vh)', eager: true %}

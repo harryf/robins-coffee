@@ -358,6 +358,73 @@ describe("design tokens", () => {
   });
 });
 
+// Milestone 6: the design system is complete when nothing shared is typed by hand.
+const css = await Bun.file(join(SITE, "assets/css/site.css")).text();
+describe("design system", () => {
+  // Properties whose values are shared scales. A component's own geometry (width, height,
+  // columns, transforms, positions) is not in this list on purpose.
+  const SCALED = /^(font|font-size|font-weight|font-family|line-height|letter-spacing|gap|column-gap|row-gap|margin(-[a-z-]+)?|padding(-[a-z-]+)?|border(-[a-z-]+)?|outline|outline-offset|z-index|box-shadow|transition|animation|max-width)$/;
+  const BARE = /^(font-weight|line-height|z-index)$/;
+
+  test("shared values in the stylesheet are tokens: type, space, borders, radius, shadow, motion, layers, measures", () => {
+    const raw: string[] = [];
+    for (const line of css.split("\n").filter((l) => !l.includes("/* shape */"))) {
+      for (const m of line.matchAll(/([a-z-]+)\s*:\s*([^;{}]+)[;}]/g)) {
+        const [, prop, value] = m as unknown as [string, string, string];
+        if (!SCALED.test(prop)) continue;
+        const rest = value.replace(/var\(--[a-z0-9-]+\)/g, "").replace(/\b(0|50%|100%)(?![\w.%])/g, "");
+        if (/\d*\.?\d+(px|rem|em|ms|s|%|vw|vh)\b/.test(rest) || (BARE.test(prop) && /\d/.test(rest)) || (/^font(-family)?$/.test(prop) && /["']|serif/.test(rest))) raw.push(`${prop}: ${value.trim()}`);
+      }
+    }
+    expect(raw).toEqual([]);
+  });
+
+  test("every token the stylesheet uses exists, and every media query uses a breakpoint token", () => {
+    const made = tokensCss(tokens);
+    for (const m of css.matchAll(/var\((--[a-z0-9-]+)\)/g)) if (!/^--(gap|scrim)$/.test(m[1]!)) expect(made).toContain(`  ${m[1]}: `);
+    const points = Object.values(tokens.breakpoint as Record<string, string>).map(parseFloat);
+    const used = [...css.matchAll(/@media[^{]*\{/g)].flatMap((m) => [...m[0].matchAll(/([\d.]+)rem/g)].map((x) => Number(x[1])));
+    expect(used.length).toBeGreaterThan(5);
+    // "max-width: 47.99rem" is the breakpoint 48rem seen from below.
+    for (const v of used) expect(points.some((p) => p === v || Math.abs(p - 0.01 - v) < 1e-9)).toBe(true);
+  });
+
+  test("every token group becomes custom properties, except breakpoints", () => {
+    const made = tokensCss(tokens);
+    for (const [group, values] of Object.entries(tokens)) {
+      if (["color", "contrast_pairs", "breakpoint"].includes(group)) continue;
+      for (const name of Object.keys(values as object)) expect(made).toContain(`  --${group}-${name}: `);
+    }
+  });
+
+  test("no template styles anything inline; only the style guide may, and only with tokens", () => {
+    for (const [path, text] of Object.entries(files)) {
+      if (!path.startsWith("templates/")) continue;
+      const styles = [...text.matchAll(/\sstyle="([^"]*)"/g)].map((m) => m[1]!);
+      if (path !== "templates/layouts/styleguide.liquid") expect([path, styles]).toEqual([path, []]);
+      else for (const s of styles) expect(s.replace(/var\(--[a-z-]+\{\{[^}]+\}\}\)|\{\{[^}]+\}\}/g, "")).not.toMatch(/\d/);
+    }
+  });
+
+  test("every component and section has a top comment and its own style guide entry", async () => {
+    const guide = (await renderSite(files, { base: "/", photos })).find((p) => p.out === "styleguide/index.html")!.html;
+    const parts = Object.keys(files).filter((p) => /^templates\/(components|sections)\//.test(p));
+    expect(parts.length).toBeGreaterThan(15);
+    expect(guide).not.toContain("No example yet");
+    for (const p of parts) {
+      expect([p, /^\{%-? comment %\}/.test(files[p]!)]).toEqual([p, true]);
+      expect(guide).toContain(`data-sg="${p.slice(10, -7)}"`);
+    }
+    for (const p of Object.keys(files).filter((p) => /^templates\/layouts\//.test(p))) expect(guide).toContain(`<code>${p.slice(10, -7)}</code>`);
+  });
+
+  test("the style guide shows every token group and the contrast of every pair", async () => {
+    const guide = (await renderSite(files, { base: "/", photos })).find((p) => p.out === "styleguide/index.html")!.html;
+    for (const group of Object.keys(tokens)) if (group !== "contrast_pairs") expect(guide).toContain(`data-sg-tokens="${group}"`);
+    expect((guide.match(/data-sg-pair/g) ?? []).length).toBe(tokens.contrast_pairs.length);
+  });
+});
+
 describe("photo cleaning", () => {
   test("strips EXIF and GPS, caps the long edge, keeps sRGB", async () => {
     const dirty = await sharp({ create: { width: 3200, height: 1600, channels: 3, background: "#804060" } })
