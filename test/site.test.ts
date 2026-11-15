@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import sharp from "sharp";
 import { join } from "node:path";
-import { renderSite, resolveUrl, hoursRows, parseFrontMatter, type Files, type Photo } from "../src/render";
+import { renderSite, resolveUrl, hoursRows, parseFrontMatter, wallClock, type Files, type Photo } from "../src/render";
 import { contrast, tokensCss } from "../src/tokens";
 import { cleanPhoto, MAX_EDGE } from "../scripts/add-photo";
 import { fromIyfFeed, fromManual, mergeEvents, upcoming, toIcs, type SiteEvent } from "../src/events";
@@ -49,6 +49,12 @@ describe("renderer", () => {
   test("no em dash in any rendered page", async () => {
     const pages = await renderSite(files, { base: "/", photos });
     for (const p of pages) expect(p.html).not.toContain("—");
+  });
+
+  test("moment dates use the names from i18n.yml, the same on every machine", async () => {
+    const pages = await renderSite(files, { base: "/", photos });
+    expect(pages.find((p) => p.out === "index.html")!.html).toContain(">31 Oct 2026</time>");
+    expect(pages.find((p) => p.out === "de/index.html")!.html).toContain(">31. Okt. 2026</time>");
   });
 
   test("moments are newest first and each has alt text and a caption in both languages", () => {
@@ -168,7 +174,12 @@ describe("events", () => {
     expect(en).toContain("Tue 17 Nov, 20:00");
     expect(en).toContain("CHF 5");
     expect(en).not.toMatch(/·\s*<\/p>/); // no dangling separator when a show is in the page language
-    expect(pages.find((p) => p.out === "de/events/index.html")!.html).toContain("Di. 17. Nov., 20:00");
+    expect(pages.find((p) => p.out === "de/events/index.html")!.html).toContain("Di, 17. Nov., 20:00");
+  });
+
+  test("wall clock time is Zürich time across the winter and summer change", () => {
+    expect(wallClock(new Date("2026-11-17T19:00:00Z"), "Europe/Zurich")).toEqual({ year: 2026, month: 11, day: 17, weekday: "tu", time: "20:00" });
+    expect(wallClock(new Date("2026-07-02T22:30:00Z"), "Europe/Zurich")).toEqual({ year: 2026, month: 7, day: 3, weekday: "fr", time: "00:30" });
   });
 
   test("the home page shows the next four, and no events section when there are none", async () => {
