@@ -3,7 +3,10 @@
 //
 // A post in the "moments" feed (writes site/moments/<date>-<slug>.jpg and .md):
 //   bun scripts/add-photo.ts <file-or-url> --date 2026-11-07 --slug elias-at-the-taps \
-//     --caption-en "..." --caption-de "..." --alt-en "..." --alt-de "..." [--dry-run]
+//     --caption-en "..." --caption-de "..." --alt-en "..." --alt-de "..." \
+//     [--album <slug from site/data/albums.yml>] [--gallery-only] [--dry-run]
+//   --gallery-only keeps it out of the home feed (feed: false); it still shows in the gallery.
+//   A whole batch from the group goes through review-photos.ts and import-selection.ts.
 //
 // A plain photo for a page section (writes site/photos/<slug>.jpg; its alt text
 // lives where the photo is used, for example site/data/home.yml):
@@ -34,6 +37,26 @@ export async function cleanPhoto(input: Uint8Array): Promise<{ data: Buffer; wid
 
 const yamlString = (s: string) => JSON.stringify(s);
 
+export type MomentText = { date: string; album?: string; feed?: boolean; caption: { en: string; de: string }; alt: { en: string; de: string } };
+
+/** The .md file of a moment. `feed` is written only when false; `album` only when set. */
+export function momentMarkdown(m: MomentText): string {
+  return [
+    "---",
+    `date: ${m.date}`,
+    ...(m.album ? [`album: ${m.album}`] : []),
+    ...(m.feed === false ? ["feed: false"] : []),
+    "caption:",
+    `  en: ${yamlString(m.caption.en)}`,
+    `  de: ${yamlString(m.caption.de)}`,
+    "alt:",
+    `  en: ${yamlString(m.alt.en)}`,
+    `  de: ${yamlString(m.alt.de)}`,
+    "---",
+    "",
+  ].join("\n");
+}
+
 if (import.meta.main) {
   const { values, positionals } = parseArgs({
     args: Bun.argv.slice(2),
@@ -42,6 +65,7 @@ if (import.meta.main) {
       date: { type: "string" }, slug: { type: "string" },
       "caption-en": { type: "string" }, "caption-de": { type: "string" },
       "alt-en": { type: "string" }, "alt-de": { type: "string" },
+      album: { type: "string" }, "gallery-only": { type: "boolean", default: false },
       plain: { type: "boolean", default: false },
       "dry-run": { type: "boolean", default: false },
     },
@@ -50,7 +74,7 @@ if (import.meta.main) {
   const need = values.plain ? (["slug"] as const) : (["date", "slug", "caption-en", "caption-de", "alt-en", "alt-de"] as const);
   const missing = need.filter((k) => !values[k]);
   if (!src || missing.length) {
-    console.error(`usage: bun scripts/add-photo.ts <file-or-url> ${values.plain ? "--plain " : ""}${need.map((k) => `--${k} …`).join(" ")} [--dry-run]`);
+    console.error(`usage: bun scripts/add-photo.ts <file-or-url> ${values.plain ? "--plain " : ""}${need.map((k) => `--${k} …`).join(" ")}${values.plain ? "" : " [--album <slug>] [--gallery-only]"} [--dry-run]`);
     if (missing.length) console.error(`missing: ${missing.join(", ")}`);
     process.exit(2);
   }
@@ -66,18 +90,10 @@ if (import.meta.main) {
     ? join(import.meta.dir, "..", "site", "photos", values.slug!)
     : join(import.meta.dir, "..", "site", "moments", `${values.date}-${values.slug}`);
   if (existsSync(`${base}.jpg`)) throw new Error(`${base}.jpg exists already; pick another slug`);
-  const md = values.plain ? "" : [
-    "---",
-    `date: ${values.date}`,
-    "caption:",
-    `  en: ${yamlString(values["caption-en"]!)}`,
-    `  de: ${yamlString(values["caption-de"]!)}`,
-    "alt:",
-    `  en: ${yamlString(values["alt-en"]!)}`,
-    `  de: ${yamlString(values["alt-de"]!)}`,
-    "---",
-    "",
-  ].join("\n");
+  const md = values.plain ? "" : momentMarkdown({
+    date: values.date!, album: values.album, feed: !values["gallery-only"],
+    caption: { en: values["caption-en"]!, de: values["caption-de"]! }, alt: { en: values["alt-en"]!, de: values["alt-de"]! },
+  });
   console.log(`${values["dry-run"] ? "would write" : "wrote"} ${base}.jpg (${width}x${height}, ${(data.length / 1024).toFixed(0)} KB)${values.plain ? "" : " and .md"}`);
   if (!values["dry-run"]) {
     await Bun.write(`${base}.jpg`, data);

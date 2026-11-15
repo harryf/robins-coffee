@@ -107,6 +107,26 @@ function eventLd(e: SiteEvent, site: any) {
   };
 }
 
+export type Album = { slug: string; title: Record<string, string>; cover?: string };
+
+/**
+ * The gallery's sections. Moments arrive newest first; albums come out newest first by
+ * their newest photo, each with its cover (a moment id, optional) in front, then the
+ * photos that belong to no album. An album without photos is left out.
+ */
+export function groupGallery<M extends { id: string; album?: string }>(moments: M[], albums: Album[]) {
+  for (const m of moments) if (m.album && !albums.some((a) => a.slug === m.album)) throw new Error(`moment ${m.id}: album "${m.album}" is not in data/albums.yml`);
+  const sections = albums.map((a) => ({ ...a, moments: moments.filter((m) => m.album === a.slug) })).filter((a) => a.moments.length);
+  sections.sort((a, b) => moments.indexOf(a.moments[0]!) - moments.indexOf(b.moments[0]!));
+  for (const a of sections) {
+    if (!a.cover) continue;
+    const cover = a.moments.find((m) => m.id === a.cover);
+    if (!cover) throw new Error(`album ${a.slug}: cover "${a.cover}" is not a moment of this album`);
+    a.moments = [cover, ...a.moments.filter((m) => m !== cover)];
+  }
+  return { albums: sections, loose: moments.filter((m) => !m.album) };
+}
+
 export async function renderSite(files: Files, opts: RenderOptions): Promise<Page[]> {
   const data: Record<string, any> = {};
   const templates: Record<string, string> = {};
@@ -124,10 +144,11 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
     .map(([p, text]) => {
       const { data: fm } = parseFrontMatter(text);
       const date = fm.date instanceof Date ? fm.date.toISOString().slice(0, 10) : String(fm.date);
-      return { ...fm, date, id: p.slice(8, -3), photo: p.replace(/\.md$/, ".jpg") };
+      return { ...fm, date, id: p.slice(8, -3), photo: p.replace(/\.md$/, ".jpg") } as { id: string; date: string; photo: string; album?: string; feed?: boolean; caption?: Record<string, string>; alt?: Record<string, string> };
     })
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.id < b.id ? -1 : 1));
   for (const m of moments) if (!opts.photos[m.photo]) throw new Error(`moment ${m.id}: photo ${m.photo} is missing`);
+  const gallery = groupGallery(moments, data.albums?.albums ?? []);
   for (const p of data.home?.about_photos ?? []) if (!opts.photos[p.photo]) throw new Error(`home.yml about_photos: photo ${p.photo} is missing`);
 
   let current = { depth: 0 };
@@ -181,6 +202,7 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
     const views = ahead.map((e) => eventView(e, page.lang, t));
     const months: { label: string; events: typeof views }[] = [];
     for (const v of views) (months.at(-1)?.label === v.month_label ? months.at(-1)! : months[months.push({ label: v.month_label, events: [] }) - 1]!).events.push(v);
+    const momentView = (m: (typeof moments)[number]) => ({ ...m, caption: m.caption?.[page.lang] ?? m.caption?.[defaultLang], alt: m.alt?.[page.lang] ?? m.alt?.[defaultLang], date_label: fillDate(t.date_short, wallClock(new Date(m.date + "T12:00:00Z"), "UTC"), t), img: opts.photos[m.photo] });
     const scope = {
       site, t, page: { ...page.data, lang: page.lang, url: page.url, slug: page.slug, content: page.html },
       home: data.home, tokens: data.tokens, hours: data.hours,
@@ -189,7 +211,14 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
       alternates, other,
       photos: opts.photos,
       // The hero photo is not repeated as the first card of the feed.
-      moments: moments.filter((m: any) => m.photo !== data.home?.hero_photo).map((m: any) => ({ ...m, caption: m.caption?.[page.lang] ?? m.caption?.[defaultLang], alt: m.alt?.[page.lang] ?? m.alt?.[defaultLang], date_label: fillDate(t.date_short, wallClock(new Date(m.date + "T12:00:00Z"), "UTC"), t), img: opts.photos[m.photo] })),
+      // Nor is a moment marked `feed: false`, which lives in the gallery only.
+      moments: moments.filter((m) => m.photo !== data.home?.hero_photo && m.feed !== false).map(momentView),
+      // Every moment, hero included: albums as sections, then the photos with no album.
+      gallery: {
+        albums: gallery.albums.map((a) => ({ slug: a.slug, title: a.title[page.lang] ?? a.title[defaultLang], moments: a.moments.map(momentView) })),
+        loose: gallery.loose.map(momentView),
+      },
+      gallery_url: page.lang === defaultLang ? "/gallery/" : `/${page.lang}/gallery/`,
       events_url: page.lang === defaultLang ? "/events/" : `/${page.lang}/events/`,
       events_next: views.slice(0, data.home?.events_count ?? 4),
       events_months: months,

@@ -1,10 +1,7 @@
 <section class="section" id="moments">
   <div class="wrap">
     <h2 class="h-xl">{{ page.moments_title }}</h2>
-    <div class="moments">
-      {%- for m in moments limit: home.moments_count %}
-      {% render 'components/moment-card', m: m %}
-      {%- endfor %}
-    </div>
+    {% render 'components/moments-grid', moments: moments, t: t, count: home.moments_count %}
+    <p><a class="btn" href="{{ gallery_url | url }}">{{ t.gallery_all }}</a></p>
   </div>
 </section>

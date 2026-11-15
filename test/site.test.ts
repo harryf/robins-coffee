@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import sharp from "sharp";
 import { join } from "node:path";
-import { renderSite, resolveUrl, hoursRows, parseFrontMatter, wallClock, type Files, type Photo } from "../src/render";
+import { renderSite, resolveUrl, hoursRows, parseFrontMatter, wallClock, groupGallery, type Files, type Photo } from "../src/render";
 import { contrast, tokensCss } from "../src/tokens";
 import { cleanPhoto, MAX_EDGE } from "../scripts/add-photo";
 import { fromIyfFeed, fromManual, mergeEvents, upcoming, toIcs, type SiteEvent } from "../src/events";
@@ -17,7 +17,7 @@ const tokens = JSON.parse(files["data/tokens.json"]!);
 describe("renderer", () => {
   test("renders home in both languages plus the style guide", async () => {
     const pages = await renderSite(files, { base: "/robins-coffee/", photos });
-    expect(pages.map((p) => p.out).sort()).toEqual(["de/events/index.html", "de/index.html", "events/index.html", "index.html", "styleguide/index.html"]);
+    expect(pages.map((p) => p.out).sort()).toEqual(["de/events/index.html", "de/gallery/index.html", "de/index.html", "events/index.html", "gallery/index.html", "index.html", "styleguide/index.html"]);
     const en = pages.find((p) => p.out === "index.html")!.html;
     const de = pages.find((p) => p.out === "de/index.html")!.html;
     expect(en).toContain('<html lang="en">');
@@ -48,7 +48,7 @@ describe("renderer", () => {
 
   test("no em dash in any rendered page", async () => {
     const pages = await renderSite(files, { base: "/", photos });
-    for (const p of pages) expect(p.html).not.toContain("—");
+    for (const p of pages) expect(p.html).not.toContain("\u2014");
   });
 
   test("moment dates use the names from i18n.yml, the same on every machine", async () => {
@@ -83,6 +83,106 @@ describe("renderer", () => {
     const evil = { ...files, "content/en/index.md": files["content/en/index.md"]!.replace(/^headline:.*$/m, 'headline: "<script>x</script>. Night."') };
     const html = (await renderSite(evil, { base: "/", photos })).find((p) => p.out === "index.html")!.html;
     expect(html).not.toContain("<script>x</script>");
+  });
+});
+
+// Milestone 4: every published photo is a moment; the gallery groups them by album.
+describe("gallery", () => {
+  const page = async (out: string, f: Files = files, p = photos) => (await renderSite(f, { base: "/robins-coffee/", photos: p })).find((x) => x.out === out)!.html;
+  const m = (id: string, album?: string) => ({ id, album });
+
+  test("albums come newest first by their newest photo, then the photos with no album", () => {
+    const albums = [{ slug: "old", title: { en: "Old" } }, { slug: "new", title: { en: "New" } }, { slug: "empty", title: { en: "Empty" } }];
+    // Moments arrive newest first.
+    const g = groupGallery([m("5-new", "new"), m("4-loose"), m("3-old", "old"), m("2-new", "new"), m("1-loose")], albums);
+    expect(g.albums.map((a) => a.slug)).toEqual(["new", "old"]);
+    expect(g.albums[0]!.moments.map((x) => x.id)).toEqual(["5-new", "2-new"]);
+    expect(g.loose.map((x) => x.id)).toEqual(["4-loose", "1-loose"]);
+  });
+
+  test("an album's cover photo is shown first; a cover or album that does not exist fails the build", () => {
+    const g = groupGallery([m("3", "a"), m("2", "a"), m("1", "a")], [{ slug: "a", title: { en: "A" }, cover: "1" }]);
+    expect(g.albums[0]!.moments.map((x) => x.id)).toEqual(["1", "3", "2"]);
+    expect(() => groupGallery([m("1", "a")], [{ slug: "a", title: { en: "A" }, cover: "9" }])).toThrow(/cover/);
+    expect(() => groupGallery([m("1", "nope")], [])).toThrow(/album "nope"/);
+  });
+
+  test("the gallery page shows every moment once, grouped, in both languages", async () => {
+    const en = await page("gallery/index.html");
+    const de = await page("de/gallery/index.html");
+    for (const html of [en, de]) {
+      expect(html.match(/class="moment"/g)?.length).toBe(momentPhotos.length);
+      expect(html.match(/data-lightbox-group/g)?.length).toBe(3);
+    }
+    const order = (html: string, words: string[]) => words.map((w) => html.indexOf(`>${w}</h2>`));
+    const enAt = order(en, ["Behind the bar", "Halloween 2026", "More from the bar"]);
+    expect(enAt.every((i) => i > 0)).toBe(true);
+    expect(enAt).toEqual([...enAt].sort((a, b) => a - b));
+    const deAt = order(de, ["Hinter der Bar", "Halloween 2026", "Mehr aus der Bar"]);
+    expect(deAt.every((i) => i > 0)).toBe(true);
+    expect(deAt).toEqual([...deAt].sort((a, b) => a - b));
+    // The regular has no album; the skeleton of 22 Oct sits with Halloween.
+    expect(en.slice(enAt[2]!)).toContain("One of our regulars");
+    expect(en.slice(enAt[1]!, enAt[2]!)).toContain("Our quietest guest");
+    expect(en).toContain('<html lang="en">');
+    expect(de).toContain('<html lang="de">');
+  });
+
+  test("the header and the home feed link to the gallery in both languages", async () => {
+    const en = await page("index.html");
+    const de = await page("de/index.html");
+    expect(en).toContain('<a class="nav-link" href="/robins-coffee/gallery/">Photos</a>');
+    expect(de).toContain('<a class="nav-link" href="/robins-coffee/de/gallery/">Fotos</a>');
+    expect(en.split('id="moments"')[1]!.split("</section>")[0]).toContain('href="/robins-coffee/gallery/"');
+    expect(de.split('id="moments"')[1]!.split("</section>")[0]).toContain('href="/robins-coffee/de/gallery/"');
+  });
+
+  test("feed: false keeps a moment out of the home feed and in the gallery", async () => {
+    const key = "moments/2026-10-10-a-regular.md";
+    const hidden = { ...files, [key]: files[key]!.replace("\ncaption:", "\nfeed: false\ncaption:") };
+    expect(await page("index.html")).toContain("One of our regulars");
+    expect(await page("index.html", hidden)).not.toContain("One of our regulars");
+    expect(await page("gallery/index.html", hidden)).toContain("One of our regulars");
+  });
+
+  test("lightbox contract: every moment photo is a plain link to its largest JPEG", async () => {
+    const sized: Record<string, Photo> = Object.fromEntries(photoPaths.map((p) => {
+      const name = p.slice(p.indexOf("/") + 1, -4);
+      const set = (ext: string) => [480, 1800].map((w) => ({ w, path: `photos/${name}-${w}.${ext}` }));
+      return [p, { width: 1800, height: 1200, jpg: set("jpg"), webp: set("webp") }];
+    }));
+    for (const out of ["index.html", "de/index.html", "gallery/index.html", "de/gallery/index.html"]) {
+      const html = await page(out, files, sized);
+      const cards = html.split('<figure class="moment">').slice(1).map((c) => c.split("</figure>")[0]!);
+      expect(cards.length).toBeGreaterThan(5);
+      for (const card of cards) {
+        const [, name] = /<a class="moment__link" href="\/robins-coffee\/photos\/([a-z0-9-]+)-1800\.jpg" data-lightbox data-srcset="[^"]+-1800\.webp 1800w">/.exec(card) ?? [];
+        expect(`${out}: link to the largest JPEG: ${!!name}`).toBe(`${out}: link to the largest JPEG: true`);
+        // The same photo inside the link, with its alt text, and a caption and date beside it.
+        expect(card).toMatch(new RegExp(`<img src="/robins-coffee/photos/${name}-1800\\.jpg"[^>]+alt="[^"]{10,}"`));
+        expect(card).toMatch(/class="moment__caption">[^<]+<\/span> <time datetime="\d{4}-\d\d-\d\d">/);
+      }
+    }
+  });
+
+  test("no moment still carries the TODO placeholder of an import", () => {
+    const unfinished = Object.entries(files).filter(([p, text]) => p.startsWith("moments/") && text.includes("TODO")).map(([p]) => p);
+    expect(unfinished).toEqual([]);
+  });
+
+  test("every album has a slug and a title in both languages", () => {
+    const { albums } = parseFrontMatter("---\n" + files["data/albums.yml"] + "\n---\n").data;
+    expect(albums.length).toBeGreaterThan(1);
+    for (const a of albums) {
+      expect(a.slug).toMatch(/^[a-z0-9-]+$/);
+      for (const lang of ["en", "de"]) expect(a.title[lang].length).toBeGreaterThan(2);
+    }
+    expect(new Set(albums.map((a: any) => a.slug)).size).toBe(albums.length);
+  });
+
+  test("both languages define the same interface words", () => {
+    const { en, de } = parseFrontMatter("---\n" + files["data/i18n.yml"] + "\n---\n").data;
+    expect(Object.keys(de).sort()).toEqual(Object.keys(en).sort());
   });
 });
 

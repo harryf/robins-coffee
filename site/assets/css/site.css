@@ -19,6 +19,7 @@ a:hover { color: var(--c-amber); }
 h1, h2, h3, p, dl, dd, figure { margin: 0; }
 code { font-size: 0.9em; color: var(--c-amber); }
 [hidden] { display: none !important; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 .skip { position: absolute; left: -999px; top: 0; background: var(--c-neon); color: var(--c-on-neon); padding: var(--space-3) var(--space-4); z-index: 10; }
 .skip:focus { left: var(--space-4); top: var(--space-4); }
@@ -60,7 +61,18 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 .pill__dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--c-muted); }
 .pill.is-open .pill__dot { background: var(--c-green); box-shadow: 0 0 0 0 var(--c-green); animation: pulse 2.4s var(--motion-ease) 3; }
 @keyframes pulse { 70% { box-shadow: 0 0 0 0.5rem transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
-@media (max-width: 30rem) { .site-header .pill { display: none; } }
+@media (max-width: 30rem) {
+  .site-header .pill { display: none; }
+  /* The logo and three links on one row of a phone: tighter gaps, a smaller wordmark.
+     Each link keeps its 44 px of height and is wider than that with its word. */
+  .site-header__row, .brand { gap: var(--space-2); }
+  .site-header__side { gap: 0; }
+  .site-header .nav-link, .site-header .lang { padding-inline: var(--space-1); }
+  .brand { flex: none; }
+  .brand__word { height: 26px; }
+}
+/* Below 360 px the roundel stands alone. */
+@media (max-width: 22.4rem) { .brand__word { display: none; } }
 
 /* buttons */
 .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: var(--space-3) var(--space-6); border-radius: var(--radius-pill); border: 2px solid currentColor; color: var(--c-text); font-weight: 700; text-decoration: none; transition: transform var(--motion-fast) var(--motion-ease), box-shadow var(--motion-fast) var(--motion-ease); }
@@ -135,6 +147,9 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 .moment { break-inside: avoid; margin-bottom: var(--space-4); background: var(--c-surface); border: 1px solid var(--c-line); border-radius: var(--radius-md); overflow: hidden; transition: transform var(--motion-fast) var(--motion-ease), box-shadow var(--motion-fast) var(--motion-ease), border-color var(--motion-fast); }
 .moment:hover { transform: translateY(-3px) rotate(-0.4deg); border-color: var(--c-neon); box-shadow: 0 0 2rem -0.5rem var(--c-neon); }
 .moment img { width: 100%; }
+.moment__link { display: block; cursor: zoom-in; }
+/* The card clips what pokes out of it, so the focus ring is drawn inside the photo. */
+.moment__link:focus-visible { outline-offset: -3px; border-radius: var(--radius-md) var(--radius-md) 0 0; }
 .moment figcaption { padding: var(--space-3) var(--space-4) var(--space-4); font-size: var(--size-sm); line-height: 1.4; }
 .moment__caption { font-weight: 600; }
 .moment time { display: block; margin-top: var(--space-1); color: var(--c-muted); font-size: var(--size-xs); }
@@ -143,6 +158,23 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
   .moment { margin-bottom: var(--space-3); }
   .moment figcaption { padding: var(--space-2) var(--space-3) var(--space-3); font-size: var(--size-xs); }
 }
+
+/* lightbox: one photo large on a dark sheet. site.js builds it on the native <dialog>;
+   it carries on-photo, so it is night-coloured in both themes. Top bar with the close
+   button, the photo, then a bar with previous, caption and next: nothing covers the photo. */
+.is-lightbox-open { overflow: hidden; }
+.lightbox { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: var(--c-bg); overflow: hidden; }
+.lightbox[open] { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; animation: lightbox-in var(--motion-fast) var(--motion-ease); }
+.lightbox::backdrop { background: transparent; }
+@keyframes lightbox-in { from { opacity: 0; } }
+.lightbox__top { display: flex; justify-content: flex-end; padding: var(--space-3) var(--space-4); }
+.lightbox__stage { display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); place-items: center; min-height: 0; padding-inline: var(--space-4); cursor: zoom-out; }
+.lightbox__stage img { width: auto; max-height: 100%; cursor: default; }
+.lightbox__bar { display: grid; grid-template-columns: 48px 1fr 48px; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4) var(--space-4); }
+.lightbox__caption { grid-column: 2; text-align: center; font-size: var(--size-sm); font-weight: 600; line-height: 1.4; }
+.lightbox__caption time { display: block; margin-top: var(--space-1); color: var(--c-muted); font-size: var(--size-xs); font-weight: 400; }
+.lightbox__btn { display: grid; place-items: center; width: 48px; height: 48px; padding: 0; border-radius: 50%; border: 1px solid var(--c-line); background: var(--c-raised); color: var(--c-text); font: 400 var(--size-lg)/1 var(--font-body); cursor: pointer; }
+.lightbox__btn:hover { border-color: var(--c-neon); color: var(--c-neon); }
 
 /* about */
 .about { display: grid; gap: var(--space-8); align-items: center; }

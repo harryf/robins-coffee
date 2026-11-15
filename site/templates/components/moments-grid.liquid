@@ -1,0 +1,6 @@
+{% comment %} moments-grid: moments (list of moment views), t, count (optional: show only the first so many). Columns that keep each photo's own shape. One grid is one lightbox group: previous and next stay inside it. {% endcomment %}
+<div class="moments" data-lightbox-group>
+  {%- for m in moments limit: count %}
+  {% render 'components/moment-card', m: m, t: t %}
+  {%- endfor %}
+</div>
