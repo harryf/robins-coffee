@@ -80,7 +80,7 @@ export function momentChanges(m: NewMoment, photo: Uint8Array): Change[] {
   const base = `moments/${momentId(m)}`;
   return [
     { path: `${base}.jpg`, label: `Photo: ${m.caption.en}`, bytes: photo },
-    { path: `${base}.md`, label: `Caption for ${momentId(m)}`, text: momentMarkdown(m) },
+    { path: `${base}.md`, label: `Photo: ${m.caption.en}`, text: momentMarkdown(m) },
   ];
 }
 
