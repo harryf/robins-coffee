@@ -26,6 +26,15 @@ describe("renderer", () => {
     expect(de).toContain('href="/robins-coffee/"');
   });
 
+  test("hreflang and canonical links are absolute", async () => {
+    const pages = await renderSite(files, { base: "/robins-coffee/", photos, origin: "https://example.org" });
+    const de = pages.find((p) => p.out === "de/index.html")!.html;
+    expect(de).toContain('<link rel="alternate" hreflang="en" href="https://example.org/robins-coffee/">');
+    expect(de).toContain('<link rel="canonical" href="https://example.org/robins-coffee/de/">');
+    const fallback = (await renderSite(files, { base: "/", photos })).find((p) => p.out === "index.html")!.html;
+    expect(fallback).toContain('<link rel="canonical" href="https://robins-coffee.ch/">');
+  });
+
   test("every page is noindex while site.yml says preview: true", async () => {
     const pages = await renderSite(files, { base: "/", photos });
     for (const p of pages) expect(p.html).toContain('name="robots" content="noindex');

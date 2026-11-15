@@ -9,8 +9,9 @@
 <meta name="robots" content="noindex, nofollow">
 {%- endif %}
 {%- for a in alternates %}
-<link rel="alternate" hreflang="{{ a.lang }}" href="{{ a.url | url }}">
+<link rel="alternate" hreflang="{{ a.lang }}" href="{{ a.url | absolute }}">
 {%- endfor %}
+<link rel="canonical" href="{{ page.url | absolute }}">
 <meta name="theme-color" content="{{ tokens.color.night.bg }}">
 <link rel="icon" type="image/png" href="{{ '/assets/brand/logo-roundel-black.png' | asset }}">
 <link rel="preload" href="{{ '/assets/fonts/alfa-slab-one.woff2' | url }}" as="font" type="font/woff2" crossorigin>

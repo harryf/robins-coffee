@@ -48,6 +48,7 @@
       var lines = [f.message.value.trim(), "", f.name.value.trim()];
       if (f.phone.value.trim()) lines.push(f.phone.value.trim());
       var link = form.querySelector("[data-mailto]");
+      if (!link) { link = document.createElement("a"); link.setAttribute("data-mailto", ""); link.hidden = true; form.appendChild(link); }
       link.href = "mailto:" + form.dataset.to + "?subject=" + encodeURIComponent(form.dataset.subject) + "&body=" + encodeURIComponent(lines.join("\n"));
       link.click();
     });

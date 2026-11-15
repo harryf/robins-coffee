@@ -17,6 +17,8 @@ export type RenderOptions = {
   /** "/" on the domain, "/robins-coffee/" on GitHub Pages, or "relative" for file:// and the editor preview. */
   base: string;
   photos: Record<string, Photo>;
+  /** Scheme and host the build is served from, for absolute URLs (hreflang, canonical). Defaults to site.url. */
+  origin?: string;
   /** Appended to asset URLs so a deploy busts caches. */
   version?: string;
 };
@@ -97,6 +99,9 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
   const url = (p: string) => resolveUrl(String(p), opts.base, current.depth);
   engine.registerFilter("url", url);
   engine.registerFilter("asset", (p: string) => url(p) + (opts.version && opts.base !== "relative" ? `?v=${opts.version}` : ""));
+  // hreflang and canonical must be absolute; in a relative build there is no address, so the path is kept.
+  const origin = (opts.origin ?? site.url).replace(/\/$/, "");
+  engine.registerFilter("absolute", (p: string) => (opts.base === "relative" ? url(p) : origin + url(p)));
   engine.registerFilter("srcset", (vs: Variant[]) => (vs ?? []).map((v) => `${url("/" + v.path)} ${v.w}w`).join(", "));
   engine.registerFilter("largest", (vs: Variant[]) => url("/" + vs.at(-1)!.path));
   engine.registerFilter("json", (v: unknown) => JSON.stringify(v).replace(/</g, "\\u003c"));

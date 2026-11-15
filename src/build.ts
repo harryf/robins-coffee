@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-// Build the site into dist/.   bun src/build.ts [--base /robins-coffee/ | relative] [--out dist]
+// Build the site into dist/.   bun src/build.ts [--base /robins-coffee/ | relative] [--origin https://host] [--out dist]
 // Everything about HOW a page looks lives in src/render.ts and site/; this file only
 // does what needs a disk: reading files, resizing photos, copying assets.
 import sharp from "sharp";
@@ -13,10 +13,10 @@ import { tokensCss } from "./tokens";
 const ROOT = join(import.meta.dir, "..");
 const SITE = join(ROOT, "site");
 const CACHE = join(ROOT, ".cache", "photos");
-const WIDTHS = [480, 800, 1200, 1800];
+const WIDTHS = [480, 640, 800, 1200, 1800];
 const TEXT = /\.(md|yml|json|liquid)$/;
 
-const { values } = parseArgs({ args: Bun.argv.slice(2), options: { base: { type: "string", default: "/" }, out: { type: "string", default: "dist" } } });
+const { values } = parseArgs({ args: Bun.argv.slice(2), options: { base: { type: "string", default: "/" }, out: { type: "string", default: "dist" }, origin: { type: "string" } } });
 const base = values.base === "relative" ? "relative" : "/" + values.base!.replace(/^\/|\/$/g, "") + (values.base === "/" ? "" : "/");
 const OUT = join(ROOT, values.out!);
 
@@ -75,7 +75,7 @@ await mkdir(OUT, { recursive: true });
 const files = await readSite();
 const photos = await buildPhotos();
 const version = await buildAssets(files);
-const pages = await renderSite(files, { base, photos, version });
+const pages = await renderSite(files, { base, photos, version, origin: values.origin });
 for (const page of pages) {
   await mkdir(dirname(join(OUT, page.out)), { recursive: true });
   await Bun.write(join(OUT, page.out), page.html);
