@@ -1,0 +1,8 @@
+# Changes to imported events, by event id (see /events.json on the built site).
+# Imported events themselves are fetched at build time and never stored here.
+#   - id: iyf-comedybrew-2026-12-24
+#     hide: true
+#   - id: iyf-jokesjokesjokes-2026-11-17
+#     featured: true
+#     name: "Jokes, Jokes, Jokes: birthday edition"
+overrides: []

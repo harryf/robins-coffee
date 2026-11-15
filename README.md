@@ -22,6 +22,7 @@ bun test
 | `site/content/` | Pages, per language |
 | `site/moments/` | The photo feed: one `.jpg` and one `.md` per post |
 | `site/photos/` | Photos used by page sections |
+| `site/events/` | Events written by hand; comedy shows are imported at build time and not stored |
 | `site/data/` | Venue facts, opening hours, home page sections, interface words, design tokens |
 | `site/templates/` | Liquid layouts, sections and components |
 | `site/assets/` | CSS, the one script, logo files |

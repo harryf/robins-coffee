@@ -110,7 +110,7 @@ All content is Markdown with front matter or a small YAML file, so every change 
 | Moment | `site/moments/<date>-<slug>.md` + `.jpg` | date, caption and alt text in EN and DE |
 | Section photo | `site/photos/<slug>.jpg` | alt text in EN and DE where it is used (`home.yml`) |
 | Imported event | fetched at build time, never committed (section 7) | generated |
-| Manual event | `site/events/<date>-<slug>.md` | title, start, end, price text, ticket URL, image, category |
+| Manual event | `site/events/<date>-<slug>.md` (format in `site/events/README.md`) | title, start, end, price_chf, ticket_url, category |
 | Event override | `site/data/event-overrides.yml` | event id, hide, featured, replacement image or title |
 | Gallery album | `site/gallery/<album>/` | title, date, cover, photos with captions |
 | Opening hours | `site/data/hours.yml` | regular hours per weekday, dated exceptions |
@@ -133,18 +133,18 @@ Events are fetched at build time and rendered as static HTML. Nothing is fetched
 
 | Source | How |
 |---|---|
-| IN YOUR FACE Comedy | The comedy site already builds `_data/calendar.yml` from Eventfrog with venue, start, end, price and ticket URL for every date. We add one small generated `events.json` to that site and read it here, keeping venue `robins` only |
+| IN YOUR FACE Comedy | The comedy site publishes `https://inyourfacecomedy.ch/events.json` (its `pages/events.json`, generated from `_data/calendar.yml`): every upcoming date with venue, start, end, price, flyer and its tracked `/go/` link. We read it at build time and keep venue `robins` |
 | Eventfrog | ROBIN's own events through the organiser API with a read-only key (Actions secret). Comes after the comedy feed works |
 | Manual | Markdown files for events on neither platform |
 
-`scripts/fetch-events.ts` normalises all sources to one shape, removes duplicates (Eventfrog id or ticket URL first, then start time plus a normalised title; the comedy record wins for title and image), applies overrides and writes into the build workspace only. A failed fetch reuses the last published `/events.json` and fails loudly in the workflow.
+`src/events.ts` (pure, tested) turns every source into one shape, removes duplicates (same start and ticket link, or same start and normalised name; the earlier source wins, comedy first), applies `site/data/event-overrides.yml` and sorts. `src/build.ts` does the fetching and hands the merged list to the renderer as `data/events.json`; it also publishes `/events.json` and `/events.ics`. Nothing imported is committed. If the feed cannot be read, the build uses the list this site published last time and raises a warning on the workflow run; with no earlier copy it builds without imported events.
 
-Display: the next few events on the home page (a "This week" section), a full events page grouped by month, `Event` structured data, `.ics` links.
+Display: the next four events on the home page ("What's on", left out when nothing is announced), an events page with the next 60 days grouped by month, `ComedyEvent` structured data, and one `.ics` feed to subscribe to. Each row shows the show's flyer, fetched and resized by the build.
 
 Taken from running the comedy site:
 
 - Comedy ticket buttons go through the comedy site's `/go/?show=<slug>` link with `utm_source=robins`, so clicks from the bar's site are counted and always land on the next date.
-- A daily scheduled build drops past events without a commit.
+- A scheduled build every morning (04:40 UTC) refreshes the list and drops past events without a commit; between builds, the page script hides an event once it has ended.
 - When an event page is removed, its URL redirects to the events page, never a 404.
 - No `Review` or `AggregateRating` structured data on our own site.
 
@@ -213,7 +213,7 @@ One branch and one pull request per milestone or smaller. Each milestone starts 
 | 0 | Repository, generator, pipeline, first page (done 15 Nov 2026) | A push to `main` deploys; a pull request gets a preview; tests run in CI |
 | 1 | Content clone (done 15 Nov 2026) | Every fact and photo of the current site is in the new one; screenshots of the old site are in `baseline/`; contact form decision made |
 | 2 | Design pass (critique and Lighthouse done 15 Nov 2026) | Harry has reviewed the direction on his phone; critique fixes are in; Lighthouse mobile 95+ for performance and accessibility |
-| 3 | Events | The home page and the events page match the comedy calendar for the next 60 days with no duplicates |
+| 3 | Events (comedy feed done 15 Nov 2026; Eventfrog source still to come) | The home page and the events page match the comedy calendar for the next 60 days with no duplicates |
 | 4 | Gallery and photo review page | A batch of group photos is picked and published in one sitting |
 | 5 | German and polish | Both languages complete, Open Graph images, 404, sitemap, link check |
 | 6 | Design system complete | Every component is in the style guide; no style value outside tokens |

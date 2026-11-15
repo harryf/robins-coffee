@@ -8,6 +8,7 @@
 import { Liquid } from "liquidjs";
 import { marked } from "marked";
 import { parse as parseYaml } from "yaml";
+import { upcoming, type SiteEvent } from "./events";
 
 /** Text files keyed by path relative to site/, for example "content/en/index.md". */
 export type Files = Record<string, string>;
@@ -19,6 +20,8 @@ export type RenderOptions = {
   photos: Record<string, Photo>;
   /** Scheme and host the build is served from, for absolute URLs (hreflang, canonical). Defaults to site.url. */
   origin?: string;
+  /** The moment the build runs; decides which events are still ahead. Defaults to now. */
+  now?: Date;
   /** Appended to asset URLs so a deploy busts caches. */
   version?: string;
 };
@@ -77,6 +80,33 @@ function jsonLd(site: any, hours: any, lang: string, pageUrl: string) {
   };
 }
 
+type WallClock = { year: number; month: number; day: number; weekday: string; time: string };
+
+/**
+ * The date and time a clock on the wall shows in a time zone. Only numbers come from
+ * Intl; every word comes from i18n.yml, so the labels are the same on every machine
+ * (Intl's own German abbreviations differ between the Mac and the build server).
+ */
+export function wallClock(d: Date, timeZone: string): WallClock {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone, year: "numeric", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(d).map((x) => [x.type, x.value]));
+  const [year, month, day] = [Number(parts.year), Number(parts.month), Number(parts.day)];
+  const weekday = ["su", "mo", "tu", "we", "th", "fr", "sa"][new Date(Date.UTC(year, month - 1, day)).getUTCDay()]!;
+  return { year, month, day, weekday, time: `${parts.hour}:${parts.minute}` };
+}
+
+const fillDate = (pattern: string, p: WallClock, t: any) =>
+  pattern.replace("{weekday}", t.days_short[p.weekday]).replace("{day}", String(p.day)).replace("{month}", t.months_short[p.month - 1]).replace("{year}", String(p.year));
+
+function eventLd(e: SiteEvent, site: any) {
+  return {
+    "@type": e.category === "comedy" ? "ComedyEvent" : "Event", name: e.title, startDate: e.start, endDate: e.end,
+    eventStatus: "https://schema.org/EventScheduled", eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    location: { "@type": "Place", name: site.legal_name, address: { "@type": "PostalAddress", streetAddress: site.street, postalCode: site.postal_code, addressLocality: site.city, addressCountry: site.country } },
+    ...(e.organiser ? { organizer: { "@type": "Organization", name: e.organiser } } : {}),
+    ...(e.ticket_url ? { offers: { "@type": "Offer", url: e.ticket_url, ...(e.price_chf === null ? {} : { price: e.price_chf, priceCurrency: "CHF" }), availability: "https://schema.org/InStock" } } : {}),
+  };
+}
+
 export async function renderSite(files: Files, opts: RenderOptions): Promise<Page[]> {
   const data: Record<string, any> = {};
   const templates: Record<string, string> = {};
@@ -119,6 +149,19 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
   });
   engine.registerFilter("tel", (s: string) => "tel:" + String(s).replace(/[^+\d]/g, ""));
 
+  // Events: the merged list arrives as data/events.json (written by the build, never committed).
+  const now = opts.now ?? new Date();
+  const allEvents: SiteEvent[] = data.events?.events ?? [];
+  const ahead = upcoming(allEvents, now, 60);
+  const eventView = (e: SiteEvent, lang: string, t: any) => {
+    const p = wallClock(new Date(e.start), site.timezone);
+    return {
+      ...e, when_label: `${fillDate(t.date_event, p, t)}, ${p.time}`, month_label: `${t.months[p.month - 1]} ${p.year}`,
+      price_label: e.price_chf === null ? "" : e.price_chf === 0 ? t.free_entry : `CHF ${e.price_chf}`,
+      language_label: t.event_languages?.[e.language] ?? "", img: e.image ? (opts.photos[e.image] ?? null) : null,
+    };
+  };
+
   const pages: Page[] = [];
   const sources = Object.entries(files).filter(([p]) => /^content\/[a-z]{2}\/.+\.md$/.test(p));
   for (const [path, text] of sources) {
@@ -135,7 +178,9 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
     const t = data.i18n[page.lang];
     const alternates = pages.filter((p) => p.slug === page.slug).map((p) => ({ lang: p.lang, url: p.url }));
     const other = alternates.find((a) => a.lang !== page.lang);
-    const fmtDate = new Intl.DateTimeFormat(page.lang === "de" ? "de-CH" : "en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+    const views = ahead.map((e) => eventView(e, page.lang, t));
+    const months: { label: string; events: typeof views }[] = [];
+    for (const v of views) (months.at(-1)?.label === v.month_label ? months.at(-1)! : months[months.push({ label: v.month_label, events: [] }) - 1]!).events.push(v);
     const scope = {
       site, t, page: { ...page.data, lang: page.lang, url: page.url, slug: page.slug, content: page.html },
       home: data.home, tokens: data.tokens, hours: data.hours,
@@ -144,7 +189,11 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
       alternates, other,
       photos: opts.photos,
       // The hero photo is not repeated as the first card of the feed.
-      moments: moments.filter((m: any) => m.photo !== data.home?.hero_photo).map((m: any) => ({ ...m, caption: m.caption?.[page.lang] ?? m.caption?.[defaultLang], alt: m.alt?.[page.lang] ?? m.alt?.[defaultLang], date_label: fmtDate.format(new Date(m.date + "T00:00:00Z")), img: opts.photos[m.photo] })),
+      moments: moments.filter((m: any) => m.photo !== data.home?.hero_photo).map((m: any) => ({ ...m, caption: m.caption?.[page.lang] ?? m.caption?.[defaultLang], alt: m.alt?.[page.lang] ?? m.alt?.[defaultLang], date_label: fillDate(t.date_short, wallClock(new Date(m.date + "T12:00:00Z"), "UTC"), t), img: opts.photos[m.photo] })),
+      events_url: page.lang === defaultLang ? "/events/" : `/${page.lang}/events/`,
+      events_next: views.slice(0, data.home?.events_count ?? 4),
+      events_months: months,
+      events_json_ld: { "@context": "https://schema.org", "@graph": ahead.map((e) => eventLd(e, site)) },
       noindex: site.preview || page.data.noindex,
       json_ld: jsonLd(site, data.hours, page.lang, site.url + page.url),
     };

@@ -16,6 +16,19 @@ en:
   days: { mo: "Monday", tu: "Tuesday", we: "Wednesday", th: "Thursday", fr: "Friday", sa: "Saturday", su: "Sunday" }
   days_short: { mo: "Mon", tu: "Tue", we: "Wed", th: "Thu", fr: "Fri", sa: "Sat", su: "Sun" }
   range_sep: " to "
+  months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+  months_short: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+  # {weekday} {day} {month} {year} are filled in by the build; the names come from the lists above.
+  date_short: "{day} {month} {year}"
+  date_event: "{weekday} {day} {month}"
+  nav_events: "Events"
+  events_title: "What's on"
+  events_all: "All events"
+  events_none: "Nothing is announced right now. Come by anyway."
+  events_subscribe: "Add all events to your calendar"
+  tickets: "Tickets"
+  free_entry: "Free entry"
+  event_languages: { en: "", de: "in German", it: "in Italian", fr: "in French", es: "in Spanish" }
   open_until: "Open until {time}"
   ticker_pause: "Pause the moving text"
   google_rating: "{value} out of 5 on Google, from {count} reviews"
@@ -46,6 +59,18 @@ de:
   days: { mo: "Montag", tu: "Dienstag", we: "Mittwoch", th: "Donnerstag", fr: "Freitag", sa: "Samstag", su: "Sonntag" }
   days_short: { mo: "Mo", tu: "Di", we: "Mi", th: "Do", fr: "Fr", sa: "Sa", su: "So" }
   range_sep: " bis "
+  months: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"]
+  months_short: ["Jan.", "Feb.", "März", "Apr.", "Mai", "Juni", "Juli", "Aug.", "Sept.", "Okt.", "Nov.", "Dez."]
+  date_short: "{day}. {month} {year}"
+  date_event: "{weekday}, {day}. {month}"
+  nav_events: "Events"
+  events_title: "Programm"
+  events_all: "Alle Events"
+  events_none: "Im Moment ist nichts angekündigt. Komm trotzdem vorbei."
+  events_subscribe: "Alle Events in deinen Kalender"
+  tickets: "Tickets"
+  free_entry: "Eintritt frei"
+  event_languages: { en: "auf Englisch", de: "", it: "auf Italienisch", fr: "auf Französisch", es: "auf Spanisch" }
   open_until: "Offen bis {time}"
   ticker_pause: "Lauftext anhalten"
   google_rating: "{value} von 5 auf Google, aus {count} Bewertungen"
