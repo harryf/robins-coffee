@@ -1,5 +1,5 @@
-{% comment %} header: site, t, home_url, other (the same page in the other language, may be nil) {% endcomment %}
-<header class="site-header">
+{% comment %} header: site, t, home_url, other (the same page in the other language, may be nil), on_photo (true when the page starts with the hero photo) {% endcomment %}
+<header class="site-header{% if on_photo %} on-photo{% endif %}">
   <div class="wrap site-header__row">
     <a class="brand" href="{{ home_url | url }}" aria-label="{{ site.legal_name }}">
       <img class="brand__mark theme-invert" src="{{ '/assets/brand/logo-roundel-white.png' | asset }}" alt="" width="44" height="44">

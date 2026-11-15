@@ -1,5 +1,9 @@
-<div class="ticker" aria-hidden="true">
-  <div class="ticker__track">
-    {%- for round in (1..4) %}{%- for word in t.ticker %}<span>{{ word }}</span><i></i>{%- endfor %}{%- endfor %}
+{% comment %} ticker: t. Two identical groups slide left by one group width, so the loop has no seam. The words are decoration (the address is in "Find us"), so the moving part is hidden from screen readers; the pause button is not. {% endcomment %}
+<div class="ticker" data-ticker>
+  <div class="ticker__view" aria-hidden="true">
+    {%- for group in (1..2) %}
+    <div class="ticker__group">{%- for round in (1..2) %}{%- for word in t.ticker %}<span>{{ word }}</span><i></i>{%- endfor %}{%- endfor %}</div>
+    {%- endfor %}
   </div>
+  <button class="ticker__pause" type="button" aria-pressed="false" aria-label="{{ t.ticker_pause }}" data-ticker-pause></button>
 </div>

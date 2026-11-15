@@ -6,6 +6,9 @@
         <h3 class="eyebrow">{{ t.address }}</h3>
         <p class="lead">{{ site.street }}<br>{{ site.postal_code }} {{ site.city }}</p>
         <p><a class="btn btn--neon" href="{{ site.maps_url }}" rel="noopener">{{ t.map }}</a></p>
+        {%- if site.google_rating %}
+        <p class="rating"><a href="{{ site.maps_url }}" rel="noopener"><span class="rating__star" aria-hidden="true">★</span> {{ t.google_rating | replace: '{value}', site.google_rating.value | replace: '{count}', site.google_rating.count }}</a></p>
+        {%- endif %}
       </div>
       <div class="card">
         <h3 class="eyebrow">{{ t.hours }}</h3>
@@ -14,7 +17,7 @@
       </div>
       <div class="card">
         <h3 class="eyebrow">{{ t.contact }}</h3>
-        <p class="lead"><a href="{{ site.phone | tel }}">{{ site.phone }}</a><br><a href="mailto:{{ site.email }}">{{ site.email }}</a></p>
+        <p class="lead taps"><a href="{{ site.phone | tel }}">{{ site.phone }}</a><a href="mailto:{{ site.email }}">{{ site.email }}</a></p>
         <p><a class="btn" href="https://www.instagram.com/{{ site.instagram }}/" rel="noopener">{{ t.instagram }}</a></p>
       </div>
     </div>
