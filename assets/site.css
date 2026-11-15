@@ -66,8 +66,9 @@ body {
   background: var(--c-bg);
   color: var(--c-text);
   font: 400 var(--size-md)/1.6 var(--font-body);
-  overflow-x: hidden;
 }
+/* The tilted ticker pokes past both edges; clip it here so the page never scrolls sideways. */
+main { overflow-x: clip; }
 img { max-width: 100%; height: auto; display: block; }
 a { color: var(--c-neon); text-underline-offset: 0.2em; }
 a:hover { color: var(--c-amber); }
