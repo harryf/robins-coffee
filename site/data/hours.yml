@@ -1,0 +1,18 @@
+# Opening hours. Drives the page, the footer, the "open now" pill and the
+# structured data; later also the Google Business Profile.
+# Days: mo tu we th fr sa su. Times are Zurich wall clock, 24 h.
+# close: null means "until late" (the current site gives no closing time).
+regular:
+  - days: [mo, tu, we, th, fr]
+    open: "16:00"
+    close: null
+  - days: [sa, su]
+    open: "10:00"
+    close: null
+# Dated exceptions, for example:
+#   - date: 2026-12-25
+#     closed: true
+#   - date: 2026-12-31
+#     open: "18:00"
+#     close: null
+exceptions: []

@@ -1,0 +1,42 @@
+{% layout 'layouts/base' %}
+{% block content %}
+<section class="section">
+  <div class="wrap">
+    <p class="eyebrow">Design system</p>
+    <h1 class="h-xl">Style guide</h1>
+    <p class="lead">Every token and component the site is built from. Add <code>?theme=day</code> or <code>?theme=night</code> to the address to pin a theme.</p>
+
+    <h2 class="h-lg">Colour</h2>
+    {%- for set in tokens.color %}
+    <h3 class="eyebrow">{{ set[0] }}</h3>
+    <div class="sg-swatches">
+      {%- for c in set[1] %}
+      <div class="sg-swatch"><span style="background: {{ c[1] }}"></span><code>{{ c[0] }}</code><code>{{ c[1] }}</code></div>
+      {%- endfor %}
+    </div>
+    {%- endfor %}
+
+    <h2 class="h-lg">Type</h2>
+    <p class="hero__title">{{ "Coffee by day. Cocktails by night." | neon_last | raw }}</p>
+    <p class="h-xl">Heading XL in Alfa Slab One</p>
+    <p class="h-lg">Heading LG in Alfa Slab One</p>
+    <p class="eyebrow">Eyebrow label</p>
+    <p class="lead">Lead text in DM Sans, for the first line of a section.</p>
+    <p>Body text in DM Sans. Zähringerstrasse 33, 8001 Zürich. <a href="#">A link looks like this.</a></p>
+
+    <h2 class="h-lg">Buttons and pills</h2>
+    <p class="hero__actions"><a class="btn btn--neon" href="#">Primary</a> <a class="btn" href="#">Secondary</a> <span class="pill is-open"><span class="pill__dot"></span>Open now, until late</span> <span class="pill"><span class="pill__dot"></span>Opens 16:00</span></p>
+
+    <h2 class="h-lg">Opening hours</h2>
+    <div class="card" style="max-width: 24rem">{% render 'components/hours', hours_rows: hours_rows, t: t %}</div>
+
+    <h2 class="h-lg">Moment card</h2>
+    <div class="moments">
+      {%- for m in moments limit: 3 %}
+      {% render 'components/moment-card', m: m %}
+      {%- endfor %}
+    </div>
+  </div>
+</section>
+{% render 'sections/ticker', home: home %}
+{% endblock %}

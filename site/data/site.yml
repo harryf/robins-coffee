@@ -1,0 +1,22 @@
+# Facts about the venue. One place; pages, footer and structured data all read from here.
+name: "ROBIN's"
+# The address the site will live at after the DNS cut-over; used for absolute URLs
+# in structured data. The GitHub Pages preview still points here on purpose.
+url: "https://robins-coffee.ch"
+legal_name: "ROBIN's Bar & Coffee"
+founded: 2022
+street: "Zähringerstrasse 33"
+postal_code: "8001"
+city: "Zürich"
+country: "CH"
+latitude: 47.3757403
+longitude: 8.5444532
+phone: "+41 79 176 74 46"
+email: "info@robins-coffee.ch"
+maps_url: "https://maps.app.goo.gl/aac8sjwkZjsTQaAT8"
+instagram: "robinsbarandcoffee"
+timezone: "Europe/Zurich"
+# While true every page carries noindex, so the preview never competes with the
+# live WordPress site. Set to false in the DNS cut-over pull request.
+preview: true
+languages: [en, de]

@@ -1,0 +1,15 @@
+{% comment %} header: site, t, home_url, other (the same page in the other language, may be nil) {% endcomment %}
+<header class="site-header">
+  <div class="wrap site-header__row">
+    <a class="brand" href="{{ home_url | url }}" aria-label="{{ site.legal_name }}">
+      <img class="brand__mark theme-invert" src="{{ '/assets/brand/logo-roundel-white.png' | asset }}" alt="" width="44" height="44">
+      <img class="brand__word theme-invert" src="{{ '/assets/brand/wordmark-white.png' | asset }}" alt="{{ site.name }}" width="117" height="40">
+    </a>
+    <div class="site-header__side">
+      {% render 'components/open-pill', t: t %}
+      {%- if other %}
+      <a class="lang" href="{{ other.url | url }}" hreflang="{{ other.lang }}" lang="{{ other.lang }}">{{ t.lang_switch }}</a>
+      {%- endif %}
+    </div>
+  </div>
+</header>

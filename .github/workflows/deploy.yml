@@ -1,0 +1,40 @@
+name: Deploy
+# Every push to main is built, tested and published to the gh-pages branch.
+# A daily run will later refresh imported events without a commit.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+      - run: bun test
+      - run: bun src/build.ts --base "/${{ github.event.repository.name }}/"
+      - name: Publish dist/ to gh-pages (pull request previews are kept)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git fetch origin gh-pages --depth 1; then
+            git worktree add pages origin/gh-pages
+            git -C pages switch -C gh-pages
+          else
+            git worktree add --detach pages
+            git -C pages switch --orphan gh-pages
+          fi
+          find pages -mindepth 1 -maxdepth 1 ! -name .git ! -name pr-preview -exec rm -rf {} +
+          cp -R dist/. pages/
+          git -C pages add -A
+          if git -C pages diff --cached --quiet; then echo "nothing changed"; exit 0; fi
+          git -C pages commit -q -m "Deploy ${GITHUB_SHA::7}"
+          git -C pages push origin gh-pages

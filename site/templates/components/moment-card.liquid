@@ -1,0 +1,5 @@
+{% comment %} moment-card: m (a moment with img, alt, caption, date_label) {% endcomment %}
+<figure class="moment">
+  {% render 'components/photo', img: m.img, alt: m.alt, sizes: '(min-width: 60rem) 30vw, (min-width: 36rem) 46vw, 92vw' %}
+  <figcaption><span class="moment__caption">{{ m.caption }}</span> <time datetime="{{ m.date }}">{{ m.date_label }}</time></figcaption>
+</figure>

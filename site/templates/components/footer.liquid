@@ -1,0 +1,17 @@
+{% comment %} footer: site, t, hours_rows {% endcomment %}
+<footer class="site-footer">
+  <div class="wrap site-footer__grid">
+    <div>
+      <img class="theme-invert" src="{{ '/assets/brand/wordmark-white.png' | asset }}" alt="{{ site.name }}" width="146" height="50" loading="lazy">
+      <p>{{ site.street }}<br>{{ site.postal_code }} {{ site.city }}</p>
+    </div>
+    <div>
+      <h2 class="eyebrow">{{ t.hours }}</h2>
+      {% render 'components/hours', hours_rows: hours_rows, t: t %}
+    </div>
+    <div>
+      <h2 class="eyebrow">{{ t.contact }}</h2>
+      <p><a href="{{ site.phone | tel }}">{{ site.phone }}</a><br><a href="mailto:{{ site.email }}">{{ site.email }}</a><br><a href="https://www.instagram.com/{{ site.instagram }}/" rel="noopener">@{{ site.instagram }}</a></p>
+    </div>
+  </div>
+</footer>

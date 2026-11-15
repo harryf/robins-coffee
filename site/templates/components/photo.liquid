@@ -1,0 +1,5 @@
+{% comment %} photo: img (entry of photos), alt, sizes, eager (optional). Fixed aspect box, webp with jpg fallback. {% endcomment %}
+<picture>
+  <source type="image/webp" srcset="{{ img.webp | srcset }}" sizes="{{ sizes }}">
+  <img src="{{ img.jpg | largest }}" srcset="{{ img.jpg | srcset }}" sizes="{{ sizes }}" width="{{ img.width }}" height="{{ img.height }}" alt="{{ alt }}"{% if eager %} fetchpriority="high"{% else %} loading="lazy" decoding="async"{% endif %}>
+</picture>

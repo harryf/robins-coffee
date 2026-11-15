@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.cache/
+.env
+.env.*
+ISA.md
+inbox/
+*.log
+.DS_Store

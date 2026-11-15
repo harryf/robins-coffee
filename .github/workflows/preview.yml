@@ -1,0 +1,53 @@
+name: Preview
+# Every pull request is built, tested and published under /pr-preview/pr-<number>/
+# on gh-pages; the folder is removed when the pull request closes.
+# The job is named "build" on purpose: the main branch rule requires that check.
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DIR: pr-preview/pr-${{ github.event.number }}
+      BASE: /${{ github.event.repository.name }}/pr-preview/pr-${{ github.event.number }}/
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        if: github.event.action != 'closed'
+        with:
+          bun-version: 1.4.2
+      - if: github.event.action != 'closed'
+        run: |
+          bun install --frozen-lockfile
+          bun test
+          bun src/build.ts --base "$BASE"
+      - name: Publish or remove the preview folder
+        # A pull request from a fork gets a read-only token: build and test only.
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin gh-pages --depth 1
+          git worktree add pages origin/gh-pages
+          git -C pages switch -C gh-pages
+          rm -rf "pages/$DIR"
+          if [ "${{ github.event.action }}" != "closed" ]; then
+            mkdir -p "pages/$DIR"
+            cp -R dist/. "pages/$DIR/"
+          fi
+          git -C pages add -A
+          if git -C pages diff --cached --quiet; then echo "nothing changed"; exit 0; fi
+          git -C pages commit -q -m "Preview for #${{ github.event.number }} (${{ github.event.action }})"
+          git -C pages push origin gh-pages
+      - name: Tell the pull request where the preview is
+        if: github.event.action == 'opened' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr comment ${{ github.event.number }} --repo ${{ github.repository }} --body "Preview, ready about a minute after each push: https://${{ github.repository_owner }}.github.io$BASE"

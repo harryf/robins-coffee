@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="{{ page.lang }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ page.title }}</title>
+<meta name="description" content="{{ page.description }}">
+{%- if noindex %}
+<meta name="robots" content="noindex, nofollow">
+{%- endif %}
+{%- for a in alternates %}
+<link rel="alternate" hreflang="{{ a.lang }}" href="{{ a.url | url }}">
+{%- endfor %}
+<meta name="theme-color" content="{{ tokens.color.night.bg }}">
+<link rel="icon" type="image/png" href="{{ '/assets/brand/logo-roundel-black.png' | asset }}">
+<link rel="preload" href="{{ '/assets/fonts/alfa-slab-one.woff2' | url }}" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="{{ '/assets/site.css' | asset }}">
+<script>
+// Day or night: the page follows the Zürich clock, like the bar does. Runs before
+// first paint so the theme never flashes. Without JavaScript the page stays "night".
+(function () {
+  try {
+    var h = +new Intl.DateTimeFormat("en-GB", { hour: "2-digit", hour12: false, timeZone: "{{ site.timezone }}" }).format(new Date());
+    var forced = new URLSearchParams(location.search).get("theme");
+    document.documentElement.dataset.theme = forced || (h >= 6 && h < 17 ? "day" : "night");
+  } catch (e) {}
+})();
+</script>
+<script type="application/ld+json">{{ json_ld | json | raw }}</script>
+</head>
+<body>
+<a class="skip" href="#main">{{ t.skip }}</a>
+{% render 'components/header', site: site, t: t, home_url: home_url, other: other %}
+<main id="main">
+{% block content %}{% endblock %}
+</main>
+{% render 'components/footer', site: site, t: t, hours_rows: hours_rows %}
+<script type="application/json" id="hours-data">{{ hours | json | raw }}</script>
+<script type="application/json" id="i18n-data">{{ t | json | raw }}</script>
+<script src="{{ '/assets/js/site.js' | asset }}" defer></script>
+</body>
+</html>
