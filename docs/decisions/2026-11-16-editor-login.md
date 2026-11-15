@@ -25,7 +25,7 @@ GitHub's fine-grained tokens do not yet work for a collaborator on another perso
 - **A token can do what its owner can do.** `main` is protected: nothing reaches the live site without a pull request and the `build` check. The editor only ever creates a branch named `edit/...` and a pull request.
 - **An editor change may touch only content, photos, events and data.** CI fails an `edit/...` pull request that touches anything else (`scripts/check-edit-scope.ts`).
 - **Photos are redrawn in the browser** at 2400 px at most, which drops every bit of metadata. The test that checks committed photos for metadata runs on every pull request, so a photo that slipped through fails the check.
-- **Who may publish.** The editor has a "Publish now" button that merges the pull request once the checks have passed. GitHub decides whether that is allowed. Today the rule asks for no approval, so an editor can publish their own change, a photo of a person included. Raising the rule to one approval makes every change wait for a second person; that is Harry's switch to flip on GitHub.
+- **Who may publish.** The editor has a "Publish now" button that merges the pull request once the checks have passed. GitHub decides whether that is allowed. Since 16 Nov 2026 the rule on `main` asks for one approval, so nobody can publish their own change alone: a second person approves it first. The repository's admin (Harry) can still merge without an approval; that bypass is part of the rule. The editor has no approve button yet (milestone 8), so for now an approval is given on github.com.
 
 ## Also decided
 
