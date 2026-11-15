@@ -2,10 +2,13 @@
 // maths the tests use. Browser-safe, like the renderer.
 export type Tokens = { color: Record<"night" | "day", Record<string, string>>; contrast_pairs: [string, string][]; [group: string]: any };
 
+/** Every group that becomes custom properties (--<group>-<name>). Colour is per theme; breakpoints cannot be variables in a media query. */
+export const SCALES = ["font", "size", "weight", "leading", "tracking", "space", "radius", "border", "shadow", "motion", "z", "target", "measure", "layout"];
+
 const vars = (prefix: string, o: Record<string, string>) => Object.entries(o).map(([k, v]) => `  --${prefix}${k}: ${v};`).join("\n");
 
 export function tokensCss(t: Tokens): string {
-  const scales = ["font", "size", "space", "radius", "motion", "layout"].map((g) => vars(`${g}-`, t[g])).join("\n");
+  const scales = SCALES.map((g) => vars(`${g}-`, t[g])).join("\n");
   return `/* GENERATED from site/data/tokens.json by src/tokens.ts. Edit the JSON, not this. */
 @font-face { font-family: "Alfa Slab One"; src: url("fonts/alfa-slab-one.woff2") format("woff2"); font-weight: 400; font-display: swap; }
 @font-face { font-family: "DM Sans Variable"; src: url("fonts/dm-sans.woff2") format("woff2"); font-weight: 100 1000; font-display: swap; }

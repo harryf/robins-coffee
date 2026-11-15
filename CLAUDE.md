@@ -19,7 +19,7 @@ Look at the result in a real browser at desktop and 390 px, in both themes (`?th
 - **`src/render.ts` must stay pure and browser-safe**: no `fs`, no `sharp`, no `Bun.*`, no network. The editor will import it to run the real build as its preview. Disk work belongs in `src/build.ts`.
 - **Every link in a template goes through the `url` or `asset` filter.** The site is served from `/robins-coffee/`, later from `/`, and from relative paths in the editor preview. A bare `/path` works in one of the three.
 - **One source per fact.** Hours in `site/data/hours.yml`, venue facts in `site/data/site.yml`, labels in `site/data/i18n.yml`. Never type an address, a time or a label into a template.
-- **Tokens only.** No raw colour or font name in templates or CSS outside `site/data/tokens.json`. A new colour pair that carries text goes into `contrast_pairs`. Anything placed on a dark photo gets the class `on-photo` (night colours in both themes).
+- **Tokens only.** No raw colour or font name in templates or CSS outside `site/data/tokens.json`. The same holds for font size, weight, line height, tracking, margin, padding, gap, border, radius, shadow, z-index, durations, text measures and media query breakpoints: tests fail on a typed value. Plain numbers are fine for one component's own geometry (width, height, columns, transforms). No `style=` in a template outside the style guide. A new colour pair that carries text goes into `contrast_pairs`. Anything placed on a dark photo gets the class `on-photo` (night colours in both themes).
 - **Every published photo is a moment.** The feed and the gallery read the same files; an album is `album: <slug>` plus a line in `site/data/albums.yml`, and `feed: false` keeps a photo in the gallery only.
 - **Nothing moves for ever without a pause** (WCAG 2.2.2). The ticker has its button; any new looping motion needs the same or a finite count.
 - **No review texts copied from Google Maps by hand.** Rating and hours are typed facts with a date; review texts come only through the Business Profile API (`docs/decisions/2026-11-15-google-listing.md`). Never add `Review` or `AggregateRating` structured data.
@@ -44,7 +44,8 @@ Look at the result in a real browser at desktop and 390 px, in both themes (`?th
 | An album | An entry in `site/data/albums.yml` (slug, title in EN and DE, optional cover), then `album: <slug>` on its moments |
 | A photo for a page section | `bun scripts/add-photo.ts <file> --plain --slug <name>`, then name it with EN and DE alt text where it is used |
 | A home page section | `site/templates/sections/<name>.liquid`, then its name in `site/data/home.yml`, then a style guide entry |
-| A component | `site/templates/components/<name>.liquid` with its parameters in a top comment, plus a style guide entry in the same pull request |
+| A component | `site/templates/components/<name>.liquid` with its parameters in a top comment (the style guide prints it), plus its example in the `case` block of `layouts/styleguide.liquid`; a test fails without both |
+| A token | A line in `site/data/tokens.json`; it becomes `--<group>-<name>` and appears in the style guide by itself |
 | A page | `site/content/en/<slug>.md` and `site/content/de/<slug>.md`; `og_photo:` picks its link preview picture, `permalink:` names its output file (only 404 uses it) |
 | An event by hand | `site/events/<date>-<slug>.md` (format in `site/events/README.md`) |
 | A change to an imported event | an entry in `site/data/event-overrides.yml`; never edit the import |

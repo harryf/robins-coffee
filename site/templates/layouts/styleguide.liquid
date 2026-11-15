@@ -1,55 +1,153 @@
 {% layout 'layouts/base' %}
+{% comment %} styleguide: this page. Tokens are listed straight from tokens.json, so a new token shows up by itself. Components and sections are listed from the template folders with the comment each file starts with; a new one needs its example added in the `case` below (a test fails while it is missing). This page is internal: English only, noindex. {% endcomment %}
 {% block content %}
 <section class="section">
   <div class="wrap">
     <p class="eyebrow">Design system</p>
     <h1 class="h-xl">Style guide</h1>
     <p class="lead">Every token and component the site is built from. Add <code>?theme=day</code> or <code>?theme=night</code> to the address to pin a theme.</p>
+    <div class="prose">
+      <p>The rule: a value that more than one thing shares is a token in <code>site/data/tokens.json</code> (colour, type, space, radius, border, shadow, motion, layers, tap targets, measures, breakpoints). The geometry of one component (a thumbnail width, a column count, a tilt) stays in the stylesheet next to that component. A test enforces both halves.</p>
+    </div>
 
-    <h2 class="h-lg">Colour</h2>
-    {%- for set in tokens.color %}
-    <h3 class="eyebrow">{{ set[0] }}</h3>
-    <div class="sg-swatches">
-      {%- for c in set[1] %}
-      <div class="sg-swatch"><span style="background: {{ c[1] }}"></span><code>{{ c[0] }}</code><code>{{ c[1] }}</code></div>
+    <h2 class="h-xl sg-part" id="tokens">Tokens</h2>
+    {%- for group in tokens %}
+    {%- assign g = group[0] %}
+    {%- if g == 'contrast_pairs' %}{% continue %}{% endif %}
+    <div class="sg-group" data-sg-tokens="{{ g }}">
+      <h3 class="h-lg">{{ g }}</h3>
+      {%- if g == 'color' %}
+      {%- for set in group[1] %}
+      <p class="eyebrow">{{ set[0] }}</p>
+      <div class="sg-swatches">
+        {%- for c in set[1] %}
+        <div class="sg-swatch"><span style="background: {{ c[1] }}"></span><code>{{ c[0] }}</code><code>{{ c[1] }}</code></div>
+        {%- endfor %}
+      </div>
       {%- endfor %}
+      <p class="eyebrow">Contrast of every pair that carries text (WCAG AA needs 4.5)</p>
+      <table class="sg-table">
+        <thead><tr><th scope="col">Text on surface</th><th scope="col">Night</th><th scope="col">Day</th></tr></thead>
+        <tbody>
+          {%- for row in guide.contrast %}
+          <tr data-sg-pair><th scope="row"><code>{{ row.fg }}</code> on <code>{{ row.bg }}</code></th><td>{{ row.night }}</td><td>{{ row.day }}</td></tr>
+          {%- endfor %}
+        </tbody>
+      </table>
+      {%- else %}
+      <div class="sg-tokens">
+        {%- for tok in group[1] %}
+        {%- assign k = tok[0] %}
+        <div class="sg-token">
+          <code>{% if g == 'breakpoint' %}{{ k }}{% else %}--{{ g }}-{{ k }}{% endif %}</code>
+          <code class="sg-token__value">{{ tok[1] }}</code>
+          {%- case g %}
+          {%- when 'font' %}<span class="sg-demo" style="font-family: var(--font-{{ k }})">Coffee, cocktails, comedy</span>
+          {%- when 'size' %}<span class="sg-demo" style="font-size: var(--size-{{ k }})">Zürich</span>
+          {%- when 'weight' %}<span class="sg-demo" style="font-weight: var(--weight-{{ k }})">Zähringerstrasse</span>
+          {%- when 'leading' %}<span class="sg-demo sg-demo--lines" style="line-height: var(--leading-{{ k }})">Two lines<br>of text</span>
+          {%- when 'tracking' %}<span class="sg-demo" style="letter-spacing: var(--tracking-{{ k }})">OLD TOWN</span>
+          {%- when 'space' %}<span class="sg-demo sg-demo--bar" style="width: var(--space-{{ k }})"></span>
+          {%- when 'radius' %}<span class="sg-demo sg-demo--box" style="border-radius: var(--radius-{{ k }})"></span>
+          {%- when 'border' %}<span class="sg-demo sg-demo--box" style="border-width: var(--border-{{ k }})"></span>
+          {%- when 'shadow' %}<span class="sg-demo sg-demo--box" style="box-shadow: var(--shadow-{{ k }}) var(--c-neon)"></span>
+          {%- when 'target' %}<span class="sg-demo sg-demo--box" style="width: var(--target-{{ k }}); height: var(--target-{{ k }})"></span>
+          {%- when 'measure' %}<span class="sg-demo sg-demo--bar" style="width: var(--measure-{{ k }})"></span>
+          {%- else %}<span class="sg-demo"></span>
+          {%- endcase %}
+        </div>
+        {%- endfor %}
+      </div>
+      {%- if g == 'breakpoint' %}<p>Breakpoints cannot be variables inside a media query, so the stylesheet repeats these numbers; a test checks that it uses no others.</p>{% endif %}
+      {%- endif %}
     </div>
     {%- endfor %}
 
-    <h2 class="h-lg">Type</h2>
+    <h2 class="h-xl sg-part" id="elements">Elements</h2>
+    <h3 class="h-lg">Type</h3>
     <p class="hero__title">{{ "Coffee by day. Cocktails by night." | neon_last | raw }}</p>
     <p class="h-xl">Heading XL in Alfa Slab One</p>
     <p class="h-lg">Heading LG in Alfa Slab One</p>
     <p class="eyebrow">Eyebrow label</p>
     <p class="lead">Lead text in DM Sans, for the first line of a section.</p>
-    <p>Body text in DM Sans. Zähringerstrasse 33, 8001 Zürich. <a href="#">A link looks like this.</a></p>
+    <p>Body text in DM Sans. Zähringerstrasse 33, 8001 Zürich. <a href="#elements">A link looks like this</a>, and <code>code</code> like this.</p>
+    <div class="prose"><p>Prose: running text from a Markdown file, one step larger and held to a readable line length.</p></div>
 
-    <h2 class="h-lg">Buttons and pills</h2>
-    <p class="hero__actions"><a class="btn btn--neon" href="#">Primary</a> <a class="btn" href="#">Secondary</a> <span class="pill is-open"><span class="pill__dot"></span>Open now, until late</span> <span class="pill"><span class="pill__dot"></span>Opens 16:00</span></p>
+    <h3 class="h-lg">Buttons, links and pills</h3>
+    <p class="hero__actions"><a class="btn btn--neon" href="#elements">Primary</a> <a class="btn" href="#elements">Secondary</a> <a class="nav-link" href="#elements">Nav link</a> <a class="lang" href="#elements">Language</a></p>
+    <p class="hero__actions"><span class="pill is-open"><span class="pill__dot"></span>Open now, until late</span> <span class="pill"><span class="pill__dot"></span>Opens 16:00</span></p>
+    <p class="rating"><a href="#elements"><span class="rating__star" aria-hidden="true">★</span> Rating line</a></p>
+    <p class="taps"><a href="#elements">Tap list: one link per line</a><a href="#elements">each a full tap target</a></p>
 
-    <h2 class="h-lg">Opening hours</h2>
-    <div class="card" style="max-width: 24rem">{% render 'components/hours', hours_rows: hours_rows, t: t %}</div>
-
-    <h2 class="h-lg">Event card</h2>
-    <div class="events">
-      {%- for e in events_next limit: 2 %}
-      {% render 'components/event-card', e: e, t: t %}
-      {%- endfor %}
+    <h3 class="h-lg">Card and surface</h3>
+    <div class="sg-pair">
+      <div class="card"><p class="eyebrow">Card</p><p>On the page background.</p></div>
+      <div class="section--surface sg-surface"><div class="card"><p class="eyebrow">Card on a surface</p><p>Inside <code>section--surface</code> it is one step lighter.</p></div></div>
     </div>
 
-    <h2 class="h-lg">Photo strip</h2>
-    {% render 'components/photo-strip', items: home.about_photos, photos: photos, lang: page.lang %}
+    <h3 class="h-lg">On a photo</h3>
+    <div class="on-photo sg-on-photo"><p>Anything with the class <code>on-photo</code> keeps the night colours in both themes: the hero, the header above it, the lightbox.</p><p class="hero__actions"><a class="btn btn--neon" href="#elements">Primary</a> <a class="btn" href="#elements">Secondary</a></p></div>
 
-    <h2 class="h-lg">Contact form</h2>
-    <div style="max-width: 36rem">{% render 'components/contact-form', site: site, t: t %}</div>
+    <h2 class="h-xl sg-part" id="components">Components</h2>
+    <p>One file each in <code>site/templates/components/</code>. The line under each name is the comment the file starts with.</p>
+    {%- for c in guide.components %}
+    <article class="sg-entry" data-sg="{{ c.path }}" id="sg-{{ c.name }}">
+      <h3 class="h-lg"><code>{{ c.path }}</code></h3>
+      <p class="sg-entry__doc">{{ c.doc }}</p>
+      {%- case c.name %}
+      {%- when 'contact-form' %}
+      <div class="sg-narrow">{% render 'components/contact-form', site: site, t: t %}</div>
+      {%- when 'event-card' %}
+      <div class="events">
+        {%- for e in events_next limit: 2 %}
+        {% render 'components/event-card', e: e, t: t %}
+        {%- endfor %}
+      </div>
+      {%- if events_next.size == 0 %}<p>No event is announced right now, so there is no card to show.</p>{% endif %}
+      {%- when 'footer' %}
+      <p>At the bottom of this page.</p>
+      {%- when 'header' %}
+      <p>At the top of this page. On the home page it sits on the hero photo and takes the night colours.</p>
+      {%- when 'hours' %}
+      <div class="card sg-narrow">{% render 'components/hours', hours_rows: hours_rows, t: t %}</div>
+      {%- when 'moment-card' %}
+      <div class="sg-narrow moments" data-lightbox-group>{% render 'components/moment-card', m: moments[0], t: t %}</div>
+      {%- when 'moments-grid' %}
+      {% render 'components/moments-grid', moments: moments, t: t, count: 3 %}
+      <p>Select a photo: the lightbox opens it large in a native <code>dialog</code> built by <code>site.js</code>, night-coloured, with caption and date. Arrow keys and a swipe step inside one grid; Esc or the close button closes and focus returns to the photo. Without JavaScript the link opens the JPEG.</p>
+      {%- when 'open-pill' %}
+      <p>{% render 'components/open-pill', t: t %}</p>
+      <p>Live from <code>hours.yml</code> and the Zürich clock; hidden without JavaScript.</p>
+      {%- when 'photo' %}
+      <div class="sg-narrow">{% render 'components/photo', img: photos[home.about_photos[0].photo], alt: home.about_photos[0].alt[page.lang], sizes: '(min-width: 40rem) 40rem, 92vw' %}</div>
+      {%- when 'photo-strip' %}
+      {% render 'components/photo-strip', items: home.about_photos, photos: photos, lang: page.lang %}
+      {%- else %}
+      <p>No example yet.</p>
+      {%- endcase %}
+    </article>
+    {%- endfor %}
 
-    <h2 class="h-lg">Moments grid and moment card</h2>
-    <p>Columns that keep each photo's own shape; used by the home feed and by every album of the gallery. Each photo is a link to its largest JPEG.</p>
-    {% render 'components/moments-grid', moments: moments, t: t, count: 3 %}
+    <h2 class="h-xl sg-part" id="layouts">Layouts</h2>
+    <table class="sg-table">
+      <thead><tr><th scope="col">Layout</th><th scope="col">What it is</th></tr></thead>
+      <tbody>
+        {%- for l in guide.layouts %}
+        <tr><th scope="row"><code>{{ l.path }}</code></th><td>{{ l.doc }}</td></tr>
+        {%- endfor %}
+      </tbody>
+    </table>
 
-    <h2 class="h-lg">Lightbox</h2>
-    <p>Select a photo above. It opens large in a native <code>dialog</code> built by <code>site.js</code>, always in night colours (<code>on-photo</code>), with its caption and date. Previous and next stay inside one grid; arrow keys and a swipe step, Esc or the close button closes, and focus goes back to the photo. Without JavaScript the link opens the JPEG.</p>
+    <h2 class="h-xl sg-part" id="sections">Sections</h2>
+    <p>The home page is a stack of these, in the order of <code>site/data/home.yml</code>. Each is shown below at full width with the home page's own words.</p>
   </div>
 </section>
-<div style="margin-top: 3rem">{% render 'sections/ticker', t: t %}</div>
+{%- for s in guide.sections %}
+<div class="wrap sg-entry sg-entry--section" data-sg="{{ s.path }}" id="sg-section-{{ s.name }}">
+  <h3 class="h-lg"><code>{{ s.path }}</code></h3>
+  <p class="sg-entry__doc">{{ s.doc }}</p>
+</div>
+{% assign tpl = s.path %}
+{% render tpl, site: site, t: t, page: guide.sample, home: home, photos: photos, moments: moments, hours_rows: hours_rows, events_next: events_next, events_url: events_url, gallery_url: gallery_url %}
+{%- endfor %}
 {% endblock %}

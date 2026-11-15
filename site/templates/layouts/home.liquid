@@ -1,4 +1,5 @@
 {% layout 'layouts/base' %}
+{% comment %} home: the sections named in home.yml, top to bottom. {% endcomment %}
 {% block content %}
 {%- for name in home.sections %}
 {% assign tpl = 'sections/' | append: name %}

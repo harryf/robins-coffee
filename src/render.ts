@@ -9,6 +9,7 @@ import { Liquid } from "liquidjs";
 import { marked } from "marked";
 import { parse as parseYaml } from "yaml";
 import { upcoming, type SiteEvent } from "./events";
+import { contrast } from "./tokens";
 
 /** Text files keyed by path relative to site/, for example "content/en/index.md". */
 export type Files = Record<string, string>;
@@ -184,6 +185,12 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
     };
   };
 
+  // For the style guide: what each template says about itself, and the contrast of every declared pair.
+  const docs = Object.fromEntries(Object.entries(templates).map(([name, text]) => [name, /\{%-? comment %\}\s*([\s\S]*?)\s*\{% endcomment -?%\}/.exec(text)?.[1] ?? ""]));
+  const parts = (kind: string) => Object.keys(templates).filter((n) => n.startsWith(kind + "/")).sort().map((n) => ({ path: n, name: n.slice(kind.length + 1), doc: docs[n] }));
+  const ratio = (theme: any, fg: string, bg: string) => contrast(theme[fg], theme[bg]).toFixed(1);
+  const contrastRows = (data.tokens?.contrast_pairs ?? []).map(([fg, bg]: [string, string]) => ({ fg, bg, night: ratio(data.tokens.color.night, fg, bg), day: ratio(data.tokens.color.day, fg, bg) }));
+
   const pages: Page[] = [];
   const sources = Object.entries(files).filter(([p]) => /^content\/[a-z]{2}\/.+\.md$/.test(p));
   for (const [path, text] of sources) {
@@ -236,6 +243,7 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
       events_months: months,
       events_json_ld: { "@context": "https://schema.org", "@graph": ahead.map((e) => eventLd(e, site)) },
       noindex: site.preview || page.data.noindex,
+      guide: { components: parts("components"), sections: parts("sections"), layouts: parts("layouts"), contrast: contrastRows, sample: (() => { const h = pages.find((p) => p.lang === page.lang && p.slug === ""); return h ? { ...h.data, lang: h.lang, content: h.html } : null; })() },
       json_ld: jsonLd(site, data.hours, page.lang, site.url + page.url),
     };
     const html = await engine.renderFile(`layouts/${page.data.layout ?? "page"}`, scope);

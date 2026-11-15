@@ -186,7 +186,8 @@ Privacy rules (the repository and its history are public and permanent):
 
 - Each component is one Liquid file in `templates/components/` or `templates/sections/` with its parameters named in a comment at the top.
 - `/styleguide/` renders every token and component. It is built with the site and kept out of search engines.
-- Layouts and CSS use tokens only. A test fails on any raw colour in the stylesheet. Things that sit on a dark photo (the hero, the header above it) carry the class `on-photo`, which gives them the night colours in both themes.
+- Layouts and CSS use tokens only: colour, type (family, size, weight, line height, tracking), space, radius, border, shadow, motion, layers, tap targets, measures and breakpoints. Tests fail on a raw colour, on a typed value for any of those, on a media query with a number that is not a breakpoint, and on an inline style in a template. The geometry of one component (a thumbnail width, a column count) stays in the stylesheet beside it.
+- The style guide lists tokens straight from `tokens.json` and components, sections and layouts straight from the template folders, each with the comment its file starts with. A test fails when a component or section has no entry or no comment. Things that sit on a dark photo (the hero, the header above it) carry the class `on-photo`, which gives them the night colours in both themes.
 - Every text and surface pair listed in `tokens.json` must reach WCAG AA contrast in both themes; a test checks it.
 - A new component arrives with its style guide entry in the same pull request.
 
@@ -234,7 +235,7 @@ One branch and one pull request per milestone or smaller. Each milestone starts 
 | 3 | Events (comedy feed done 15 Nov 2026; Eventfrog source still to come) | The home page and the events page match the comedy calendar for the next 60 days with no duplicates |
 | 4 | Gallery and photo review page (gallery and lightbox done 15 Nov 2026; review page and import built, first real batch still to run) | A batch of group photos is picked and published in one sitting |
 | 5 | German and polish (done 16 Nov 2026) | Both languages complete, Open Graph images, 404, sitemap, link check |
-| 6 | Design system complete | Every component is in the style guide; no style value outside tokens |
+| 6 | Design system complete (done 16 Nov 2026) | Every component is in the style guide; no style value outside tokens |
 | 7 | Editor MVP | Elias posts a photo and changes the hours from his phone, with the exact preview, without github.com |
 | 8 | Editor complete | Conflict handling, offline drafts, self-update, German interface |
 | 9 | Handover | robins-coffee.ch serves the new site; two approvers have each merged a change |
