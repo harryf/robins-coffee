@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { parse as parseYaml } from "yaml";
 import { renderSite, hoursRows, type Files, type Photo } from "../src/render";
-import { DAYS, weekFromYaml, weekToYaml, validateWeek, slugify, validateMoment, momentChanges, momentId, inEditScope, branchName, describe as describeChange, type NewMoment, type Week } from "../src/editor/changes";
+import { DAYS, weekFromYaml, weekToYaml, validateWeek, hoursEditable, slugify, validateMoment, momentChanges, momentId, inEditScope, branchName, describe as describeChange, type NewMoment, type Week } from "../src/editor/changes";
 import { github, toBase64, GitHubError } from "../src/editor/github";
 import { outOfScope } from "../scripts/check-edit-scope";
 
@@ -51,6 +51,21 @@ describe("editor: opening hours", () => {
     expect(problems.some((p) => p.startsWith("we: opening and closing time are the same"))).toBe(true);
     expect(validateWeek(weekFromYaml(hoursYml))).toEqual([]);
   });
+
+  test("the form refuses a file it could not write back whole", () => {
+    expect(hoursEditable(hoursYml)).toBe(true);
+    // two time spans on one day
+    expect(hoursEditable('regular:\n  - days: [mo]\n    open: "11:00"\n    close: "14:00"\n  - days: [mo, tu, we, th, fr, sa, su]\n    open: "17:00"\n    close: "23:00"\nexceptions: []\n')).toBe(false);
+    // a key the form has no field for
+    expect(hoursEditable('regular:\n  - days: [mo, tu, we, th, fr, sa, su]\n    open: "17:00"\n    close: "23:00"\n    note: "kitchen until 22"\nexceptions: []\n')).toBe(false);
+    // a comment at the left edge inside the block, which the rewrite would stop at
+    expect(hoursEditable('regular:\n  - days: [mo, tu]\n    open: "17:00"\n    close: "23:00"\n# weekend\n  - days: [we, th, fr, sa, su]\n    open: "10:00"\n    close: "23:00"\nexceptions: []\n')).toBe(false);
+    // no line break at the end, with regular: last
+    expect(hoursEditable('exceptions: []\nregular:\n  - days: [mo, tu, we, th, fr, sa, su]\n    open: "17:00"\n    close: "23:00"')).toBe(false);
+    // a time the form's fields cannot hold
+    expect(hoursEditable('regular:\n  - days: [mo, tu, we, th, fr, sa, su]\n    open: "17:00"\n    close: "24:00"\nexceptions: []\n')).toBe(false);
+    expect(hoursEditable("not: [yaml")).toBe(false);
+  });
 });
 
 describe("editor: post a photo", () => {
@@ -76,14 +91,14 @@ describe("editor: post a photo", () => {
   test("the post is two files, and the site builds with them: on the home feed and in its album", async () => {
     const changes = momentChanges(good, new Uint8Array([1, 2, 3]));
     expect(changes.map((c) => c.path)).toEqual(["moments/2026-11-20-friday-crowd-zuerich.jpg", "moments/2026-11-20-friday-crowd-zuerich.md"]);
-    const blob = "blob:https://example.org/1234";
+    const blob = "data:image/jpeg;base64,AAAA";
     const variant = [{ w: 1600, path: blob }];
     const pages = await renderSite({ ...files, [changes[1]!.path]: changes[1]!.text! }, { base: "/robins-coffee/", photos: { ...photos, [changes[0]!.path]: { width: 1600, height: 1200, jpg: variant, webp: variant } } });
     const home = pages.find((p) => p.out === "index.html")!.html;
     expect(home).toContain("Friday crowd, Zürich!");
-    // A photo that is not on the site yet keeps its blob: address; nothing is put in front of it.
+    // A photo that is not on the site yet keeps its own address; nothing is put in front of it.
     expect(home).toContain(`href="${blob}"`);
-    expect(home).not.toContain("/robins-coffee/blob:");
+    expect(home).not.toContain("/robins-coffee/data:");
     expect(pages.find((p) => p.out === "de/gallery/index.html")!.html).toContain("Freitagabend, volle Bar.");
   });
 });
@@ -99,7 +114,7 @@ describe("editor: what a change may touch", () => {
   });
 
   test("branch names and summaries", () => {
-    expect(branchName("Elias-B", "friday-crowd", new Date("2026-11-20T18:05:00Z"))).toBe("edit/elias-b/friday-crowd-2026-11-20-18-05");
+    expect(branchName("Elias-B", "friday-crowd", new Date("2026-11-20T18:05:00Z"))).toBe("edit/elias-b/friday-crowd-2026-11-20-18-05-00");
     const d = describeChange([...momentChanges({ date: "2026-11-20", slug: "x", caption: { en: "Hello", de: "Hallo" }, alt: { en: "a", de: "b" } }, new Uint8Array(1)), { path: "data/hours.yml", label: "Opening hours", text: "x" }], "elias");
     expect(d.title).toBe("Photo: Hello and 1 more");
     expect(d.body).toContain("@elias");
@@ -153,7 +168,7 @@ describe("editor: GitHub", () => {
   });
 
   test("a missing file reads as null; without a token no Authorization header is sent", async () => {
-    const { calls, doFetch } = fake({ [`GET ${R}/contents/site/data/hours.yml`]: { body: "regular: []\n" }, [`GET ${R}/pulls`]: { body: [{ number: 1, head: { ref: "edit/a/b" } }, { number: 2, head: { ref: "milestone-9" } }] } });
+    const { calls, doFetch } = fake({ [`GET ${R}/contents/site/data/hours.yml`]: { body: "regular: []\n" }, [`GET ${R}/pulls`]: { body: [{ number: 1, head: { ref: "edit/a/b", repo: { full_name: "o/r" } } }, { number: 2, head: { ref: "milestone-9", repo: { full_name: "o/r" } } }, { number: 3, head: { ref: "edit/x/y", repo: { full_name: "stranger/r" } } }] } });
     const gh = github("o/r", null, doFetch);
     expect(await gh.fileText("site/data/hours.yml", "main")).toBe("regular: []\n");
     expect(await gh.fileText("site/moments/none.jpg", "main")).toBeNull();
@@ -161,12 +176,13 @@ describe("editor: GitHub", () => {
     expect(calls.every((c) => c.auth === null)).toBe(true);
   });
 
-  test("publish squashes; a refusal from GitHub carries its reason", async () => {
+  test("publish squashes exactly the commit that was looked at; a refusal from GitHub carries its reason", async () => {
     const { calls, doFetch } = fake({ [`PUT ${R}/pulls/7/merge`]: { body: { merged: true } }, [`DELETE ${R}/git/refs/heads/edit/a/b`]: { status: 204, body: "" } });
-    await github("o/r", "t", doFetch).publish(7, "edit/a/b");
-    expect(calls[0]!.body).toEqual({ merge_method: "squash" });
+    await github("o/r", "t", doFetch).publish(7, "edit/a/b", "SEEN");
+    expect(calls[0]!.body).toEqual({ merge_method: "squash", sha: "SEEN" });
+    expect(calls[1]!.method + " " + calls[1]!.url).toBe(`DELETE ${R}/git/refs/heads/edit/a/b`);
     const no = fake({ [`PUT ${R}/pulls/7/merge`]: { status: 405, body: { message: "Required status check \"build\" is expected." } } });
-    const err = await github("o/r", "t", no.doFetch).publish(7, "edit/a/b").catch((e) => e);
+    const err = await github("o/r", "t", no.doFetch).publish(7, "edit/a/b", "SEEN").catch((e) => e);
     expect(err.message).toContain("Required status check");
   });
 });
@@ -181,10 +197,19 @@ describe("editor: the page and its bundle", () => {
     expect(page.data.noindex).toBe(true);
   });
 
-  test("the editor code never stores or sends the token anywhere but GitHub's API", async () => {
-    const src = await Bun.file(join(import.meta.dir, "..", "src", "editor", "github.ts")).text() + await Bun.file(join(import.meta.dir, "..", "src", "editor", "main.ts")).text();
+  test("the editor's source names no host but GitHub, logs nothing, and sandboxes its preview", async () => {
+    let src = "";
+    for (const f of new Bun.Glob("*.{ts,js}").scanSync({ cwd: join(import.meta.dir, "..", "src", "editor") })) src += await Bun.file(join(import.meta.dir, "..", "src", "editor", f)).text();
     expect(src.match(/https?:\/\/[a-z.]+/g)!.every((u) => ["https://api.github.com", "https://github.com"].includes(u))).toBe(true);
-    expect(src).not.toMatch(/console\.(log|info|debug)\(/);
-    expect(src).not.toContain("${token}`)"); // only ever inside the Bearer header
+    expect(src).not.toMatch(/console\.\w+\(/);
+    expect(src).toContain('sandbox: "allow-scripts"');
+    expect(src).not.toMatch(/sandbox: "[^"]*allow-same-origin/);
+    expect(src).not.toMatch(/innerHTML|insertAdjacentHTML|document\.write/);
+  });
+
+  test("the scope rule imports nothing, so CI can run the base branch's copy before installing", async () => {
+    expect(await Bun.file(join(import.meta.dir, "..", "src", "editor", "scope.ts")).text()).not.toMatch(/^import /m);
+    const guard = await Bun.file(join(import.meta.dir, "..", "scripts", "check-edit-scope.ts")).text();
+    expect([...guard.matchAll(/^import .* from "(.*)";$/gm)].map((m) => m[1])).toEqual(["../src/editor/scope"]);
   });
 });

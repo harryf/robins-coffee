@@ -13,8 +13,13 @@ export async function cleanInBrowser(file: Blob): Promise<CleanPhoto> {
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
-  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, width, height);
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "white"; // a see-through PNG would turn black in a JPEG
+  ctx.fillRect(0, 0, width, height);
+  ctx.drawImage(bitmap, 0, 0, width, height);
   bitmap.close();
   const blob = await new Promise<Blob>((done, fail) => canvas.toBlob((b) => (b ? done(b) : fail(new Error("This photo could not be read."))), "image/jpeg", JPEG_QUALITY / 100));
-  return { bytes: new Uint8Array(await blob.arrayBuffer()), width, height, url: URL.createObjectURL(blob) };
+  // A data: address, not a blob: one: the preview frame is sandboxed and could not load a blob.
+  const url = await new Promise<string>((done, fail) => { const r = new FileReader(); r.onload = () => done(String(r.result)); r.onerror = () => fail(new Error("This photo could not be read.")); r.readAsDataURL(blob); });
+  return { bytes: new Uint8Array(await blob.arrayBuffer()), width, height, url };
 }

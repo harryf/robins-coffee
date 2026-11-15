@@ -17,7 +17,9 @@ jobs:
     env:
       DIR: pr-preview/pr-${{ github.event.number }}
       BASE: /${{ github.event.repository.name }}/pr-preview/pr-${{ github.event.number }}/
-      HEAD_REF: ${{ github.head_ref }}
+      BASE_REF: ${{ github.base_ref }}
+      # The preview says which commit it was built from; the editor waits for the right one.
+      BUILD_COMMIT: ${{ github.event.pull_request.head.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,11 +28,19 @@ jobs:
         if: github.event.action != 'closed'
         with:
           bun-version: 1.4.2
+      - name: A change sent from the editor may only touch content, photos, events and data
+        # Runs before anything from the pull request is installed or run, with the rule
+        # as the base branch has it, so a change cannot loosen its own guard.
+        if: github.event.action != 'closed' && startsWith(github.head_ref, 'edit/')
+        shell: bash
+        run: |
+          set -euo pipefail
+          git worktree add --detach "$RUNNER_TEMP/base" "origin/$BASE_REF"
+          git diff --name-only --no-renames "origin/$BASE_REF...HEAD" > "$RUNNER_TEMP/changed.txt"
+          bun "$RUNNER_TEMP/base/scripts/check-edit-scope.ts" < "$RUNNER_TEMP/changed.txt"
       - if: github.event.action != 'closed'
         run: |
           bun install --frozen-lockfile
-          # A change sent from the editor may only touch content, photos, events and data.
-          if [[ "$HEAD_REF" == edit/* ]]; then git diff --name-only "origin/${{ github.base_ref }}...HEAD" | bun scripts/check-edit-scope.ts; fi
           bun test
           bun src/build.ts --base "$BASE" --origin "https://${{ github.repository_owner }}.github.io"
           bun scripts/check-links.ts dist --base "$BASE" --origin "https://${{ github.repository_owner }}.github.io"

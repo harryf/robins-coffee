@@ -22,6 +22,26 @@ export function weekFromYaml(text: string): Week {
   })) as Week;
 }
 
+/**
+ * Can the form keep everything this hours.yml says? It cannot when the file was written
+ * by hand in a shape the form has no fields for: two rules for one day, an extra key, a
+ * time like 24:00. Then the editor refuses, and nothing is lost by a silent rewrite.
+ */
+export function hoursEditable(text: string): boolean {
+  try {
+    const before = parseYaml(text);
+    const week = weekFromYaml(text);
+    if (validateWeek(week).length) return false;
+    const after = parseYaml(weekToYaml(text, week));
+    const perDay = (data: any) => DAYS.map((d) => (data.regular ?? []).filter((r: any) => (r.days ?? []).includes(d)).map((r: any) => (r.closed ? { closed: true } : { open: String(r.open), close: r.close == null ? null : String(r.close) })));
+    const keys = (data: any) => (data.regular ?? []).flatMap((r: any) => Object.keys(r)).filter((k: string) => !["days", "open", "close", "closed"].includes(k));
+    const rest = (data: any) => JSON.stringify({ ...data, regular: null });
+    return keys(before).length === 0 && perDay(before).every((rules) => rules.length <= 1) && JSON.stringify(perDay(before).map((r) => r[0] ?? { closed: true })) === JSON.stringify(perDay(after).map((r) => r[0] ?? { closed: true })) && rest(before) === rest(after) && (after.regular ?? []).flatMap((r: any) => r.days).length === 7;
+  } catch {
+    return false;
+  }
+}
+
 export function validateWeek(week: Week): string[] {
   const problems: string[] = [];
   for (const d of DAYS) {
@@ -84,17 +104,11 @@ export function momentChanges(m: NewMoment, photo: Uint8Array): Change[] {
   ];
 }
 
-/**
- * The files an editor pull request may touch, by repository path: content, moments,
- * events and data, never the design tokens, templates, code or workflows. The CI check
- * for `edit/*` branches (scripts/check-edit-scope.ts) uses the same function.
- */
-export const inEditScope = (repoPath: string) =>
-  /^site\/(content|moments|events)\/[^/].*/.test(repoPath) || (/^site\/data\/[^/]+$/.test(repoPath) && repoPath !== "site/data/tokens.json");
+export { inEditScope } from "./scope";
 
-/** edit/<login>/<slug>-<date>-<hhmm>: the time keeps two changes on one day apart. */
+/** edit/<login>/<slug>-<date>-<time>: the time, to the second, keeps two changes apart. */
 export function branchName(login: string, slug: string, now: Date): string {
-  const stamp = now.toISOString().slice(0, 16).replace(/[T:]/g, "-");
+  const stamp = now.toISOString().slice(0, 19).replace(/[T:]/g, "-");
   return `edit/${slugify(login) || "editor"}/${slug || "change"}-${stamp}`;
 }
 

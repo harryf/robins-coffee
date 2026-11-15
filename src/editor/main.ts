@@ -6,12 +6,12 @@
 // (edit/site.json), so looking and trying needs no login. GitHub is asked only when a
 // change is sent.
 import { renderSite, type Files, type Photo } from "../render";
-import { DAYS, weekFromYaml, weekToYaml, validateWeek, validateMoment, momentChanges, momentId, slugify, branchName, describe, type Change, type Week, type NewMoment } from "./changes";
+import { DAYS, weekFromYaml, weekToYaml, validateWeek, hoursEditable, validateMoment, momentChanges, momentId, slugify, branchName, describe, type Change, type Week, type NewMoment } from "./changes";
 import { github, GitHubError, type Pull } from "./github";
 import { cleanInBrowser, type CleanPhoto } from "./photo";
 import { parse as parseYaml } from "yaml";
 
-type Bundle = { built_at: string; base: string; preview_root: string; version: string; repo: string; branch: string; files: Files; photos: Record<string, Photo> };
+type Bundle = { built_at: string; commit: string | null; base: string; preview_root: string; version: string; repo: string; branch: string; files: Files; photos: Record<string, Photo> };
 type Child = Node | string | null | undefined | false;
 
 const TOKEN_KEY = "robins-editor-token";
@@ -60,18 +60,31 @@ function home() {
     draft.length ? h("div", { class: "card" },
       h("h2", { class: "eyebrow" }, "Your change, not sent yet"),
       h("ul", { class: "ed-list" }, ...[...new Set(draft.map((c) => c.label))].map((l) => h("li", {}, l))),
-      h("p", { class: "ed-row" }, button("See it on the site", () => preview()), button("Send for publishing", send, true), button("Throw away", () => { if (draft.length) { draft = []; home(); } }))) : null,
+      h("p", { class: "ed-row" }, button("See it on the site", () => preview()), button("Send for publishing", send, true), throwAway())) : null,
     h("h2", { class: "h-lg" }, "Waiting to be published"), waiting,
-    h("p", { class: "ed-note" }, who ? `Signed in as ${who.login}. ` : "", who ? h("button", { type: "button", class: "ed-link", onclick: signOut }, "Sign out") : null,
+    h("p", { class: "ed-note" }, who ? `Signed in as ${who.login}. ` : token ? "A sign-in is remembered on this device. " : "", token ? h("button", { type: "button", class: "ed-link", onclick: signOut }, "Sign out") : null,
       ` Site data from ${bundle.built_at.slice(0, 16).replace("T", " ")} UTC.`));
   github(bundle.repo, token).editorPulls().then(
     (pulls) => waiting.replaceChildren(pulls.length ? h("ul", { class: "ed-list" }, ...pulls.map((p) => h("li", {}, h("button", { type: "button", class: "ed-link", onclick: () => status(p.number) }, p.title), ` (by ${p.user.login})`))) : h("p", { class: "ed-note" }, "Nothing is waiting.")),
     (e) => waiting.replaceChildren(h("p", { class: "ed-note" }, `The list could not be loaded: ${say(e)}`)));
 }
 
+/** Two taps to throw a change away: the second one is the question. */
+function throwAway() {
+  let asked = false;
+  const b = button("Throw away", () => {
+    if (!asked) { asked = true; b.textContent = "Really throw it away?"; return; }
+    draft = [];
+    for (const k of Object.keys(draftPhotos)) delete draftPhotos[k];
+    home();
+  });
+  return b;
+}
+
 // ---- opening hours ----
 function hoursForm() {
   const original = files()["data/hours.yml"]!;
+  if (!hoursEditable(original)) return screen("Opening hours", h("p", {}, "The opening hours file was written by hand in a way this form cannot keep (two time spans on one day, or a note). Changing it here would lose that, so the form stays closed. Ask Harry to change the hours."), back());
   const week: Week = weekFromYaml(original);
   const names: Record<string, string> = parseYaml(bundle.files["data/i18n.yml"]!).en.days;
   const out = h("div", {});
@@ -116,15 +129,20 @@ function photoForm() {
   const album = h("select", {}, h("option", { value: "" }, "No album"), ...albums.map((a) => h("option", { value: a.slug }, a.title.en ?? a.slug))) as HTMLSelectElement;
   const feed = input({ type: "checkbox" });
   feed.checked = true;
+  let pick = 0;
   file.addEventListener("change", async () => {
     photo = null;
+    const mine = ++pick; // a slower, earlier pick must not replace a later one
     const picked = file.files?.[0];
     if (!picked) return thumb.replaceChildren();
     thumb.replaceChildren(h("p", { class: "ed-note" }, "Preparing the photo…"));
     try {
-      photo = await cleanInBrowser(picked);
+      const cleaned = await cleanInBrowser(picked);
+      if (mine !== pick) return;
+      photo = cleaned;
       thumb.replaceChildren(h("img", { src: photo.url, alt: "The photo you picked", width: photo.width, height: photo.height }), h("p", { class: "ed-note" }, `${photo.width} x ${photo.height} px, ${Math.round(photo.bytes.length / 1024)} KB. Location and phone details are removed.`));
     } catch (e) {
+      if (mine !== pick) return;
       thumb.replaceChildren(problemsBox([`This photo could not be read (${say(e)}). Try a JPEG.`]));
     }
   });
@@ -156,7 +174,9 @@ function photoForm() {
 // ---- preview: the real renderer on the real files plus the change ----
 async function preview(anchor = "") {
   const pages = [["index.html", "Home, English"], ["de/index.html", "Home, German"], ["gallery/index.html", "Photos"], ["de/gallery/index.html", "Photos, German"]];
-  const frame = h("iframe", { class: "ed-frame", title: "Preview of the site with your change" }) as HTMLIFrameElement;
+  // Sandboxed without "allow-same-origin": whatever script the previewed page carries runs
+  // in a throwaway origin and cannot read this page's storage, where a sign-in may be kept.
+  const frame = h("iframe", { class: "ed-frame", sandbox: "allow-scripts", title: "Preview of the site with your change" }) as HTMLIFrameElement;
   const out = h("div", {});
   const pick = h("select", { "aria-label": "Page" }, ...pages.map(([v, l]) => h("option", { value: v }, l))) as HTMLSelectElement;
   const width = h("select", { "aria-label": "Width" }, h("option", { value: "phone" }, "Phone"), h("option", { value: "full" }, "Full width")) as HTMLSelectElement;
@@ -186,7 +206,7 @@ async function preview(anchor = "") {
 function signIn(then: () => void, problem = "") {
   const input = h("input", { type: "password", autocomplete: "off", spellcheck: "false", required: true }) as HTMLInputElement;
   const remember = h("input", { type: "checkbox" }) as HTMLInputElement;
-  remember.checked = true;
+  // Off unless asked for: a remembered sign-in can be read by any script on this address.
   const out = h("div", {}, problem ? problemsBox([problem]) : null);
   const go = async () => {
     const candidate = input.value.trim();
@@ -215,7 +235,7 @@ function signIn(then: () => void, problem = "") {
       h("label", { class: "ed-check" }, remember, "Remember it on this device"),
       h("p", { class: "ed-row" }, h("button", { type: "submit", class: "btn btn--neon" }, "Sign in"), button("Cancel", home))),
     out,
-    h("p", { class: "ed-note" }, "The token stays in this browser and is sent only to api.github.com. Do not tick \"Remember\" on a device other people use."));
+    h("p", { class: "ed-note" }, "The token is sent only to api.github.com. Without \"Remember\" it is forgotten when you close or reload this page. Tick it only on your own device."));
 }
 function signOut() {
   token = null;
@@ -237,15 +257,17 @@ async function send() {
     // The editor never overwrites someone else's work: a file that changed on GitHub since this editor loaded stops the send.
     for (const c of draft.filter((d) => d.text !== undefined && d.path in bundle.files)) {
       const now = await gh.fileText(`site/${c.path}`, bundle.branch);
-      if (now !== null && now !== bundle.files[c.path]) throw new Error(`"${c.label}" was changed by someone else a moment ago. Reload the editor and make your change again.`);
+      if (now !== null && now !== bundle.files[c.path]) throw new Error(`"${c.label}" on GitHub is newer than what this editor loaded: someone changed it, or the site is still being updated. Wait a minute, reload the editor and make your change again.`);
     }
     for (const c of draft.filter((d) => d.bytes)) if ((await gh.fileText(`site/${c.path}`, bundle.branch)) !== null) throw new Error("A photo with this date and caption was published a moment ago. Change the caption a little.");
     const { title, body } = describe(draft, who.login);
     const slug = slugify(title.replace(/^Photo: /, "")) || "change";
     const branch = branchName(who.login, slug, new Date());
     await gh.commit(branch, bundle.branch, title, draft);
-    const pull = await gh.openPull(branch, bundle.branch, title, body);
+    // A branch with no pull request would sit in the public repository for ever: take it back if the second step fails.
+    const pull = await gh.openPull(branch, bundle.branch, title, body).catch(async (e) => { await gh.removeBranch(branch); throw e; });
     draft = [];
+    for (const k of Object.keys(draftPhotos)) delete draftPhotos[k];
     status(pull.number, true);
   } catch (e) {
     if (e instanceof GitHubError && e.status === 401) { token = null; who = null; return signIn(send, say(e)); }
@@ -258,6 +280,7 @@ async function status(number: number, fresh = false) {
   const out = h("div", {});
   const previewUrl = `${bundle.preview_root}pr-preview/pr-${number}/`;
   let timer = 0;
+  const started = Date.now();
   const leave = () => { clearTimeout(timer); home(); };
   screen(`Change ${number}`, fresh ? h("p", { class: "lead" }, "Sent. It is being built and checked now; that takes about a minute.") : null, out, h("p", {}, button("Back", leave)));
   const gh = github(bundle.repo, token);
@@ -267,17 +290,21 @@ async function status(number: number, fresh = false) {
       const pull: Pull = await gh.pull(number);
       if (pull.merged) return out.replaceChildren(h("p", { class: "lead" }, "Published. The live site shows it in about a minute."));
       if (pull.state !== "open") return out.replaceChildren(h("p", {}, "This change was closed without being published."));
-      const ready = await fetch(previewUrl, { method: "HEAD", cache: "no-store" }).then((r) => r.ok, () => false);
+      // The preview is published only after the tests, the build and the link check have passed,
+      // and it says which commit it was built from. Ready means: built from the commit the branch is at now.
+      const built: string | null = await fetch(previewUrl + "edit/site.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((j) => j?.commit ?? null, () => null);
+      const ready = built !== null && built === pull.head.sha;
+      const slow = !ready && Date.now() - started > 5 * 60 * 1000;
       const publish = button("Publish now", async () => {
         if (!token) return signIn(() => status(number));
         publish.setAttribute("disabled", "");
-        try { await github(bundle.repo, token).publish(number, pull.head.ref); draw(); }
+        try { await github(bundle.repo, token).publish(number, pull.head.ref, pull.head.sha); draw(); }
         catch (e) { publish.removeAttribute("disabled"); note.replaceChildren(problemsBox([`It cannot be published yet. ${say(e)}`])); }
       }, true);
       const note = h("div", {});
       out.replaceChildren(...[
         h("p", {}, h("strong", {}, pull.title), ` (by ${pull.user.login})`),
-        ready ? h("p", {}, "It passed the checks. ", h("a", { href: previewUrl, target: "_blank", rel: "noopener" }, "Look at the built site with this change"), ".") : h("p", { class: "ed-note" }, "Still being built and checked…"),
+        ready ? h("p", {}, "It passed the checks. ", h("a", { href: previewUrl, target: "_blank", rel: "noopener" }, "Look at the built site with this change"), ".") : h("p", { class: "ed-note" }, slow ? "This is taking longer than it should. A check may have failed; ask Harry to look at the pull request on GitHub." : "Still being built and checked…"),
         ready ? h("p", { class: "ed-row" }, publish) : null, note].filter((c): c is HTMLElement => c !== null));
       if (!ready) timer = window.setTimeout(draw, 15000);
     } catch (e) {

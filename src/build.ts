@@ -108,7 +108,7 @@ async function buildEditor(files: Files, photos: Record<string, Photo>, version:
   if (!built.success) throw new Error("editor bundle failed:\n" + built.logs.join("\n"));
   const site = parseYaml(files["data/site.yml"]!);
   const night = JSON.parse(files["data/tokens.json"]!).color.night;
-  await Bun.write(join(dir, "site.json"), JSON.stringify({ built_at: new Date().toISOString(), base, preview_root: base.replace(/pr-preview\/pr-\d+\/$/, ""), version, repo: site.repo, branch: site.branch, files, photos }));
+  await Bun.write(join(dir, "site.json"), JSON.stringify({ built_at: new Date().toISOString(), commit: process.env.BUILD_COMMIT ?? null, base, preview_root: base.replace(/pr-preview\/pr-\d+\/$/, ""), version, repo: site.repo, branch: site.branch, files, photos }));
   await Bun.write(join(dir, "manifest.webmanifest"), JSON.stringify({
     name: `${site.name} editor`, short_name: `${site.name} edit`, start_url: "./", scope: "./", display: "standalone",
     background_color: night.bg, theme_color: night.bg,

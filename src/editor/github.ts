@@ -8,7 +8,7 @@ const API = "https://api.github.com";
 export class GitHubError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
-export type Pull = { number: number; title: string; html_url: string; state: string; merged: boolean; mergeable_state?: string; head: { ref: string; sha: string }; user: { login: string } };
+export type Pull = { number: number; title: string; html_url: string; state: string; merged: boolean; mergeable_state?: string; head: { ref: string; sha: string; repo: { full_name: string } | null }; user: { login: string } };
 
 export function toBase64(bytes: Uint8Array): string {
   let s = "";
@@ -64,14 +64,21 @@ export function github(repo: string, token: string | null, doFetch: typeof fetch
     },
     openPull: (branch: string, base: string, title: string, body: string): Promise<Pull> => json("POST", `${r}/pulls`, { head: branch, base, title, body }),
     pull: (n: number): Promise<Pull> => json("GET", `${r}/pulls/${n}`),
-    /** Open pull requests that came from the editor. */
+    /** Open pull requests that came from the editor: an edit/ branch of this repository, never a fork. */
     async editorPulls(): Promise<Pull[]> {
-      return ((await json("GET", `${r}/pulls?state=open&per_page=50`)) as Pull[]).filter((p) => p.head.ref.startsWith("edit/"));
+      return ((await json("GET", `${r}/pulls?state=open&per_page=50`)) as Pull[]).filter((p) => p.head.ref.startsWith("edit/") && p.head.repo?.full_name === repo);
     },
-    /** Squash and merge. GitHub refuses while a required check or review is missing; the message says which. */
-    async publish(n: number, branch: string): Promise<void> {
-      await json("PUT", `${r}/pulls/${n}/merge`, { merge_method: "squash" });
-      await call("DELETE", `${r}/git/refs/heads/${branch}`).catch(() => undefined); // the repository may already have removed it
+    /**
+     * Squash and merge exactly the commit the person looked at (`sha`); GitHub refuses if the
+     * branch moved since, and while a required check or review is missing. Its message says which.
+     */
+    async publish(n: number, branch: string, sha: string): Promise<void> {
+      await json("PUT", `${r}/pulls/${n}/merge`, { merge_method: "squash", sha });
+      await this.removeBranch(branch);
+    },
+    /** Best effort: the repository may already have removed it. */
+    async removeBranch(branch: string): Promise<void> {
+      await call("DELETE", `${r}/git/refs/heads/${branch}`).catch(() => undefined);
     },
   };
 }
