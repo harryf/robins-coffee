@@ -232,6 +232,7 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 .editor .form small { font-weight: var(--weight-regular); color: var(--c-muted); }
 .editor .form input[type="file"] { padding: var(--space-2); }
 .editor button.btn { cursor: pointer; font: inherit; font-weight: var(--weight-bold); }
+.editor button.btn:not(.btn--neon) { background: transparent; }
 .editor button.btn[disabled] { opacity: 0.5; cursor: default; }
 .ed-actions { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); max-width: var(--measure-form); }
 .ed-actions .btn { min-height: 5rem; font-size: var(--size-lg); }

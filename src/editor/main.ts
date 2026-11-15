@@ -164,8 +164,8 @@ async function preview(anchor = "") {
     try {
       const rendered = await renderSite(files(), { base: bundle.base, photos: { ...bundle.photos, ...draftPhotos }, version: bundle.version, origin: location.origin, now: new Date() });
       const html = rendered.find((p) => p.out === pick.value)!.html;
-      // The page's own script is asked to jump to the changed part once it has loaded.
-      frame.srcdoc = anchor ? html.replace("</body>", `<script>addEventListener("load",function(){var e=document.querySelector(${JSON.stringify(anchor)});if(e)e.scrollIntoView();});</script></body>`) : html;
+      // The page is asked to jump to the changed part once it has loaded (inside the frame only, so the editor itself stays put).
+      frame.srcdoc = anchor ? html.replace("</body>", `<script>addEventListener("load",function(){var e=document.querySelector(${JSON.stringify(anchor)});if(e)scrollTo(0,e.getBoundingClientRect().top+scrollY);});</script></body>`) : html;
       frame.dataset.width = width.value;
       out.replaceChildren();
     } catch (e) {
