@@ -50,4 +50,5 @@ jobs:
         if: github.event.action == 'opened' && github.event.pull_request.head.repo.full_name == github.repository
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh pr comment ${{ github.event.number }} --repo ${{ github.repository }} --body "Preview, ready about a minute after each push: https://${{ github.repository_owner }}.github.io$BASE"
+        run: |
+          gh pr comment ${{ github.event.number }} --repo ${{ github.repository }} --body "Preview, ready about a minute after each push: https://${{ github.repository_owner }}.github.io$BASE"

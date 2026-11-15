@@ -103,7 +103,7 @@ All content is Markdown with front matter or a small YAML file, so every change 
 | Type | Location | Key fields |
 |---|---|---|
 | Page | `site/content/<lang>/<slug>.md` | title, description, layout, body |
-| Home | `site/content/<lang>/index.md` + `site/data/home.yml` | texts per language; section order, hero photo, ticker words |
+| Home | `site/content/<lang>/index.md` + `site/data/home.yml` | texts per language; section order, hero photo |
 | Moment | `site/moments/<date>-<slug>.md` + `.jpg` | date, caption and alt text in EN and DE |
 | Imported event | fetched at build time, never committed (section 7) | generated |
 | Manual event | `site/events/<date>-<slug>.md` | title, start, end, price text, ticket URL, image, category |
