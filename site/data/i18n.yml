@@ -16,6 +16,7 @@ en:
   days: { mo: "Monday", tu: "Tuesday", we: "Wednesday", th: "Thursday", fr: "Friday", sa: "Saturday", su: "Sunday" }
   days_short: { mo: "Mon", tu: "Tue", we: "Wed", th: "Thu", fr: "Fri", sa: "Sat", su: "Sun" }
   range_sep: " to "
+  ticker: ["Coffee", "Cocktails", "Comedy", "Zähringerstrasse 33", "Zürich Old Town"]
 de:
   nav_home: "Start"
   open_now: "Jetzt offen"
@@ -34,3 +35,4 @@ de:
   days: { mo: "Montag", tu: "Dienstag", we: "Mittwoch", th: "Donnerstag", fr: "Freitag", sa: "Samstag", su: "Sonntag" }
   days_short: { mo: "Mo", tu: "Di", we: "Mi", th: "Do", fr: "Fr", sa: "Sa", su: "So" }
   range_sep: " bis "
+  ticker: ["Kaffee", "Cocktails", "Comedy", "Zähringerstrasse 33", "Zürcher Altstadt"]

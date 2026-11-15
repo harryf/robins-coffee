@@ -2,5 +2,4 @@
 # component in site/templates/sections/ plus one line here.
 sections: [hero, ticker, moments, about, visit]
 hero_photo: "moments/2026-11-07-elias-at-the-taps.jpg"
-ticker: ["Coffee", "Cocktails", "Comedy", "Zähringerstrasse 33", "Zürich Old Town"]
 moments_count: 9

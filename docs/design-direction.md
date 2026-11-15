@@ -28,7 +28,6 @@ Seven photos from the bar's group (October and November 2026) and the two logo f
 ## Open
 
 - The roundel (173 px) and wordmark (512 px) are small bitmaps. Vector originals would let the roundel pattern become a section divider and a favicon set.
-- The ticker words are the same in both languages.
 - A manual day and night switch for visitors (today only `?theme=`).
 - Whether the day theme should start with the bar's weekend opening (10:00) rather than 06:00.
 - The four photos of the current site (barista, patterned cups) are not placed yet; they belong in an "about" strip or the first gallery album.
