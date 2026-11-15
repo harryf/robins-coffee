@@ -8,7 +8,7 @@ import { parseArgs } from "node:util";
 import { mkdir, rm, cp } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join, dirname } from "node:path";
-import { renderSite, type Files, type Photo } from "./render";
+import { renderSite, sitemapXml, resolveUrl, parseFrontMatter, OG_SIZE, type Files, type Photo } from "./render";
 import { tokensCss } from "./tokens";
 import { parse as parseYaml } from "yaml";
 import { fromIyfFeed, fromManual, mergeEvents, upcoming, toIcs, type SiteEvent } from "./events";
@@ -72,6 +72,50 @@ async function buildAssets(files: Files): Promise<string> {
   return Bun.hash(css).toString(36).slice(0, 8);
 }
 
+/**
+ * Link preview pictures for chat apps and social sites: the photo cropped to OG_SIZE,
+ * kept from the top (faces sit high in a photo), darkened towards the bottom, with the wordmark on it. No text is drawn, so the
+ * picture is the same on every machine. Made for the hero photo and any page's `og_photo`.
+ */
+async function buildOg(files: Files, photos: Record<string, Photo>) {
+  const night = JSON.parse(files["data/tokens.json"]!).color.night;
+  const keys = new Set<string>([parseYaml(files["data/home.yml"]!).hero_photo]);
+  for (const [p, text] of Object.entries(files)) if (p.startsWith("content/") && parseFrontMatter(text).data.og_photo) keys.add(parseFrontMatter(text).data.og_photo);
+  const { width, height } = OG_SIZE;
+  const shade = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0.35" stop-color="${night.bg}" stop-opacity="0"/><stop offset="1" stop-color="${night.bg}" stop-opacity="0.9"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/></svg>`);
+  const wordmark = await sharp(join(SITE, "assets", "brand", "wordmark-white.png")).resize({ width: 420 }).toBuffer({ resolveWithObject: true });
+  await mkdir(join(OUT, "og"), { recursive: true });
+  for (const key of keys) {
+    if (!photos[key]) throw new Error(`link preview: photo ${key} is missing`);
+    const bytes = new Uint8Array(await Bun.file(join(SITE, key)).arrayBuffer());
+    const file = `og/${key.slice(key.indexOf("/") + 1, -4)}-${Bun.hash(bytes).toString(36).slice(0, 8)}.jpg`;
+    await sharp(bytes).resize({ width, height, fit: "cover", position: "north" })
+      .composite([{ input: shade }, { input: wordmark.data, left: 64, top: height - wordmark.info.height - 52 }])
+      .jpeg({ quality: 82, mozjpeg: true }).toFile(join(OUT, file));
+    photos[key]!.og = file;
+  }
+}
+
+/** Favicons: the R on the night colour for the small sizes, the roundel for the home screen sizes. Bitmaps until vector logos arrive. */
+async function buildIcons(files: Files) {
+  const background = JSON.parse(files["data/tokens.json"]!).color.night.bg;
+  const icon = async (mark: string, size: number, inner: number) =>
+    sharp({ create: { width: size, height: size, channels: 4, background } })
+      .composite([{ input: await sharp(join(SITE, "assets", "brand", mark)).resize({ width: inner, height: inner, fit: "inside" }).toBuffer() }])
+      .png().toBuffer();
+  await mkdir(join(OUT, "assets", "icons"), { recursive: true });
+  const small = await icon("r-mark-white.png", 32, 30);
+  await Bun.write(join(OUT, "assets", "icons", "icon-32.png"), small);
+  await Bun.write(join(OUT, "assets", "icons", "icon-192.png"), await icon("logo-roundel-white.png", 192, 168));
+  await Bun.write(join(OUT, "assets", "icons", "apple-touch-icon.png"), await icon("logo-roundel-white.png", 180, 156));
+  // favicon.ico is a six byte header, one sixteen byte entry and the 32 px PNG itself.
+  const head = Buffer.alloc(22);
+  head.writeUInt16LE(1, 2); head.writeUInt16LE(1, 4);
+  head.writeUInt8(32, 6); head.writeUInt8(32, 7); head.writeUInt16LE(1, 10); head.writeUInt16LE(32, 12);
+  head.writeUInt32LE(small.length, 14); head.writeUInt32LE(22, 18);
+  await Bun.write(join(OUT, "favicon.ico"), Buffer.concat([head, small]));
+}
+
 const warn = (msg: string) => console.warn(process.env.GITHUB_ACTIONS ? `::warning title=Events::${msg}` : `WARNING: ${msg}`);
 const getJson = async (src: string) => (/^https?:/.test(src) ? await (await fetch(src, { signal: AbortSignal.timeout(20_000) })).json() : JSON.parse(await Bun.file(src).text()));
 
@@ -130,6 +174,8 @@ await rm(OUT, { recursive: true, force: true });
 await mkdir(OUT, { recursive: true });
 const files = await readSite();
 const photos = await buildPhotos();
+await buildOg(files, photos);
+await buildIcons(files);
 const version = await buildAssets(files);
 const now = new Date();
 const events = await loadEvents(files);
@@ -146,6 +192,9 @@ for (const page of pages) {
 }
 await Bun.write(join(OUT, ".nojekyll"), "");
 // While the preview flag is on, ask crawlers to stay away from the whole site.
-const preview = /^preview:\s*true/m.test(files["data/site.yml"]!);
-await Bun.write(join(OUT, "robots.txt"), preview ? "User-agent: *\nDisallow: /\n" : "User-agent: *\nAllow: /\nDisallow: /styleguide/\n");
+const site = parseYaml(files["data/site.yml"]!);
+// The sitemap needs full addresses, so a relative build (file://, editor preview) has none.
+const abs = (path: string) => (values.origin ?? site.url).replace(/\/$/, "") + resolveUrl(path, base, 0);
+if (base !== "relative") await Bun.write(join(OUT, "sitemap.xml"), sitemapXml(pages, site.languages[0], abs));
+await Bun.write(join(OUT, "robots.txt"), site.preview || base === "relative" ? "User-agent: *\nDisallow: /\n" : `User-agent: *\nAllow: /\nDisallow: ${resolveUrl("/styleguide/", base, 0)}\n\nSitemap: ${abs("/sitemap.xml")}\n`);
 console.log(`built ${pages.length} pages, ${upcoming(events, now).length} upcoming events, ${Object.keys(photos).length} photos into ${values.out}/ (base ${base}) in ${Math.round(performance.now() - started)} ms`);

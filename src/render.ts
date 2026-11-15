@@ -13,7 +13,8 @@ import { upcoming, type SiteEvent } from "./events";
 /** Text files keyed by path relative to site/, for example "content/en/index.md". */
 export type Files = Record<string, string>;
 export type Variant = { w: number; path: string };
-export type Photo = { width: number; height: number; jpg: Variant[]; webp: Variant[] };
+export type Photo = { width: number; height: number; jpg: Variant[]; webp: Variant[]; /** The link preview picture (OG_SIZE), when the build made one. */ og?: string };
+export const OG_SIZE = { width: 1200, height: 630 };
 export type RenderOptions = {
   /** "/" on the domain, "/robins-coffee/" on GitHub Pages, or "relative" for file:// and the editor preview. */
   base: string;
@@ -190,7 +191,9 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
     const slug = name === "index" ? "" : name!;
     const dir = (lang === defaultLang ? "" : `${lang}/`) + (slug ? `${slug}/` : "");
     const { data: fm, body } = parseFrontMatter(text);
-    pages.push({ lang: lang!, slug, url: "/" + dir, out: dir + "index.html", depth: dir.split("/").length - 1, data: fm, html: marked.parse(body, { async: false }) as string });
+    // `permalink` names the output file itself (404.html must sit at the root for GitHub Pages).
+    const out = fm.permalink ? String(fm.permalink).replace(/^\//, "") : dir + "index.html";
+    pages.push({ lang: lang!, slug, url: fm.permalink ? "/" + out : "/" + dir, out, depth: out.split("/").length - 1, data: fm, html: marked.parse(body, { async: false }) as string });
   }
 
   const out: Page[] = [];
@@ -199,6 +202,11 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
     const t = data.i18n[page.lang];
     const alternates = pages.filter((p) => p.slug === page.slug).map((p) => ({ lang: p.lang, url: p.url }));
     const other = alternates.find((a) => a.lang !== page.lang);
+    // The link preview picture: the page's own `og_photo`, or the hero photo. Its alt text is the moment's.
+    const ogKey: string | undefined = page.data.og_photo ?? data.home?.hero_photo;
+    const ogMoment = moments.find((m) => m.photo === ogKey);
+    const og = ogKey && opts.photos[ogKey]?.og ? { path: "/" + opts.photos[ogKey]!.og, ...OG_SIZE, alt: ogMoment?.alt?.[page.lang] ?? ogMoment?.alt?.[defaultLang] ?? site.legal_name } : null;
+    const langUrl = (l: string, path: string) => (l === defaultLang ? "" : `/${l}`) + path;
     const views = ahead.map((e) => eventView(e, page.lang, t));
     const months: { label: string; events: typeof views }[] = [];
     for (const v of views) (months.at(-1)?.label === v.month_label ? months.at(-1)! : months[months.push({ label: v.month_label, events: [] }) - 1]!).events.push(v);
@@ -208,7 +216,11 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
       home: data.home, tokens: data.tokens, hours: data.hours,
       hours_rows: hoursRows(data.hours, t),
       home_url: page.lang === defaultLang ? "/" : `/${page.lang}/`,
-      alternates, other,
+      alternates, other, og,
+      x_default: alternates.find((a) => a.lang === defaultLang)?.url,
+      og_locales_other: alternates.filter((a) => a.lang !== page.lang).map((a) => data.i18n[a.lang].og_locale),
+      // Every language at once, for the one page that speaks them all (404).
+      all_langs: langs.map((l) => ({ lang: l, t: data.i18n[l], home_url: langUrl(l, "/"), events_url: langUrl(l, "/events/"), gallery_url: langUrl(l, "/gallery/") })),
       photos: opts.photos,
       // The hero photo is not repeated as the first card of the feed.
       // Nor is a moment marked `feed: false`, which lives in the gallery only.
@@ -230,4 +242,21 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
     out.push({ ...page, html });
   }
   return out;
+}
+
+/**
+ * sitemap.xml: every page a search engine may list, each with its language versions.
+ * `abs` turns a site path ("/de/") into the full address the build is served from.
+ */
+export function sitemapXml(pages: Page[], defaultLang: string, abs: (path: string) => string): string {
+  const x = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  const listed = pages.filter((p) => !p.data.noindex).sort((a, b) => (a.url < b.url ? -1 : 1));
+  const entries = listed.map((p) => {
+    const versions = listed.filter((o) => o.slug === p.slug);
+    const links = versions.map((o) => `    <xhtml:link rel="alternate" hreflang="${o.lang}" href="${x(abs(o.url))}"/>`);
+    const main = versions.find((o) => o.lang === defaultLang);
+    if (main) links.push(`    <xhtml:link rel="alternate" hreflang="x-default" href="${x(abs(main.url))}"/>`);
+    return `  <url>\n    <loc>${x(abs(p.url))}</loc>\n${links.join("\n")}\n  </url>`;
+  });
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${entries.join("\n")}\n</urlset>\n`;
 }

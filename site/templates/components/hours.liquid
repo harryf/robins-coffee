@@ -1,6 +1,6 @@
 {% comment %} hours: hours_rows, t {% endcomment %}
 <dl class="hours">
 {%- for r in hours_rows %}
-  <div class="hours__row"><dt>{{ r.label }}</dt><dd>{% if r.closed %}{{ t.closed_today }}{% else %}{{ r.open }}{% if r.close %}{{ t.range_sep }}{{ r.close }}{% else %}, {{ t.until_late }}{% endif %}{% endif %}</dd></div>
+  <div class="hours__row"><dt>{{ r.label }}</dt><dd>{% if r.closed %}{{ t.closed }}{% else %}{{ r.open }}{% if r.close %}{{ t.range_sep }}{{ r.close }}{% else %}, {{ t.until_late }}{% endif %}{% endif %}</dd></div>
 {%- endfor %}
 </dl>

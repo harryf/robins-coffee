@@ -13,7 +13,10 @@ bun install
 bun run build          # writes dist/ for the domain root
 bun run build:local    # same, with relative links: open dist/index.html from disk
 bun test
+bun run check          # build, link check and tests in one go
 ```
+
+The build also writes what a visitor never sees as a page: `404.html`, `sitemap.xml`, `robots.txt`, the favicons and the 1200 x 630 link preview pictures in `og/`. A page shows the hero photo in link previews unless its front matter names another with `og_photo: moments/<file>.jpg`.
 
 ## Where things are
 
@@ -27,7 +30,7 @@ bun test
 | `site/templates/` | Liquid layouts, sections and components |
 | `site/assets/` | CSS, the one script, logo files |
 | `src/` | The generator |
-| `scripts/` | Tools: `add-photo.ts`, `review-photos.ts`, `import-selection.ts` |
+| `scripts/` | Tools: `add-photo.ts`, `review-photos.ts`, `import-selection.ts`, `check-links.ts` |
 | `inbox/` | Local only, not in git: the photo review page and its records |
 | `docs/` | [The spec](docs/spec.md), [design direction](docs/design-direction.md), decisions, the baseline of the old site |
 
@@ -63,4 +66,4 @@ Everything under `inbox/` stays on the Mac: the review page, the chat id and the
 
 ## How a change goes live
 
-Open a pull request. CI builds and tests it and posts a preview under `/pr-preview/pr-<number>/`. Merging to `main` deploys.
+Open a pull request. CI builds it, tests it, checks every link in the built site (pages, anchors, images, upper and lower case) and posts a preview under `/pr-preview/pr-<number>/`. Merging to `main` deploys.

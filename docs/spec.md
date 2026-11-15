@@ -233,7 +233,7 @@ One branch and one pull request per milestone or smaller. Each milestone starts 
 | 2 | Design pass (critique and Lighthouse done 15 Nov 2026) | Harry has reviewed the direction on his phone; critique fixes are in; Lighthouse mobile 95+ for performance and accessibility |
 | 3 | Events (comedy feed done 15 Nov 2026; Eventfrog source still to come) | The home page and the events page match the comedy calendar for the next 60 days with no duplicates |
 | 4 | Gallery and photo review page (gallery and lightbox done 15 Nov 2026; review page and import built, first real batch still to run) | A batch of group photos is picked and published in one sitting |
-| 5 | German and polish | Both languages complete, Open Graph images, 404, sitemap, link check |
+| 5 | German and polish (done 16 Nov 2026) | Both languages complete, Open Graph images, 404, sitemap, link check |
 | 6 | Design system complete | Every component is in the style guide; no style value outside tokens |
 | 7 | Editor MVP | Elias posts a photo and changes the hours from his phone, with the exact preview, without github.com |
 | 8 | Editor complete | Conflict handling, offline drafts, self-update, German interface |
