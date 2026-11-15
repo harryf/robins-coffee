@@ -101,11 +101,16 @@ async function buildOg(files: Files, photos: Record<string, Photo>) {
  * the site's text files and photo list in one file so the editor can show the real
  * page without a login, a web app manifest and a small service worker.
  */
-async function buildEditor(files: Files, photos: Record<string, Photo>, version: string) {
+async function buildEditorScript(): Promise<string> {
   const dir = join(OUT, "edit");
   await mkdir(dir, { recursive: true });
   const built = await Bun.build({ entrypoints: [join(ROOT, "src", "editor", "main.ts")], target: "browser", minify: true, outdir: dir, naming: "editor.js" });
   if (!built.success) throw new Error("editor bundle failed:\n" + built.logs.join("\n"));
+  return Bun.hash(await Bun.file(join(dir, "editor.js")).arrayBuffer()).toString(36).slice(0, 8);
+}
+
+async function buildEditorData(files: Files, photos: Record<string, Photo>, version: string) {
+  const dir = join(OUT, "edit");
   const site = parseYaml(files["data/site.yml"]!);
   const night = JSON.parse(files["data/tokens.json"]!).color.night;
   await Bun.write(join(dir, "site.json"), JSON.stringify({ built_at: new Date().toISOString(), commit: process.env.BUILD_COMMIT ?? null, base, preview_root: base.replace(/pr-preview\/pr-\d+\/$/, ""), version, repo: site.repo, branch: site.branch, files, photos }));
@@ -198,7 +203,9 @@ const files = await readSite();
 const photos = await buildPhotos();
 await buildOg(files, photos);
 await buildIcons(files);
-const version = await buildAssets(files);
+// The version in asset addresses changes when the stylesheet or the editor's script
+// does, so a browser never keeps an old copy of either after a deploy.
+const version = Bun.hash((await buildAssets(files)) + (await buildEditorScript())).toString(36).slice(0, 8);
 const now = new Date();
 const events = await loadEvents(files);
 await buildEventImages(upcoming(events, now, 60), photos);
@@ -208,7 +215,7 @@ files["data/events.json"] = JSON.stringify({ generated_at: now.toISOString(), ev
 await Bun.write(join(OUT, "events.json"), files["data/events.json"]);
 await Bun.write(join(OUT, "events.ics"), toIcs(upcoming(events, now), parseYaml(files["data/site.yml"]!), now));
 const pages = await renderSite(files, { base, photos, version, origin: values.origin, now });
-await buildEditor(files, photos, version);
+await buildEditorData(files, photos, version);
 for (const page of pages) {
   await mkdir(dirname(join(OUT, page.out)), { recursive: true });
   await Bun.write(join(OUT, page.out), page.html);
