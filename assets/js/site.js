@@ -81,10 +81,46 @@
   });
 
   // Ticker: the whole strip is the button that pauses and restarts the moving text.
+  // On a device that asks for reduced motion it starts paused, and a tap sets it going.
+  var calm = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
   document.querySelectorAll("[data-ticker]").forEach(function (ticker) {
-    ticker.addEventListener("click", function () {
-      ticker.setAttribute("aria-pressed", String(ticker.classList.toggle("is-paused")));
-    });
+    var set = function (paused) {
+      ticker.classList.toggle("is-paused", paused);
+      ticker.classList.toggle("is-playing", !paused);
+      ticker.setAttribute("aria-pressed", String(paused));
+    };
+    if (calm) set(true);
+    ticker.addEventListener("click", function () { set(!ticker.classList.contains("is-paused")); });
+  });
+
+  // Style guide: what this device and browser report, for chasing a "works here, not there".
+  document.querySelectorAll("[data-device-report]").forEach(function (out) {
+    var view = document.querySelector(".ticker__view");
+    var x = function () { return view ? view.getBoundingClientRect().left : 0; };
+    var before = x();
+    setTimeout(function () {
+      var cs = view ? getComputedStyle(view) : null;
+      var can = function (rule) { return window.CSS && CSS.supports ? CSS.supports(rule) : false; };
+      var facts = [
+        ["Reduce Motion asked for", calm ? "yes" : "no"],
+        ["Ticker animation", cs ? cs.animationName + ", " + cs.animationDuration + ", " + cs.animationPlayState : "no ticker on this page"],
+        ["Ticker moved in one second", view ? (Math.abs(x() - before) > 0.5 ? "yes" : "no") : "no ticker on this page"],
+        ["color-mix", can("color: color-mix(in srgb, red 50%, blue)") ? "yes" : "no"],
+        ["overflow: clip", can("overflow: clip") ? "yes" : "no"],
+        ["svh units", can("height: 1svh") ? "yes" : "no"],
+        ["translate property", can("translate: 1px 0") ? "yes" : "no"],
+        ["Window", window.innerWidth + " x " + window.innerHeight + ", pixel ratio " + window.devicePixelRatio],
+        ["Browser", navigator.userAgent]
+      ];
+      out.textContent = "";
+      facts.forEach(function (f) {
+        var dt = document.createElement("dt"), dd = document.createElement("dd");
+        dt.textContent = f[0];
+        dd.textContent = f[1];
+        out.appendChild(dt);
+        out.appendChild(dd);
+      });
+    }, 1000);
   });
 
   // Lightbox. Every moment photo is a plain link to its largest JPEG; here a click
