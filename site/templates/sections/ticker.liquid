@@ -1,4 +1,4 @@
-{% comment %} ticker: t. Two identical groups in one track that slides left by half its width, so the loop has no seam. The words are decoration (the address is in "Find us"), so they are hidden from screen readers. The whole ticker is one button without a visible mark: a tap, a click or Enter pauses the movement and starts it again (WCAG 2.2.2). {% endcomment %}
+{% comment %} ticker: t. Two identical groups in one track that slides left by half its width, so the loop has no seam. The words are decoration (the address is in "Find us"), so they are hidden from screen readers. The whole ticker is one button without a visible mark: a tap, a click or Enter pauses the movement and starts it again (WCAG 2.2.2). On a device that asks for reduced motion it starts paused. {% endcomment %}
 <button class="ticker" type="button" data-ticker aria-pressed="false" aria-label="{{ t.ticker_pause }}">
   <span class="ticker__view" aria-hidden="true">
     {%- for group in (1..2) %}
