@@ -54,7 +54,7 @@ en:
   form_send: "Write the email"
   form_hint: "This opens your email app with the message ready to send to {email}."
   form_subject: "Message from the website"
-  ticker: ["Coffee", "Cocktails", "Comedy", "Zähringerstrasse 33", "Zürich Old Town"]
+  ticker: ["Coffee", "Cocktails", "Comedy", "Live Music", "Chess", "Zähringerstrasse 33", "Zürich Old Town"]
 de:
   nav_home: "Start"
   open_now: "Jetzt offen"
@@ -110,4 +110,4 @@ de:
   form_send: "E-Mail schreiben"
   form_hint: "Das öffnet dein E-Mail-Programm mit der fertigen Nachricht an {email}."
   form_subject: "Nachricht von der Website"
-  ticker: ["Kaffee", "Cocktails", "Comedy", "Zähringerstrasse 33", "Zürcher Altstadt"]
+  ticker: ["Kaffee", "Cocktails", "Comedy", "Live-Musik", "Schach", "Zähringerstrasse 33", "Zürcher Altstadt"]
