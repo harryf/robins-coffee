@@ -66,9 +66,11 @@ Everything under `inbox/` stays on the Mac: the review page, the chat id and the
 
 ## The editor
 
-`/edit/` on the site is the editor for the people who run the bar: post a photo, change the opening hours, see the real page with the change, send it. It can be added to a phone's home screen. Looking and trying needs no login. Sending needs a GitHub access token, pasted once; the sign-in screen says how to make one. A sent change is a pull request on a branch named `edit/...`; once it has passed the checks the editor offers "Publish now".
+`/edit/` on the site is the editor for the people who run the bar: post a photo, change the opening hours, see the real page with the change, send it. It can be added to a phone's home screen, speaks English and German, and keeps an unsent change on the device. Looking and trying needs no login. Sending needs a key from GitHub, pasted once; "Set up this device" walks through it. A sent change is a pull request on a branch named `edit/...`. It shows up in the other person's inbox in the editor, with a yes (approve and publish) and a no (it stays open for Harry on GitHub).
 
-The code is in `src/editor/` and is bundled by the normal build into `dist/edit/`. It does not run from a file on disk (`build:local`); use a pull request preview to try it. Why it works this way: [the decision](docs/decisions/2026-11-16-editor-login.md).
+The editor's version is in `src/editor/version.json`. Raise `version` with every change to the editor. An open editor notices a new build and offers "Update now"; raise `min_supported` only when an older editor must not send any more.
+
+The code is in `src/editor/` and is bundled by the normal build into `dist/edit/`. It does not run from a file on disk (`build:local`); use a pull request preview to try it, or `bun run build` and any static file server on `dist/`. Why it works this way: [sign-in](docs/decisions/2026-11-16-editor-login.md), [inbox, versions and drafts](docs/decisions/2026-11-16-editor-inbox-updates.md).
 
 ## How a change goes live
 

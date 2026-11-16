@@ -101,10 +101,12 @@ async function buildOg(files: Files, photos: Record<string, Photo>) {
  * the site's text files and photo list in one file so the editor can show the real
  * page without a login, a web app manifest and a small service worker.
  */
+const EDITOR: { version: string; min_supported: string } = await Bun.file(join(ROOT, "src", "editor", "version.json")).json();
+
 async function buildEditorScript(): Promise<string> {
   const dir = join(OUT, "edit");
   await mkdir(dir, { recursive: true });
-  const built = await Bun.build({ entrypoints: [join(ROOT, "src", "editor", "main.ts")], target: "browser", minify: true, outdir: dir, naming: "editor.js" });
+  const built = await Bun.build({ entrypoints: [join(ROOT, "src", "editor", "main.ts")], target: "browser", minify: true, outdir: dir, naming: "editor.js", define: { EDITOR_VERSION: JSON.stringify(EDITOR.version) } });
   if (!built.success) throw new Error("editor bundle failed:\n" + built.logs.join("\n"));
   return Bun.hash(await Bun.file(join(dir, "editor.js")).arrayBuffer()).toString(36).slice(0, 8);
 }
@@ -113,9 +115,14 @@ async function buildEditorData(files: Files, photos: Record<string, Photo>, vers
   const dir = join(OUT, "edit");
   const site = parseYaml(files["data/site.yml"]!);
   const night = JSON.parse(files["data/tokens.json"]!).color.night;
-  await Bun.write(join(dir, "site.json"), JSON.stringify({ built_at: new Date().toISOString(), commit: process.env.BUILD_COMMIT ?? null, base, preview_root: base.replace(/pr-preview\/pr-\d+\/$/, ""), version, repo: site.repo, branch: site.branch, files, photos }));
+  // One name for this build: the commit on the build server, the time on a laptop. The running
+  // editor compares its own with the one in version.json to learn that the site has moved on.
+  const built_at = new Date().toISOString();
+  const build = process.env.BUILD_COMMIT ?? built_at;
+  await Bun.write(join(dir, "version.json"), JSON.stringify({ ...EDITOR, build, built_at }));
+  await Bun.write(join(dir, "site.json"), JSON.stringify({ built_at, commit: process.env.BUILD_COMMIT ?? null, build, base, preview_root: base.replace(/pr-preview\/pr-\d+\/$/, ""), version, repo: site.repo, branch: site.branch, files, photos }));
   await Bun.write(join(dir, "manifest.webmanifest"), JSON.stringify({
-    name: `${site.name} editor`, short_name: `${site.name} edit`, start_url: "./", scope: "./", display: "standalone",
+    name: `${site.name} editor`, short_name: `${site.name} edit`, id: "./", start_url: "./", scope: "./", display: "standalone",
     background_color: night.bg, theme_color: night.bg,
     icons: [192, 512].map((s) => ({ src: `../assets/icons/icon-${s}.png`, sizes: `${s}x${s}`, type: "image/png" })),
   }, null, 1));

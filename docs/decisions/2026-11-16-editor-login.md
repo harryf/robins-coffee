@@ -29,7 +29,7 @@ A second, independent review of the editor ran before it was merged. It found no
 - **The editor's own preview is sandboxed.** It shows the page in a frame with no access to the editor's storage, so a script in the previewed page cannot read a remembered sign-in.
 - **An editor change may touch only content, photos, events and data.** CI fails an `edit/...` pull request that touches anything else. It runs before anything from the pull request is installed, with the rule as the base branch has it. This catches an editor that went wrong, not a person who means harm: a person can give their branch another name. The approval covers that.
 - **Photos are redrawn in the browser** at 2400 px at most, which drops every bit of metadata. The test that checks committed photos for metadata runs on every pull request.
-- **"Publish now" merges exactly what was looked at.** The button appears only when the pull request preview says it was built from the commit the branch is at now, and the merge names that commit; GitHub refuses if the branch moved. The editor has no approve button yet (milestone 8), so an approval is given on github.com.
+- **"Publish now" merges exactly what was looked at.** The button appears only when the pull request preview says it was built from the commit the branch is at now, and the merge names that commit; GitHub refuses if the branch moved. Since milestone 8a the editor has a yes and a no (`2026-11-16-editor-inbox-updates.md`).
 - **The hours form refuses a file it cannot keep whole** (two time spans on one day, an extra note, a hand-written comment inside the list) and changes nothing.
 
 ## Also decided

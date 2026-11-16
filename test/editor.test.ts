@@ -2,7 +2,9 @@ import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { parse as parseYaml } from "yaml";
 import { renderSite, hoursRows, type Files, type Photo } from "../src/render";
-import { DAYS, weekFromYaml, weekToYaml, validateWeek, hoursEditable, slugify, validateMoment, momentChanges, momentId, inEditScope, branchName, describe as describeChange, type NewMoment, type Week } from "../src/editor/changes";
+import { DAYS, weekFromYaml, weekToYaml, validateWeek, hoursEditable, slugify, validateMoment, momentChanges, momentId, inEditScope, branchName, describe as describeChange, staleChanges, localLabel, whatChanged, verdict, type NewMoment, type Week } from "../src/editor/changes";
+import { STRINGS, pickLang } from "../src/editor/strings";
+import { compareVersions, updateState } from "../src/editor/version";
 import { github, toBase64, GitHubError } from "../src/editor/github";
 import { outOfScope } from "../scripts/check-edit-scope";
 
@@ -82,7 +84,7 @@ describe("editor: post a photo", () => {
     expect(validateMoment(good, [], albums)).toEqual([]);
     expect(validateMoment({ ...good, alt: { en: "", de: "TODO" } }, [], albums).length).toBe(2);
     expect(validateMoment({ ...good, caption: { en: "A \u2014 B", de: "Strasse" } }, [], albums)[0]).toContain("long dash");
-    expect(validateMoment({ ...good, caption: { ...good.caption, de: "Straße" } }, [], albums)[0]).toContain("ss, not ß");
+    expect(validateMoment({ ...good, caption: { ...good.caption, de: "Straße" } }, [], albums)[0]).toContain("write ss");
     expect(validateMoment(good, [momentId(good)], albums)[0]).toContain("already exists");
     expect(validateMoment({ ...good, album: "nope" }, [], albums)[0]).toContain("no album");
     expect(validateMoment({ ...good, date: "2026-02-30" }, [], albums)[0]).toContain("real day");
@@ -159,7 +161,7 @@ describe("editor: GitHub", () => {
 
   test("access says who and whether they may write; a bad token is said plainly", async () => {
     const ok = fake({ "GET https://api.github.com/user": { body: { login: "elias" } }, [`GET ${R}`]: { body: { permissions: { push: true } } } });
-    expect(await github("o/r", "t", ok.doFetch).access()).toEqual({ login: "elias", canWrite: true });
+    expect(await github("o/r", "t", ok.doFetch).access()).toEqual({ login: "elias", canWrite: true, owner: false });
     const bad = fake({ "GET https://api.github.com/user": { status: 401, body: { message: "Bad credentials" } } });
     const err = await github("o/r", "t", bad.doFetch).access().catch((e) => e);
     expect(err).toBeInstanceOf(GitHubError);
@@ -174,6 +176,25 @@ describe("editor: GitHub", () => {
     expect(await gh.fileText("site/moments/none.jpg", "main")).toBeNull();
     expect((await gh.editorPulls()).map((p) => p.number)).toEqual([1]);
     expect(calls.every((c) => c.auth === null)).toBe(true);
+  });
+
+  test("yes approves exactly the commit that was looked at; no leaves the change open with its reason; taking back closes it and removes the branch", async () => {
+    const { calls, doFetch } = fake({ [`POST ${R}/pulls/7/reviews`]: { body: {} }, [`PATCH ${R}/pulls/7`]: { body: {} }, [`DELETE ${R}/git/refs/heads/edit/a/b`]: { status: 204, body: "" }, [`GET ${R}/pulls/7/reviews`]: { body: [{ user: { login: "harry" }, state: "APPROVED", commit_id: "SEEN" }] }, [`GET ${R}/pulls/7/files`]: { body: [{ filename: "site/data/hours.yml" }] } });
+    const gh = github("o/r", "t", doFetch);
+    await gh.approve(7, "SEEN");
+    await gh.reject(7, "  wrong day ");
+    await gh.reject(7, "");
+    await gh.withdraw(7, "edit/a/b");
+    expect(calls[0]!.body).toEqual({ event: "APPROVE", commit_id: "SEEN" });
+    expect(calls[1]!.body).toEqual({ event: "REQUEST_CHANGES", body: "wrong day" });
+    expect(calls[2]!.body.body).toBe("Not accepted in the editor.");
+    expect(calls[3]!.method).toBe("PATCH");
+    expect(calls[3]!.body).toEqual({ state: "closed" });
+    expect(calls[4]!.method + " " + calls[4]!.url).toBe(`DELETE ${R}/git/refs/heads/edit/a/b`);
+    expect(await gh.changedFiles(7)).toEqual(["site/data/hours.yml"]);
+    expect(verdict(await gh.reviews(7), "elias", "SEEN")).toEqual({ state: "approved", by: "harry" });
+    // No call closes or merges a change as a side effect of a no.
+    expect(calls.slice(1, 3).every((c) => c.method === "POST")).toBe(true);
   });
 
   test("publish squashes exactly the commit that was looked at; a refusal from GitHub carries its reason", async () => {
@@ -193,6 +214,7 @@ describe("editor: the page and its bundle", () => {
     expect(page.html).toContain('name="robots" content="noindex');
     expect(page.html).toContain('<link rel="manifest" href="/robins-coffee/edit/manifest.webmanifest">');
     expect(page.html).toContain('data-bundle="/robins-coffee/edit/site.json"');
+    expect(page.html).toContain('data-version="/robins-coffee/edit/version.json"');
     expect(page.html).toContain('<script type="module" src="/robins-coffee/edit/editor.js');
     expect(page.data.noindex).toBe(true);
   });
@@ -211,5 +233,88 @@ describe("editor: the page and its bundle", () => {
     expect(await Bun.file(join(import.meta.dir, "..", "src", "editor", "scope.ts")).text()).not.toMatch(/^import /m);
     const guard = await Bun.file(join(import.meta.dir, "..", "scripts", "check-edit-scope.ts")).text();
     expect([...guard.matchAll(/^import .* from "(.*)";$/gm)].map((m) => m[1])).toEqual(["../src/editor/scope"]);
+  });
+});
+
+describe("editor: yes and no", () => {
+  const r = (login: string, state: string, commit_id = "HEAD", body = "") => ({ user: { login }, state, commit_id, body });
+  test("nobody's own yes counts, a comment is not an answer, and no reviews means waiting", () => {
+    expect(verdict([], "elias", "HEAD")).toEqual({ state: "waiting" });
+    expect(verdict([r("elias", "APPROVED"), r("harry", "COMMENTED")], "elias", "HEAD")).toEqual({ state: "waiting" });
+  });
+  test("a yes counts only for the commit the branch is at now", () => {
+    expect(verdict([r("harry", "APPROVED", "OLD")], "elias", "HEAD")).toEqual({ state: "waiting" });
+    expect(verdict([r("harry", "APPROVED", "HEAD")], "elias", "HEAD")).toEqual({ state: "approved", by: "harry" });
+  });
+  test("each person's last answer stands; one standing no is a no, with its reason", () => {
+    expect(verdict([r("harry", "APPROVED"), r("harry", "CHANGES_REQUESTED", "HEAD", " wrong photo ")], "elias", "HEAD")).toEqual({ state: "rejected", by: "harry", reason: "wrong photo" });
+    expect(verdict([r("harry", "CHANGES_REQUESTED"), r("harry", "APPROVED")], "elias", "HEAD")).toEqual({ state: "approved", by: "harry" });
+    expect(verdict([r("harry", "APPROVED"), r("jun", "CHANGES_REQUESTED")], "elias", "HEAD").state).toBe("rejected");
+  });
+  test("a change is described by what it touches, in the language of the screen", () => {
+    expect(whatChanged(["site/data/hours.yml", "site/moments/a.jpg", "site/moments/a.md"], STRINGS.en)).toEqual(["Opening hours", "Photo"]);
+    expect(whatChanged(["site/data/site.yml"], STRINGS.de)).toEqual(["Die Datei site/data/site.yml"]);
+    expect(localLabel("Photo: Friday night", STRINGS.de)).toBe("Foto: Friday night");
+    expect(localLabel("Opening hours and 1 more", STRINGS.de)).toBe("Öffnungszeiten and 1 more");
+  });
+});
+
+describe("editor: a draft kept on the device", () => {
+  test("a draft is stale when the site's file is no longer what it was written on, or a new file is already there", () => {
+    const hours = { path: "data/hours.yml", label: "Opening hours", text: "new", base: "old" };
+    const moment = momentChanges({ date: "2026-11-20", slug: "x", caption: { en: "x", de: "x" }, alt: { en: "x", de: "x" } }, new Uint8Array([1]));
+    expect(moment.every((c) => c.base === null)).toBe(true);
+    expect(staleChanges([hours, ...moment], { "data/hours.yml": "old" })).toEqual([]);
+    expect(staleChanges([hours, ...moment], { "data/hours.yml": "someone else's" })).toEqual([hours]);
+    expect(staleChanges(moment, { "moments/2026-11-20-x.md": "---" }).map((c) => c.path)).toEqual(["moments/2026-11-20-x.md"]);
+  });
+  test("the store keeps one draft per site address and touches nothing but IndexedDB", async () => {
+    const src = await Bun.file(join(import.meta.dir, "..", "src", "editor", "store.ts")).text();
+    expect(src).not.toMatch(/localStorage|fetch\(/);
+    expect(await Bun.file(join(import.meta.dir, "..", "src", "editor", "main.ts")).text()).toContain("saveDraft(bundle.base,");
+  });
+});
+
+describe("editor: versions and updates", () => {
+  test("versions compare by number, not by letter", () => {
+    expect(compareVersions("0.8.0", "0.10.0")).toBeLessThan(0);
+    expect(compareVersions("1.0", "1.0.0")).toBe(0);
+    expect(compareVersions("1.2.1", "1.2.0")).toBeGreaterThan(0);
+  });
+  test("offline claims nothing; another build offers an update; below min_supported the editor must update", () => {
+    const mine = { version: "0.8.0", build: "aaa" };
+    expect(updateState(mine, null)).toBe("current");
+    expect(updateState(mine, { version: "0.8.0", min_supported: "0.8.0", build: "aaa" })).toBe("current");
+    expect(updateState(mine, { version: "0.8.0", min_supported: "0.8.0", build: "bbb" })).toBe("newer");
+    expect(updateState(mine, { version: "0.9.0", min_supported: "0.8.0", build: "bbb" })).toBe("newer");
+    expect(updateState(mine, { version: "0.9.0", min_supported: "0.9.0", build: "bbb" })).toBe("required");
+  });
+  test("version.json is well formed, and min_supported is never ahead of the version", async () => {
+    const v = await Bun.file(join(import.meta.dir, "..", "src", "editor", "version.json")).json();
+    expect(v.version).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(v.min_supported).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(compareVersions(v.min_supported, v.version)).toBeLessThanOrEqual(0);
+  });
+});
+
+describe("editor: two languages", () => {
+  const flat = (o: Record<string, any>) => Object.values(o).map((v) => (typeof v === "function" ? v("x", "y", "z") : v) as string);
+  test("German has every line English has, in Swiss spelling, and neither has a long dash", () => {
+    expect(Object.keys(STRINGS.de).sort()).toEqual(Object.keys(STRINGS.en).sort());
+    expect(flat(STRINGS.de).join("\n")).not.toContain("ß");
+    expect(flat(STRINGS.en).concat(flat(STRINGS.de)).join("\n")).not.toContain("\u2014");
+    expect(flat(STRINGS.de).every((v) => v.length > 0)).toBe(true);
+  });
+  test("the language follows the person's choice, else the browser", () => {
+    expect(pickLang(null, "de-CH")).toBe("de");
+    expect(pickLang(null, "fr-CH")).toBe("en");
+    expect(pickLang("en", "de-CH")).toBe("en");
+    expect(pickLang("xx", undefined)).toBe("en");
+  });
+  test("the rules speak German when asked", () => {
+    const week = { ...weekFromYaml(hoursYml), mo: { closed: false, open: "25:00", close: null } } as Week;
+    expect(validateWeek(week, STRINGS.de)[0]).toBe("mo: die Öffnungszeit muss wie 16:00 aussehen");
+    const m: NewMoment = { date: "2026-11-20", slug: "x", caption: { en: "x", de: "" }, alt: { en: "x", de: "x" } };
+    expect(validateMoment(m, [], [], STRINGS.de)).toEqual(["Der deutsche Bildtext fehlt."]);
   });
 });

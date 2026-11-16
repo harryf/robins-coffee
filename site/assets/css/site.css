@@ -242,6 +242,10 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 .ed-list > * + *, .ed-steps > * + * { margin-top: var(--space-2); }
 .ed-steps { max-width: var(--measure-form); }
 .ed-problems { padding-block: var(--space-3); padding-inline-end: var(--space-4); border: var(--border-thick) solid var(--c-amber); border-radius: var(--radius-sm); background: var(--c-raised); max-width: var(--measure-form); }
+.ed-banner { padding: var(--space-3) var(--space-4); border: var(--border-thick) solid var(--c-neon); border-radius: var(--radius-sm); background: var(--c-raised); max-width: var(--measure-form); }
+.ed-banner > * + *, .ed-change > * + * { margin-top: var(--space-3); }
+.editor details { max-width: var(--measure-form); }
+.editor summary { min-height: var(--target-min); cursor: pointer; }
 .ed-link { display: inline-flex; align-items: center; min-height: var(--target-min); padding: 0; border: 0; background: none; color: var(--c-neon); font: inherit; text-decoration: underline; text-align: start; cursor: pointer; }
 .ed-check { display: flex !important; align-items: center; gap: var(--space-2); min-height: var(--target-min); font-weight: var(--weight-regular) !important; }
 .ed-check input { width: 1.4rem; min-height: 0; height: 1.4rem; flex: none; }
