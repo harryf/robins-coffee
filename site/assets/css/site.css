@@ -293,8 +293,7 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition: none !important; }
-  /* Nothing moves by itself. The ticker is the one exception with a switch: it starts
-     paused (site.js) and a tap sets it going. */
+  /* Nothing else moves by itself. The ticker keeps running, by Harry's decision of
+     16 Nov 2026: it is slow, it is the bar's sign, and a tap on it stops it. */
   *:not(.ticker__view), *::before, *::after { animation: none !important; }
-  .ticker:not(.is-playing) .ticker__view { animation-play-state: paused; }
 }

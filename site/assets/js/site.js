@@ -81,30 +81,30 @@
   });
 
   // Ticker: the whole strip is the button that pauses and restarts the moving text.
-  // On a device that asks for reduced motion it starts paused, and a tap sets it going.
+  // It runs from the start on every device, also one that asks for reduced motion.
   var calm = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
   document.querySelectorAll("[data-ticker]").forEach(function (ticker) {
-    var set = function (paused) {
-      ticker.classList.toggle("is-paused", paused);
-      ticker.classList.toggle("is-playing", !paused);
-      ticker.setAttribute("aria-pressed", String(paused));
-    };
-    if (calm) set(true);
-    ticker.addEventListener("click", function () { set(!ticker.classList.contains("is-paused")); });
+    ticker.addEventListener("click", function () {
+      ticker.setAttribute("aria-pressed", String(ticker.classList.toggle("is-paused")));
+    });
   });
 
   // Style guide: what this device and browser report, for chasing a "works here, not there".
   document.querySelectorAll("[data-device-report]").forEach(function (out) {
     var view = document.querySelector(".ticker__view");
     var x = function () { return view ? view.getBoundingClientRect().left : 0; };
+    var can = function (rule) { return window.CSS && CSS.supports ? CSS.supports(rule) : false; };
     var before = x();
-    setTimeout(function () {
+    // Measured again every second, so the answer is about now and not about the moment
+    // the page loaded (a page in a background tab does not move anything).
+    var report = function () {
       var cs = view ? getComputedStyle(view) : null;
-      var can = function (rule) { return window.CSS && CSS.supports ? CSS.supports(rule) : false; };
+      var now = x();
       var facts = [
         ["Reduce Motion asked for", calm ? "yes" : "no"],
+        ["Page in front", document.visibilityState === "visible" ? "yes" : "no"],
         ["Ticker animation", cs ? cs.animationName + ", " + cs.animationDuration + ", " + cs.animationPlayState : "no ticker on this page"],
-        ["Ticker moved in one second", view ? (Math.abs(x() - before) > 0.5 ? "yes" : "no") : "no ticker on this page"],
+        ["Ticker moved in the last second", view ? (Math.abs(now - before) > 0.5 ? "yes" : "no") : "no ticker on this page"],
         ["color-mix", can("color: color-mix(in srgb, red 50%, blue)") ? "yes" : "no"],
         ["overflow: clip", can("overflow: clip") ? "yes" : "no"],
         ["svh units", can("height: 1svh") ? "yes" : "no"],
@@ -112,6 +112,7 @@
         ["Window", window.innerWidth + " x " + window.innerHeight + ", pixel ratio " + window.devicePixelRatio],
         ["Browser", navigator.userAgent]
       ];
+      before = now;
       out.textContent = "";
       facts.forEach(function (f) {
         var dt = document.createElement("dt"), dd = document.createElement("dd");
@@ -120,7 +121,8 @@
         out.appendChild(dt);
         out.appendChild(dd);
       });
-    }, 1000);
+    };
+    setInterval(report, 1000);
   });
 
   // Lightbox. Every moment photo is a plain link to its largest JPEG; here a click
