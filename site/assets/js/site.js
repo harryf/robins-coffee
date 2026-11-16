@@ -81,16 +81,12 @@
   });
 
   // Ticker: the whole strip is the button that pauses and restarts the moving text.
-  // On a device that asks for reduced motion it starts paused, and a tap sets it going.
+  // It runs from the start on every device, also one that asks for reduced motion.
   var calm = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
   document.querySelectorAll("[data-ticker]").forEach(function (ticker) {
-    var set = function (paused) {
-      ticker.classList.toggle("is-paused", paused);
-      ticker.classList.toggle("is-playing", !paused);
-      ticker.setAttribute("aria-pressed", String(paused));
-    };
-    if (calm) set(true);
-    ticker.addEventListener("click", function () { set(!ticker.classList.contains("is-paused")); });
+    ticker.addEventListener("click", function () {
+      ticker.setAttribute("aria-pressed", String(ticker.classList.toggle("is-paused")));
+    });
   });
 
   // Style guide: what this device and browser report, for chasing a "works here, not there".
