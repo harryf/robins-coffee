@@ -97,14 +97,18 @@
   document.querySelectorAll("[data-device-report]").forEach(function (out) {
     var view = document.querySelector(".ticker__view");
     var x = function () { return view ? view.getBoundingClientRect().left : 0; };
+    var can = function (rule) { return window.CSS && CSS.supports ? CSS.supports(rule) : false; };
     var before = x();
-    setTimeout(function () {
+    // Measured again every second, so the answer is about now and not about the moment
+    // the page loaded (a page in a background tab does not move anything).
+    var report = function () {
       var cs = view ? getComputedStyle(view) : null;
-      var can = function (rule) { return window.CSS && CSS.supports ? CSS.supports(rule) : false; };
+      var now = x();
       var facts = [
         ["Reduce Motion asked for", calm ? "yes" : "no"],
+        ["Page in front", document.visibilityState === "visible" ? "yes" : "no"],
         ["Ticker animation", cs ? cs.animationName + ", " + cs.animationDuration + ", " + cs.animationPlayState : "no ticker on this page"],
-        ["Ticker moved in one second", view ? (Math.abs(x() - before) > 0.5 ? "yes" : "no") : "no ticker on this page"],
+        ["Ticker moved in the last second", view ? (Math.abs(now - before) > 0.5 ? "yes" : "no") : "no ticker on this page"],
         ["color-mix", can("color: color-mix(in srgb, red 50%, blue)") ? "yes" : "no"],
         ["overflow: clip", can("overflow: clip") ? "yes" : "no"],
         ["svh units", can("height: 1svh") ? "yes" : "no"],
@@ -112,6 +116,7 @@
         ["Window", window.innerWidth + " x " + window.innerHeight + ", pixel ratio " + window.devicePixelRatio],
         ["Browser", navigator.userAgent]
       ];
+      before = now;
       out.textContent = "";
       facts.forEach(function (f) {
         var dt = document.createElement("dt"), dd = document.createElement("dd");
@@ -120,7 +125,8 @@
         out.appendChild(dt);
         out.appendChild(dd);
       });
-    }, 1000);
+    };
+    setInterval(report, 1000);
   });
 
   // Lightbox. Every moment photo is a plain link to its largest JPEG; here a click
