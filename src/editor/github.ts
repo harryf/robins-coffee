@@ -2,7 +2,7 @@
 // requests; GitHub's login endpoints do not, which is why the editor signs in with a
 // personal access token and not with a login redirect (docs/decisions).
 // The token travels only in the Authorization header, only to api.github.com.
-import type { Change } from "./changes";
+import type { Change, Review } from "./changes";
 
 const API = "https://api.github.com";
 export class GitHubError extends Error {
@@ -38,10 +38,10 @@ export function github(repo: string, token: string | null, doFetch: typeof fetch
 
   return {
     /** Who the token belongs to and whether that person may write to the repository. */
-    async access(): Promise<{ login: string; canWrite: boolean }> {
+    async access(): Promise<{ login: string; canWrite: boolean; owner: boolean }> {
       const user = await json("GET", "/user");
       const info = await json("GET", r);
-      return { login: user.login, canWrite: !!info.permissions?.push };
+      return { login: user.login, canWrite: !!info.permissions?.push, owner: !!info.permissions?.admin };
     },
     /** A file's text on a branch, or null when it is not there. */
     async fileText(repoPath: string, ref: string): Promise<string | null> {
@@ -74,6 +74,23 @@ export function github(repo: string, token: string | null, doFetch: typeof fetch
      */
     async publish(n: number, branch: string, sha: string): Promise<void> {
       await json("PUT", `${r}/pulls/${n}/merge`, { merge_method: "squash", sha });
+      await this.removeBranch(branch);
+    },
+    /** Every yes and no given to a change, oldest first. */
+    reviews: (n: number): Promise<Review[]> => json("GET", `${r}/pulls/${n}/reviews?per_page=100`),
+    /** The repository paths a change touches. */
+    changedFiles: async (n: number): Promise<string[]> => ((await json("GET", `${r}/pulls/${n}/files?per_page=100`)) as { filename: string }[]).map((f) => f.filename),
+    /** Yes: an approval of exactly the commit that was looked at. GitHub refuses the author's own. */
+    async approve(n: number, sha: string): Promise<void> {
+      await json("POST", `${r}/pulls/${n}/reviews`, { event: "APPROVE", commit_id: sha });
+    },
+    /** No: the change stays open and is marked, with one line of why, for the owner to handle on GitHub. */
+    async reject(n: number, reason: string): Promise<void> {
+      await json("POST", `${r}/pulls/${n}/reviews`, { event: "REQUEST_CHANGES", body: reason.trim() || "Not accepted in the editor." });
+    },
+    /** The sender takes an unpublished change back: the pull request is closed and its branch removed. */
+    async withdraw(n: number, branch: string): Promise<void> {
+      await json("PATCH", `${r}/pulls/${n}`, { state: "closed" });
       await this.removeBranch(branch);
     },
     /** Best effort: the repository may already have removed it. */

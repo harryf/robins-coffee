@@ -197,6 +197,8 @@ An installable web app at `/edit/`. People sign in with GitHub, edit forms, see 
 
 **As built (16 Nov 2026):** no server and no framework; sign-in is a personal access token; see `docs/decisions/2026-11-16-editor-login.md`, which replaces the Stack and Login points below. The first version posts photos and changes the opening hours.
 
+**Added 16 Nov 2026 (milestone 8a):** an inbox with yes and no, a version with "Update now", the unsent change kept on the device, English and German, a one-screen device setup; see `docs/decisions/2026-11-16-editor-inbox-updates.md`, which replaces the Save and review and Self-update points below where they differ.
+
 - **Stack.** Vite, TypeScript, a small UI library (Preact or Svelte, chosen at the start of stage 3), Octokit for the GitHub REST API, a Markdown editor limited to what the site supports. English and German.
 - **Login.** A GitHub App installed only on this repository (contents, pull requests, metadata). GitHub's token endpoints cannot be called from browser code, so a Cloudflare Worker of about 50 lines swaps the login code for a token. It accepts only the site's origins and stores nothing.
 - **Roles.** Write access means editor. Listed in `CODEOWNERS` means approver.
@@ -239,7 +241,9 @@ One branch and one pull request per milestone or smaller. Each milestone starts 
 | 5 | German and polish (done 16 Nov 2026) | Both languages complete, Open Graph images, 404, sitemap, link check |
 | 6 | Design system complete (done 16 Nov 2026) | Every component is in the style guide; no style value outside tokens |
 | 7 | Editor MVP (built 16 Nov 2026; first real send by Harry and Elias still to come) | Elias posts a photo and changes the hours from his phone, with the exact preview, without github.com |
-| 8 | Editor complete | Conflict handling, offline drafts, self-update, German interface |
+| 8a | Editor: install, updates, inbox (built 16 Nov 2026) | The editor is installed from the site, shows its version and offers updates; a draft survives a reload; Elias sets up his phone from one screen; either of Harry and Elias says yes or no to the other's change inside the editor; German interface |
+| 8b | Events from Eventfrog, with kinds | Music and chess events the bar publishes on Eventfrog appear on the site, marked by kind, next to the comedy feed (waits for the bar's organiser account; by-hand events until then) |
+| 8c | Drinks menu as a book | Seasonal drinks with a name, a picture and an optional description, paged through like the book in the bar, changed from the editor (waits for photos of the book) |
 | 9 | Handover | robins-coffee.ch serves the new site; two approvers have each merged a change |
 | 10 | Google Business Profile | Hours on Google follow `hours.yml` |
 
