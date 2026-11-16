@@ -10,6 +10,10 @@
       <p>The rule: a value that more than one thing shares is a token in <code>site/data/tokens.json</code> (colour, type, space, radius, border, shadow, motion, layers, tap targets, measures, breakpoints). The geometry of one component (a thumbnail width, a column count, a tilt) stays in the stylesheet next to that component. A test enforces both halves.</p>
     </div>
 
+    <h2 class="h-xl sg-part" id="device">This device</h2>
+    <p>What this browser reports, filled in by <code>site.js</code> a second after the page loads. Open this page on the device where something looks wrong.</p>
+    <dl class="sg-device prose" data-device-report><dt>Report</dt><dd>Needs JavaScript.</dd></dl>
+
     <h2 class="h-xl sg-part" id="tokens">Tokens</h2>
     {%- for group in tokens %}
     {%- assign g = group[0] %}

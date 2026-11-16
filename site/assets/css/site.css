@@ -66,7 +66,7 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 .pill__dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--c-muted); }
 .pill.is-open .pill__dot { background: var(--c-green); box-shadow: 0 0 0 0 var(--c-green); animation: pulse var(--motion-pulse) var(--motion-ease) 3; }
 @keyframes pulse { 70% { box-shadow: 0 0 0 var(--space-2) transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
-@media (max-width: 30rem) {
+@media (max-width: 36rem) {
   .site-header .pill { display: none; }
   /* The roundel, three links and the theme switch on one row of a phone: tighter gaps,
      and the wordmark gives way (the roundel carries the name for screen readers).
@@ -109,7 +109,7 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 .hero__body { position: relative; padding-block: var(--space-24) var(--space-16); }
 .hero__body::before { content: ""; position: absolute; z-index: var(--z-under); inset: var(--space-8) auto 0 50%; width: 100vw; translate: -50% 0; background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--scrim) 22%, transparent) 6%, color-mix(in srgb, var(--scrim) 48%, transparent) 12%, color-mix(in srgb, var(--scrim) 70%, transparent) 20%, color-mix(in srgb, var(--scrim) 84%, transparent) 42%, var(--scrim) 100%); }
 .hero__status { display: none; }
-@media (max-width: 30rem) {
+@media (max-width: 36rem) {
   .hero { min-height: min(80svh, 56rem); }
   .hero__status { display: block; }
 }
@@ -282,6 +282,7 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 .sg-entry { padding-top: var(--space-8); border-top: var(--border-thin) solid var(--c-line); }
 .sg-entry--section { margin-block: var(--space-16) var(--space-8); }
 .sg-entry__doc { color: var(--c-muted); font-size: var(--size-sm); max-width: var(--measure-form); }
+.sg-device { font-size: var(--size-sm); overflow-wrap: anywhere; }
 .sg-narrow { max-width: var(--measure-form); }
 .sg-narrow.moments { columns: 1; width: 20rem; }
 .sg-pair { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
@@ -291,5 +292,9 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  *, *::before, *::after { animation: none !important; transition: none !important; }
+  *, *::before, *::after { transition: none !important; }
+  /* Nothing moves by itself. The ticker is the one exception with a switch: it starts
+     paused (site.js) and a tap sets it going. */
+  *:not(.ticker__view), *::before, *::after { animation: none !important; }
+  .ticker:not(.is-playing) .ticker__view { animation-play-state: paused; }
 }
