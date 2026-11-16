@@ -6,8 +6,8 @@
 <title>Programm im ROBIN&#39;s: Comedy und Events in der Zürcher Altstadt</title>
 <meta name="description" content="Kommende Comedy-Shows und Events im ROBIN&#39;s Bar &amp; Coffee, Zähringerstrasse 33, Zürich. Daten, Zeiten und Tickets.">
 <meta name="robots" content="noindex, nofollow">
-<link rel="alternate" hreflang="en" href="https://harryf.github.io/robins-coffee/events/">
 <link rel="alternate" hreflang="de" href="https://harryf.github.io/robins-coffee/de/events/">
+<link rel="alternate" hreflang="en" href="https://harryf.github.io/robins-coffee/events/">
 <link rel="alternate" hreflang="x-default" href="https://harryf.github.io/robins-coffee/events/">
 <link rel="canonical" href="https://harryf.github.io/robins-coffee/de/events/">
 <meta property="og:url" content="https://harryf.github.io/robins-coffee/de/events/">
@@ -29,27 +29,17 @@
 <link rel="preload" href="/robins-coffee/assets/fonts/alfa-slab-one.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/robins-coffee/assets/site.css?v=198dpogr">
 <script>
-// Coffee or cocktail: the page follows the device. Light mode gives the coffee colours,
-// dark mode the cocktail colours, so a phone that turns dark at sunset turns the page
-// with it (site.js follows a change while the page is open). The switch in the header
-// overrules the device for this visit; ?theme=day or ?theme=night overrules both. A
-// browser that cannot tell its mode falls back to the Zürich clock. Runs before first
-// paint so the theme never flashes. Without JavaScript the page stays "night".
+// Day or night: the page follows the Zürich clock, like the bar does (coffee colours
+// by day, cocktail colours at night). The switch in the header overrules the clock for
+// this visit; ?theme=day or ?theme=night overrules both. Runs before first paint so the
+// theme never flashes. Without JavaScript the page stays "night".
 (function () {
   try {
+    var h = +new Intl.DateTimeFormat("en-GB", { hour: "2-digit", hour12: false, timeZone: "Europe/Zurich" }).format(new Date());
     var forced = new URLSearchParams(location.search).get("theme");
     var chosen = null;
     try { chosen = sessionStorage.getItem("theme"); } catch (e) {}
-    var device = null;
-    if (window.matchMedia) {
-      if (matchMedia("(prefers-color-scheme: dark)").matches) device = "night";
-      else if (matchMedia("(prefers-color-scheme: light)").matches) device = "day";
-    }
-    if (!device) {
-      var h = +new Intl.DateTimeFormat("en-GB", { hour: "2-digit", hour12: false, timeZone: "Europe/Zurich" }).format(new Date());
-      device = h >= 6 && h < 17 ? "day" : "night";
-    }
-    var theme = forced || chosen || device;
+    var theme = forced || chosen || (h >= 6 && h < 17 ? "day" : "night");
     document.documentElement.dataset.theme = theme === "day" ? "day" : "night";
     var bar = document.querySelector('meta[name="theme-color"]');
     bar.content = bar.getAttribute("data-" + document.documentElement.dataset.theme);
