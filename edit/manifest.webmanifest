@@ -1,6 +1,7 @@
 {
  "name": "ROBIN's editor",
  "short_name": "ROBIN's edit",
+ "id": "./",
  "start_url": "./",
  "scope": "./",
  "display": "standalone",
