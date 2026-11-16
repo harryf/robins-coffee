@@ -2,21 +2,35 @@
 // from the hours data the build embedded in the page.
 
 // Theme switch: coffee colours or cocktail colours, kept for this visit only, so the
-// next visit follows the clock again.
+// next visit follows the device again (light mode: coffee, dark mode: cocktail). While
+// nobody has picked one, the page also follows the device when it changes mode.
 (function () {
   var root = document.documentElement;
-  document.querySelectorAll("[data-theme-switch]").forEach(function (button) {
-    var show = function () { button.setAttribute("aria-checked", String(root.dataset.theme !== "day")); };
+  var buttons = document.querySelectorAll("[data-theme-switch]");
+  var set = function (theme) {
+    root.dataset.theme = theme;
+    var bar = document.querySelector('meta[name="theme-color"]');
+    if (bar) bar.content = bar.getAttribute("data-" + theme);
+    buttons.forEach(function (button) { button.setAttribute("aria-checked", String(theme !== "day")); });
+  };
+  buttons.forEach(function (button) {
     button.hidden = false;
-    show();
     button.addEventListener("click", function () {
-      root.dataset.theme = root.dataset.theme === "day" ? "night" : "day";
+      set(root.dataset.theme === "day" ? "night" : "day");
       try { sessionStorage.setItem("theme", root.dataset.theme); } catch (e) {}
-      var bar = document.querySelector('meta[name="theme-color"]');
-      if (bar) bar.content = bar.getAttribute("data-" + root.dataset.theme);
-      show();
     });
   });
+  set(root.dataset.theme === "day" ? "day" : "night");
+
+  if (!window.matchMedia) return;
+  var dark = matchMedia("(prefers-color-scheme: dark)");
+  var follow = function (event) {
+    var picked = new URLSearchParams(location.search).get("theme");
+    try { picked = picked || sessionStorage.getItem("theme"); } catch (e) {}
+    if (!picked) set(event.matches ? "night" : "day");
+  };
+  if (dark.addEventListener) dark.addEventListener("change", follow);
+  else if (dark.addListener) dark.addListener(follow);
 })();
 
 (function () {
