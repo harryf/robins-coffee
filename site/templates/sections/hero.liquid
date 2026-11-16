@@ -1,7 +1,12 @@
-{% comment %} hero: page (kicker, headline, visit_title), home (hero_photo), photos, site, t. Full-height photo with the headline; always night-coloured (on-photo). The last sentence of the headline becomes the neon sign. {% endcomment %}
+{% comment %} hero: page (kicker, headline, visit_title), home (hero_photo, hero_photo_day), photos, site, t. Full-height photo with the headline; always light on dark (on-photo). With hero_photo_day set, the day theme shows that photo and the night theme the other; only the one on show is loaded. The last sentence of the headline becomes the neon sign. {% endcomment %}
 <section class="hero on-photo">
   <div class="hero__photo">
+    {%- if home.hero_photo_day %}
+    <div class="hero__shot" data-theme-only="night">{% render 'components/photo', img: photos[home.hero_photo], alt: '', sizes: 'max(100vw, 138vh)' %}</div>
+    <div class="hero__shot hero__shot--day" data-theme-only="day">{% render 'components/photo', img: photos[home.hero_photo_day], alt: '', sizes: 'max(100vw, 138vh)' %}</div>
+    {%- else %}
     {% render 'components/photo', img: photos[home.hero_photo], alt: '', sizes: 'max(100vw, 138vh)', eager: true %}
+    {%- endif %}
   </div>
   <div class="wrap hero__body">
     <p class="eyebrow">{{ page.kicker }}</p>

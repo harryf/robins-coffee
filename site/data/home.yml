@@ -3,6 +3,8 @@
 sections: [hero, ticker, events, moments, about, visit, contact]
 events_count: 4
 hero_photo: "moments/2026-11-07-elias-at-the-taps.jpg"
+# The hero of the day theme (coffee). Leave it out to show hero_photo in both themes.
+hero_photo_day: "photos/latte-art-pour.jpg"
 moments_count: 9
 # The four photos of the 2022 site, shown under the About text. Added with
 # `bun scripts/add-photo.ts <file> --plain --slug <name>`.

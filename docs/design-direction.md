@@ -21,7 +21,8 @@ Seven photos from the bar's group (October and November 2026) and the two logo f
 ## Fixed
 
 - Pink is light, not paint: headline, main button, ticker, link colour. Never a large flat background behind text other than the ticker.
-- The hero is always dark, in both themes, because the photo is. It and the header above it carry `on-photo`, so every colour on them is a night colour.
+- The hero is always dark, in both themes, because the photo is. It and the header above it carry `on-photo`, so everything on them is light on dark.
+- Since 16 Nov 2026 the day theme is "coffee": espresso brown with a crema orange where the night has neon pink, and the latte art photo as its hero. Harry found the first day theme (cream) ugly. Night is "cocktails": aubergine and pink, with Elias at the taps as its hero. A switch in the header (coffee cup, cocktail glass) shows either for the rest of the visit.
 - Nothing moves for ever without a pause: the ticker has a pause button, the "open" dot pulses three times, the headline flickers once. (WCAG 2.2.2; the roundel no longer turns.)
 - The hero photo is never repeated as the first card of the feed.
 - Two font families. No third "handwriting" font; the wall lettering stays in the photos.
@@ -31,6 +32,5 @@ Seven photos from the bar's group (October and November 2026) and the two logo f
 ## Open
 
 - The roundel (173 px) and wordmark (512 px) are small bitmaps. Vector originals would let the roundel pattern become a section divider and a favicon set.
-- A manual day and night switch for visitors (today only `?theme=`).
 - Whether the day theme should start with the bar's weekend opening (10:00) rather than 06:00.
 - Critique of 15 Nov 2026: all twelve findings applied except two left open: the first three feed cards are still the same evening (needs more photos, not CSS), and the hero photo is soft on large phones (needs the original file; the group copy is 1500 px wide).

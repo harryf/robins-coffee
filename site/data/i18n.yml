@@ -44,6 +44,7 @@ en:
   event_languages: { en: "", de: "in German", it: "in Italian", fr: "in French", es: "in Spanish" }
   open_until: "Open until {time}"
   ticker_pause: "Pause the moving text"
+  theme_switch: "Night colours"
   google_rating: "{value} out of 5 on Google, from {count} reviews"
   contact_title: "Write to us"
   form_name: "Name"
@@ -99,6 +100,7 @@ de:
   event_languages: { en: "auf Englisch", de: "", it: "auf Italienisch", fr: "auf Französisch", es: "auf Spanisch" }
   open_until: "Offen bis {time}"
   ticker_pause: "Lauftext anhalten"
+  theme_switch: "Nachtfarben"
   google_rating: "{value} von 5 auf Google, aus {count} Bewertungen"
   contact_title: "Schreib uns"
   form_name: "Name"

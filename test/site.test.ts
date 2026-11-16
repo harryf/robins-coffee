@@ -562,3 +562,28 @@ describe("link check", () => {
     await rm(dir, { recursive: true });
   });
 });
+
+// 16 Nov 2026: the coffee theme for the day, the switch, the ticker without its button.
+describe("day and night", () => {
+  test("a dark day theme needs no special case; a light one would get night colours on photos and dark logos", () => {
+    const dark = tokensCss(tokens);
+    expect(dark).not.toContain("invert(1)");
+    expect(dark).toContain(".on-photo { color: var(--c-text); }");
+    const light = tokensCss({ ...tokens, color: { ...tokens.color, day: { ...tokens.color.day, bg: "#ffffff" } } });
+    expect(light).toContain(':root[data-theme="day"] .on-photo {');
+    expect(light).toContain(':root[data-theme="day"] .theme-invert { filter: invert(1); }');
+    expect(light).toContain("color-scheme: light");
+  });
+  test("the home page has a hero photo per theme, the header a switch that JavaScript reveals, and the ticker is one button with no pause mark", async () => {
+    const html = (await renderSite(files, { base: "/", photos })).find((p) => p.out === "index.html")!.html;
+    expect(html).toContain('class="hero__shot" data-theme-only="night"');
+    expect(html).toContain('class="hero__shot hero__shot--day" data-theme-only="day"');
+    expect(html).not.toContain('fetchpriority="high"'); // only the photo on show may load, so neither is forced
+    expect(html).toMatch(/<button class="theme-switch"[^>]*role="switch"[^>]*data-theme-switch hidden>/);
+    expect(html).toMatch(/<button class="ticker" type="button" data-ticker aria-pressed="false" aria-label="[^"]+">/);
+    expect(html).not.toContain("ticker__pause");
+    expect(html).toContain('sessionStorage.getItem("theme")');
+    const de = (await renderSite(files, { base: "/", photos })).find((p) => p.out === "de/index.html")!.html;
+    expect(de).toContain('aria-label="Nachtfarben"');
+  });
+});
