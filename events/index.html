@@ -22,20 +22,27 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Elias, the barman, looks up from behind the beer taps in pink bar light, bottle shelves glowing behind him.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#150a17">
+<meta name="theme-color" content="#150a17" data-night="#150a17" data-day="#1b110b">
 <link rel="icon" href="/robins-coffee/favicon.ico" sizes="32x32">
-<link rel="icon" type="image/png" sizes="192x192" href="/robins-coffee/assets/icons/icon-192.png?v=2p7ccfpj">
-<link rel="apple-touch-icon" href="/robins-coffee/assets/icons/apple-touch-icon.png?v=2p7ccfpj">
+<link rel="icon" type="image/png" sizes="192x192" href="/robins-coffee/assets/icons/icon-192.png?v=389klzh7">
+<link rel="apple-touch-icon" href="/robins-coffee/assets/icons/apple-touch-icon.png?v=389klzh7">
 <link rel="preload" href="/robins-coffee/assets/fonts/alfa-slab-one.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/robins-coffee/assets/site.css?v=2p7ccfpj">
+<link rel="stylesheet" href="/robins-coffee/assets/site.css?v=389klzh7">
 <script>
-// Day or night: the page follows the Zürich clock, like the bar does. Runs before
-// first paint so the theme never flashes. Without JavaScript the page stays "night".
+// Day or night: the page follows the Zürich clock, like the bar does (coffee colours
+// by day, cocktail colours at night). The switch in the header overrules the clock for
+// this visit; ?theme=day or ?theme=night overrules both. Runs before first paint so the
+// theme never flashes. Without JavaScript the page stays "night".
 (function () {
   try {
     var h = +new Intl.DateTimeFormat("en-GB", { hour: "2-digit", hour12: false, timeZone: "Europe/Zurich" }).format(new Date());
     var forced = new URLSearchParams(location.search).get("theme");
-    document.documentElement.dataset.theme = forced || (h >= 6 && h < 17 ? "day" : "night");
+    var chosen = null;
+    try { chosen = sessionStorage.getItem("theme"); } catch (e) {}
+    var theme = forced || chosen || (h >= 6 && h < 17 ? "day" : "night");
+    document.documentElement.dataset.theme = theme === "day" ? "day" : "night";
+    var bar = document.querySelector('meta[name="theme-color"]');
+    bar.content = bar.getAttribute("data-" + document.documentElement.dataset.theme);
   } catch (e) {}
 })();
 </script>
@@ -48,8 +55,8 @@
 <header class="site-header">
   <div class="wrap site-header__row">
     <a class="brand" href="/robins-coffee/" aria-label="ROBIN&#39;s Bar &amp; Coffee">
-      <img class="brand__mark theme-invert" src="/robins-coffee/assets/brand/logo-roundel-white.png?v=2p7ccfpj" alt="" width="44" height="44">
-      <img class="brand__word theme-invert" src="/robins-coffee/assets/brand/wordmark-white.png?v=2p7ccfpj" alt="ROBIN&#39;s" width="117" height="40">
+      <img class="brand__mark theme-invert" src="/robins-coffee/assets/brand/logo-roundel-white.png?v=389klzh7" alt="" width="44" height="44">
+      <img class="brand__word theme-invert" src="/robins-coffee/assets/brand/wordmark-white.png?v=389klzh7" alt="ROBIN&#39;s" width="117" height="40">
     </a>
     <div class="site-header__side">
       <a class="nav-link" href="/robins-coffee/events/">Events</a>
@@ -57,6 +64,7 @@
       
 <span class="pill" data-open-pill hidden><span class="pill__dot" aria-hidden="true"></span><span data-open-text></span></span>
 
+      <button class="theme-switch" type="button" role="switch" aria-checked="true" aria-label="Night colours" data-theme-switch hidden><span data-theme-side="day" aria-hidden="true">☕</span><span data-theme-side="night" aria-hidden="true">🍸</span></button>
       <a class="lang" href="/robins-coffee/de/events/" hreflang="de" lang="de">Deutsch</a>
     </div>
   </div>
@@ -440,7 +448,7 @@
 <footer class="site-footer">
   <div class="wrap site-footer__grid">
     <div>
-      <img class="theme-invert" src="/robins-coffee/assets/brand/wordmark-white.png?v=2p7ccfpj" alt="ROBIN&#39;s" width="146" height="50" loading="lazy">
+      <img class="theme-invert" src="/robins-coffee/assets/brand/wordmark-white.png?v=389klzh7" alt="ROBIN&#39;s" width="146" height="50" loading="lazy">
       <p>Zähringerstrasse 33<br>8001 Zürich</p>
     </div>
     <div>
@@ -462,7 +470,7 @@
 </footer>
 
 <script type="application/json" id="hours-data">{"regular":[{"days":["mo","tu","we","th"],"open":"16:00","close":"00:00"},{"days":["fr"],"open":"16:00","close":"02:00"},{"days":["sa"],"open":"10:00","close":"02:00"},{"days":["su"],"open":"10:00","close":"00:00"}],"exceptions":[]}</script>
-<script type="application/json" id="i18n-data">{"nav_home":"Home","open_now":"Open now","opens_at":"Opens {time}","until_late":"until late","closed_today":"Closed today","closed":"Closed","og_locale":"en_GB","notfound_title":"This page is not here","notfound_text":"The address may be old or mistyped. The bar is still where it always was.","notfound_home":"To the home page","hours":"Opening hours","address":"Address","contact":"Contact","call":"Call","email":"Email","map":"Open in Google Maps","instagram":"Instagram","skip":"Skip to content","lang_switch":"Deutsch","days":{"mo":"Monday","tu":"Tuesday","we":"Wednesday","th":"Thursday","fr":"Friday","sa":"Saturday","su":"Sunday"},"days_short":{"mo":"Mon","tu":"Tue","we":"Wed","th":"Thu","fr":"Fri","sa":"Sat","su":"Sun"},"range_sep":" to ","months":["January","February","March","April","May","June","July","August","September","October","November","December"],"months_short":["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"date_short":"{day} {month} {year}","date_event":"{weekday} {day} {month}","nav_events":"Events","nav_gallery":"Photos","gallery_all":"All photos","gallery_loose":"More from the bar","photo_enlarge":"View larger","lightbox_label":"Photo viewer","lightbox_close":"Close","lightbox_prev":"Previous photo","lightbox_next":"Next photo","events_title":"What's on","events_all":"All events","events_none":"Nothing is announced right now. Come by anyway.","events_subscribe":"Add all events to your calendar","tickets":"Tickets","free_entry":"Free entry","event_languages":{"en":"","de":"in German","it":"in Italian","fr":"in French","es":"in Spanish"},"open_until":"Open until {time}","ticker_pause":"Pause the moving text","google_rating":"{value} out of 5 on Google, from {count} reviews","contact_title":"Write to us","form_name":"Name","form_phone":"Phone","form_message":"Message","form_optional":"optional","form_send":"Write the email","form_hint":"This opens your email app with the message ready to send to {email}.","form_subject":"Message from the website","ticker":["Coffee","Cocktails","Comedy","Zähringerstrasse 33","Zürich Old Town"]}</script>
-<script src="/robins-coffee/assets/js/site.js?v=2p7ccfpj" defer></script>
+<script type="application/json" id="i18n-data">{"nav_home":"Home","open_now":"Open now","opens_at":"Opens {time}","until_late":"until late","closed_today":"Closed today","closed":"Closed","og_locale":"en_GB","notfound_title":"This page is not here","notfound_text":"The address may be old or mistyped. The bar is still where it always was.","notfound_home":"To the home page","hours":"Opening hours","address":"Address","contact":"Contact","call":"Call","email":"Email","map":"Open in Google Maps","instagram":"Instagram","skip":"Skip to content","lang_switch":"Deutsch","days":{"mo":"Monday","tu":"Tuesday","we":"Wednesday","th":"Thursday","fr":"Friday","sa":"Saturday","su":"Sunday"},"days_short":{"mo":"Mon","tu":"Tue","we":"Wed","th":"Thu","fr":"Fri","sa":"Sat","su":"Sun"},"range_sep":" to ","months":["January","February","March","April","May","June","July","August","September","October","November","December"],"months_short":["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"date_short":"{day} {month} {year}","date_event":"{weekday} {day} {month}","nav_events":"Events","nav_gallery":"Photos","gallery_all":"All photos","gallery_loose":"More from the bar","photo_enlarge":"View larger","lightbox_label":"Photo viewer","lightbox_close":"Close","lightbox_prev":"Previous photo","lightbox_next":"Next photo","events_title":"What's on","events_all":"All events","events_none":"Nothing is announced right now. Come by anyway.","events_subscribe":"Add all events to your calendar","tickets":"Tickets","free_entry":"Free entry","event_languages":{"en":"","de":"in German","it":"in Italian","fr":"in French","es":"in Spanish"},"open_until":"Open until {time}","ticker_pause":"Pause the moving text","theme_switch":"Night colours","google_rating":"{value} out of 5 on Google, from {count} reviews","contact_title":"Write to us","form_name":"Name","form_phone":"Phone","form_message":"Message","form_optional":"optional","form_send":"Write the email","form_hint":"This opens your email app with the message ready to send to {email}.","form_subject":"Message from the website","ticker":["Coffee","Cocktails","Comedy","Zähringerstrasse 33","Zürich Old Town"]}</script>
+<script src="/robins-coffee/assets/js/site.js?v=389klzh7" defer></script>
 </body>
 </html>
