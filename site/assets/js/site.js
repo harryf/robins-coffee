@@ -1,5 +1,24 @@
 // The only script on the public site. No framework. It fills the "open now" pill
 // from the hours data the build embedded in the page.
+
+// Theme switch: coffee colours or cocktail colours, kept for this visit only, so the
+// next visit follows the clock again.
+(function () {
+  var root = document.documentElement;
+  document.querySelectorAll("[data-theme-switch]").forEach(function (button) {
+    var show = function () { button.setAttribute("aria-checked", String(root.dataset.theme !== "day")); };
+    button.hidden = false;
+    show();
+    button.addEventListener("click", function () {
+      root.dataset.theme = root.dataset.theme === "day" ? "night" : "day";
+      try { sessionStorage.setItem("theme", root.dataset.theme); } catch (e) {}
+      var bar = document.querySelector('meta[name="theme-color"]');
+      if (bar) bar.content = bar.getAttribute("data-" + root.dataset.theme);
+      show();
+    });
+  });
+})();
+
 (function () {
   var hoursEl = document.getElementById("hours-data");
   var i18nEl = document.getElementById("i18n-data");
@@ -61,11 +80,10 @@
     if (location.pathname.indexOf("/" + block.getAttribute("data-lang") + "/") >= 0) block.parentNode.prepend(block);
   });
 
-  // Ticker: one button pauses and restarts the moving text.
-  document.querySelectorAll("[data-ticker-pause]").forEach(function (button) {
-    button.addEventListener("click", function () {
-      var paused = button.closest("[data-ticker]").classList.toggle("is-paused");
-      button.setAttribute("aria-pressed", String(paused));
+  // Ticker: the whole strip is the button that pauses and restarts the moving text.
+  document.querySelectorAll("[data-ticker]").forEach(function (ticker) {
+    ticker.addEventListener("click", function () {
+      ticker.setAttribute("aria-pressed", String(ticker.classList.toggle("is-paused")));
     });
   });
 

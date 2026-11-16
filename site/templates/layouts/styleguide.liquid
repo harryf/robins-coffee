@@ -5,7 +5,7 @@
   <div class="wrap">
     <p class="eyebrow">Design system</p>
     <h1 class="h-xl">Style guide</h1>
-    <p class="lead">Every token and component the site is built from. Add <code>?theme=day</code> or <code>?theme=night</code> to the address to pin a theme.</p>
+    <p class="lead">Every token and component the site is built from. Use the cup and cocktail switch in the header, or add <code>?theme=day</code> or <code>?theme=night</code> to the address, to see either theme.</p>
     <div class="prose">
       <p>The rule: a value that more than one thing shares is a token in <code>site/data/tokens.json</code> (colour, type, space, radius, border, shadow, motion, layers, tap targets, measures, breakpoints). The geometry of one component (a thumbnail width, a column count, a tilt) stays in the stylesheet next to that component. A test enforces both halves.</p>
     </div>
@@ -86,7 +86,7 @@
     </div>
 
     <h3 class="h-lg">On a photo</h3>
-    <div class="on-photo sg-on-photo"><p>Anything with the class <code>on-photo</code> keeps the night colours in both themes: the hero, the header above it, the lightbox.</p><p class="hero__actions"><a class="btn btn--neon" href="#elements">Primary</a> <a class="btn" href="#elements">Secondary</a></p></div>
+    <div class="on-photo sg-on-photo"><p>Anything with the class <code>on-photo</code> is light on dark in every theme: the hero, the header above it, the lightbox.</p><p class="hero__actions"><a class="btn btn--neon" href="#elements">Primary</a> <a class="btn" href="#elements">Secondary</a></p></div>
 
     <h2 class="h-xl sg-part" id="components">Components</h2>
     <p>One file each in <code>site/templates/components/</code>. The line under each name is the comment the file starts with.</p>
@@ -107,7 +107,7 @@
       {%- when 'footer' %}
       <p>At the bottom of this page.</p>
       {%- when 'header' %}
-      <p>At the top of this page. On the home page it sits on the hero photo and takes the night colours.</p>
+      <p>At the top of this page. On the home page it sits on the hero photo. It carries the theme switch.</p>
       {%- when 'hours' %}
       <div class="card sg-narrow">{% render 'components/hours', hours_rows: hours_rows, t: t %}</div>
       {%- when 'moment-card' %}

@@ -7,7 +7,11 @@ export const SCALES = ["font", "size", "weight", "leading", "tracking", "space",
 
 const vars = (prefix: string, o: Record<string, string>) => Object.entries(o).map(([k, v]) => `  --${prefix}${k}: ${v};`).join("\n");
 
+/** A theme is dark when its background is: then white logos and night-coloured overlays need no special case. */
+export const isDark = (theme: Record<string, string>) => luminance(theme.bg!) < 0.2;
+
 export function tokensCss(t: Tokens): string {
+  const dayDark = isDark(t.color.day);
   const scales = SCALES.map((g) => vars(`${g}-`, t[g])).join("\n");
   return `/* GENERATED from site/data/tokens.json by src/tokens.ts. Edit the JSON, not this. */
 @font-face { font-family: "Alfa Slab One"; src: url("fonts/alfa-slab-one.woff2") format("woff2"); font-weight: 400; font-display: swap; }
@@ -19,15 +23,19 @@ ${scales}
 }
 :root[data-theme="day"] {
 ${vars("c-", t.color.day)}
-  color-scheme: light;
+  color-scheme: ${dayDark ? "dark" : "light"};
 }
-/* Anything that sits on a dark photo keeps the night colours in both themes. */
-.on-photo {
+/* Anything that sits on a dark photo must be light on dark. Both themes are dark today, so it
+   takes the theme's own colours; a light day theme gets the night colours there, and its
+   white brand images are inverted everywhere else. */
+.on-photo { color: var(--c-text); }
+${dayDark ? "" : `:root[data-theme="day"] .on-photo {
 ${vars("c-", t.color.night)}
-  color: var(--c-text);
   color-scheme: dark;
 }
-`;
+:root[data-theme="day"] .theme-invert { filter: invert(1); }
+:root[data-theme="day"] .on-photo .theme-invert { filter: none; }
+`}`;
 }
 
 function luminance(hex: string): number {

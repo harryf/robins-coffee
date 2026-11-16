@@ -9,7 +9,7 @@ bun run build:local    # dist/ with relative links, opens from file://
 bun run check          # build + link check + tests; run before saying you are done
 ```
 
-Look at the result in a real browser at desktop and 390 px, in both themes (`?theme=day`, `?theme=night`).
+Look at the result in a real browser at desktop and 390 px, in both themes (`?theme=day`, `?theme=night`, or the cup and cocktail switch in the header).
 
 ## Rules that bite
 
@@ -19,9 +19,9 @@ Look at the result in a real browser at desktop and 390 px, in both themes (`?th
 - **`src/render.ts` must stay pure and browser-safe**: no `fs`, no `sharp`, no `Bun.*`, no network. The editor will import it to run the real build as its preview. Disk work belongs in `src/build.ts`.
 - **Every link in a template goes through the `url` or `asset` filter.** The site is served from `/robins-coffee/`, later from `/`, and from relative paths in the editor preview. A bare `/path` works in one of the three.
 - **One source per fact.** Hours in `site/data/hours.yml`, venue facts in `site/data/site.yml`, labels in `site/data/i18n.yml`. Never type an address, a time or a label into a template.
-- **Tokens only.** No raw colour or font name in templates or CSS outside `site/data/tokens.json`. The same holds for font size, weight, line height, tracking, margin, padding, gap, border, radius, shadow, z-index, durations, text measures and media query breakpoints: tests fail on a typed value. Plain numbers are fine for one component's own geometry (width, height, columns, transforms). No `style=` in a template outside the style guide. A new colour pair that carries text goes into `contrast_pairs`. Anything placed on a dark photo gets the class `on-photo` (night colours in both themes).
+- **Tokens only.** No raw colour or font name in templates or CSS outside `site/data/tokens.json`. The same holds for font size, weight, line height, tracking, margin, padding, gap, border, radius, shadow, z-index, durations, text measures and media query breakpoints: tests fail on a typed value. Plain numbers are fine for one component's own geometry (width, height, columns, transforms). No `style=` in a template outside the style guide. A new colour pair that carries text goes into `contrast_pairs`. Anything placed on a dark photo gets the class `on-photo` (light on dark whatever the theme; `src/tokens.ts` works out what that takes).
 - **Every published photo is a moment.** The feed and the gallery read the same files; an album is `album: <slug>` plus a line in `site/data/albums.yml`, and `feed: false` keeps a photo in the gallery only.
-- **Nothing moves for ever without a pause** (WCAG 2.2.2). The ticker has its button; any new looping motion needs the same or a finite count.
+- **Nothing moves for ever without a pause** (WCAG 2.2.2). The whole ticker is a button without a visible mark: a tap or Enter pauses it. Any new looping motion needs a pause too, or a finite count.
 - **No review texts copied from Google Maps by hand.** Rating and hours are typed facts with a date; review texts come only through the Business Profile API (`docs/decisions/2026-11-15-google-listing.md`). Never add `Review` or `AggregateRating` structured data.
 - **Both languages or neither.** A new text needs EN and DE. German uses Swiss spelling: ss, never ß.
 - **The old site's facts stay.** The "content clone" test lists every fact of the 2022 page; if one really changes, change the data file and that list together.

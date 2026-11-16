@@ -43,8 +43,6 @@ code { font-size: var(--size-code); color: var(--c-amber); }
 .prose > * + * { margin-top: var(--space-4); }
 .prose p { font-size: var(--size-lg); line-height: var(--leading-text); max-width: var(--measure-prose); }
 
-/* The white brand PNGs turn dark on the day theme. */
-:root[data-theme="day"] .theme-invert { filter: invert(1); }
 
 /* header */
 .site-header { position: absolute; inset: 0 0 auto 0; z-index: var(--z-header); padding-block: var(--space-4); }
@@ -56,8 +54,11 @@ code { font-size: var(--size-code); color: var(--c-amber); }
 .nav-link { display: inline-flex; align-items: center; min-height: var(--target-min); padding-inline: var(--space-2); font-weight: var(--weight-bold); font-size: var(--size-sm); color: var(--c-text); text-decoration: none; }
 .nav-link:hover { color: var(--c-neon); }
 .lang { display: inline-flex; align-items: center; min-height: var(--target-min); padding-inline: var(--space-2); font-weight: var(--weight-semi); font-size: var(--size-sm); color: var(--c-text); }
-/* On a dark photo (the hero and the header above it) the white logos stay white. */
-:root[data-theme="day"] .on-photo .theme-invert { filter: none; }
+/* theme switch: coffee cup for the day colours, cocktail for the night colours; the side that is on is lit. */
+.theme-switch { display: inline-flex; align-items: center; min-height: var(--target-min); padding: var(--space-1); border: var(--border-thin) solid var(--c-line); border-radius: var(--radius-pill); background: var(--c-raised); font: inherit; font-size: var(--size-sm); line-height: var(--leading-none); cursor: pointer; }
+.theme-switch span { display: grid; place-items: center; width: 2.1rem; height: 2.1rem; border-radius: 50%; opacity: 0.5; filter: grayscale(1); transition: opacity var(--motion-fast) var(--motion-ease), background-color var(--motion-fast) var(--motion-ease); }
+:root[data-theme="day"] .theme-switch [data-theme-side="day"], :root:not([data-theme="day"]) .theme-switch [data-theme-side="night"] { background: var(--c-neon); opacity: 1; filter: none; }
+:root[data-theme="day"] [data-theme-only="night"], :root:not([data-theme="day"]) [data-theme-only="day"] { display: none; }
 main > :first-child:not(.hero) { padding-top: var(--space-24); }
 
 /* pill */
@@ -67,8 +68,11 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 @keyframes pulse { 70% { box-shadow: 0 0 0 var(--space-2) transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
 @media (max-width: 30rem) {
   .site-header .pill { display: none; }
-  /* The logo and three links on one row of a phone: tighter gaps, a smaller wordmark.
+  /* The roundel, three links and the theme switch on one row of a phone: tighter gaps,
+     and the wordmark gives way (the roundel carries the name for screen readers).
      Each link keeps its 44 px of height and is wider than that with its word. */
+  .site-header .brand__word { display: none; }
+  .site-header .theme-switch { margin-inline: var(--space-1); }
   .site-header__row, .brand { gap: var(--space-2); }
   .site-header__side { gap: 0; }
   .site-header .nav-link, .site-header .lang { padding-inline: var(--space-1); }
@@ -97,7 +101,9 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 /* hero: always "night", because the photo is */
 .hero { position: relative; min-height: min(92svh, 56rem); display: grid; align-items: end; isolation: isolate; overflow: hidden; --scrim: var(--c-bg); }
 .hero__photo { position: absolute; inset: 0; z-index: var(--z-under); background: var(--c-bg); }
+.hero__shot { position: absolute; inset: 0; }
 .hero__photo picture, .hero__photo img { width: 100%; height: 100%; object-fit: cover; object-position: 60% 30%; }
+.hero__shot--day img { object-position: 50% 62%; }
 /* Two scrims: one under the header, one that follows the text block at any height. */
 .hero__photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, color-mix(in srgb, var(--scrim) 85%, transparent) 0%, color-mix(in srgb, var(--scrim) 70%, transparent) 9%, color-mix(in srgb, var(--scrim) 10%, transparent) 32%, transparent 55%); }
 .hero__body { position: relative; padding-block: var(--space-24) var(--space-16); }
@@ -116,17 +122,16 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 @keyframes flicker { 0%, 12%, 16%, 24% { opacity: 0.35; text-shadow: none; } 10%, 14%, 22%, 30%, 100% { opacity: 1; } }
 
 /* ticker */
-/* Two identical groups sit side by side; each slides left by its own width plus the
-   gap, so when the first has left, the second is exactly where the first began. */
-.ticker { --gap: var(--space-6); position: relative; z-index: var(--z-raised); overflow: hidden; background: var(--c-neon); color: var(--c-on-neon); border-block: var(--border-thick) solid var(--c-on-neon); transform: rotate(-1deg) scale(1.02); margin-block: calc(var(--space-6) * -1) var(--space-4); }
-.ticker__view { display: flex; gap: var(--gap); }
-.ticker__group { display: flex; flex: none; align-items: center; justify-content: space-around; gap: var(--gap); min-width: 100%; padding-block: var(--space-3); font: var(--weight-regular) var(--size-lg)/var(--leading-none) var(--font-display); text-transform: uppercase; white-space: nowrap; animation: ticker var(--motion-ticker) linear infinite; }
+/* Two identical groups sit side by side in one track; the track slides left by half its
+   own width, so when the first group has left, the second is exactly where the first
+   began. One element moves, by a plain percentage: the form every browser animates.
+   The whole ticker is a button: a tap or Enter pauses it and starts it again. */
+.ticker { --gap: var(--space-6); display: block; width: 100%; padding: 0; border: 0; font: inherit; cursor: pointer; position: relative; z-index: var(--z-raised); overflow: hidden; background: var(--c-neon); color: var(--c-on-neon); border-block: var(--border-thick) solid var(--c-on-neon); transform: rotate(-1deg) scale(1.02); margin-block: calc(var(--space-6) * -1) var(--space-4); }
+.ticker__view { display: flex; width: max-content; animation: ticker var(--motion-ticker) linear infinite; will-change: transform; }
+.ticker__group { display: flex; flex: none; align-items: center; justify-content: space-around; gap: var(--gap); min-width: 100vw; padding-block: var(--space-3); padding-inline-end: var(--gap); font: var(--weight-regular) var(--size-lg)/var(--leading-none) var(--font-display); text-transform: uppercase; white-space: nowrap; }
 .ticker__group i { width: 0.5em; height: 0.5em; border-radius: 50%; background: currentColor; flex: none; }
-@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(calc(-100% - var(--gap))); } }
-.ticker.is-paused .ticker__group { animation-play-state: paused; }
-.ticker__pause { position: absolute; inset: 0 0 0 auto; width: 60px; display: grid; place-items: center; padding: 0 var(--space-4) 0 0; border: 0; background: var(--c-neon); color: var(--c-on-neon); cursor: pointer; }
-.ticker__pause::before { content: ""; width: 12px; height: 14px; border-inline: 4px solid currentColor; } /* shape */
-.ticker.is-paused .ticker__pause::before { width: 0; height: 0; border-block: 8px solid transparent; border-inline: 13px solid currentColor; border-inline-end-width: 0; } /* shape */
+@keyframes ticker { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-50%, 0, 0); } }
+.ticker.is-paused .ticker__view { animation-play-state: paused; }
 
 /* events: one row per event: flyer, when and what, ticket button */
 .events { display: grid; gap: var(--space-3); }
@@ -286,6 +291,5 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .ticker__pause { display: none; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }

@@ -51,10 +51,10 @@ All of it is on the new home page, and `test/site.test.ts` ("content clone of th
 
 The first draft planned style tiles before any page. We skipped that: the photos from the bar already answer the question. The room at night is pink and violet light over warm amber shelves, dark wood and green cabinets, with a chalk-white wall of hand lettering. The logo is a heavy slab serif inside a patterned roundel that matches the espresso cups. The site takes all of that and drops the black and gold of the old theme, which belongs to no part of the room.
 
-- **Colour.** Night: aubergine black, neon pink as the one loud colour, violet and amber as support, cream text. Day: the same hues on cream. Pink is the brand's light, used for the headline, the main button and the ticker, never for body text.
-- **Day and night.** The page follows the Zürich clock: a cream day theme from 06:00 to 17:00, the night theme otherwise. `?theme=day` or `?theme=night` pins one. Without JavaScript the page is night.
+- **Colour.** Night: aubergine black, neon pink as the one loud colour, violet and amber as support, cream text. Day (since 16 Nov 2026): espresso brown with crema orange as the loud colour, the "coffee" half. Pink is the brand's light, used for the headline, the main button and the ticker, never for body text.
+- **Day and night.** The page follows the Zürich clock: the coffee theme from 06:00 to 17:00, the night theme otherwise. The cup and cocktail switch in the header picks one for the visit; `?theme=day` or `?theme=night` pins one. Without JavaScript the page is night.
 - **Type.** Alfa Slab One for headings (close to the logo's slab), DM Sans for text. Both self-hosted, two families only.
-- **Signs of life.** An "open until" pill worked out from `hours.yml`; a headline that lights up like the sign; a slow ticker with a pause button; the newest photos first on the home page. All motion stops under `prefers-reduced-motion`.
+- **Signs of life.** An "open until" pill worked out from `hours.yml`; a headline that lights up like the sign; a slow ticker that pauses on a tap; the newest photos first on the home page. All motion stops under `prefers-reduced-motion`.
 - **Photography first.** Real photos from the bar lead every page. No stock, no illustrations.
 
 Open design work is listed in `design-direction.md`.

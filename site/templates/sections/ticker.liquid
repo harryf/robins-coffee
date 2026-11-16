@@ -1,9 +1,8 @@
-{% comment %} ticker: t. Two identical groups slide left by one group width, so the loop has no seam. The words are decoration (the address is in "Find us"), so the moving part is hidden from screen readers; the pause button is not. {% endcomment %}
-<div class="ticker" data-ticker>
-  <div class="ticker__view" aria-hidden="true">
+{% comment %} ticker: t. Two identical groups in one track that slides left by half its width, so the loop has no seam. The words are decoration (the address is in "Find us"), so they are hidden from screen readers. The whole ticker is one button without a visible mark: a tap, a click or Enter pauses the movement and starts it again (WCAG 2.2.2). {% endcomment %}
+<button class="ticker" type="button" data-ticker aria-pressed="false" aria-label="{{ t.ticker_pause }}">
+  <span class="ticker__view" aria-hidden="true">
     {%- for group in (1..2) %}
-    <div class="ticker__group">{%- for round in (1..2) %}{%- for word in t.ticker %}<span>{{ word }}</span><i></i>{%- endfor %}{%- endfor %}</div>
+    <span class="ticker__group">{%- for round in (1..2) %}{%- for word in t.ticker %}<span>{{ word }}</span><i></i>{%- endfor %}{%- endfor %}</span>
     {%- endfor %}
-  </div>
-  <button class="ticker__pause" type="button" aria-pressed="false" aria-label="{{ t.ticker_pause }}" data-ticker-pause></button>
-</div>
+  </span>
+</button>
