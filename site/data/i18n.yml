@@ -40,6 +40,8 @@ en:
   events_none: "Nothing is announced right now. Come by anyway."
   events_subscribe: "Add all events to your calendar"
   tickets: "Tickets"
+  event_walk_in: "Just come by"
+  menu_title: "On the menu"
   free_entry: "Free entry"
   event_languages: { en: "", de: "in German", it: "in Italian", fr: "in French", es: "in Spanish" }
   open_until: "Open until {time}"
@@ -96,6 +98,8 @@ de:
   events_none: "Im Moment ist nichts angekündigt. Komm trotzdem vorbei."
   events_subscribe: "Alle Events in deinen Kalender"
   tickets: "Tickets"
+  event_walk_in: "Einfach vorbeikommen"
+  menu_title: "Auf der Karte"
   free_entry: "Eintritt frei"
   event_languages: { en: "auf Englisch", de: "", it: "auf Italienisch", fr: "auf Französisch", es: "auf Spanisch" }
   open_until: "Offen bis {time}"

@@ -26,6 +26,7 @@ Look at the result in a real browser at desktop and 390 px, in both themes (`?th
 - **Both languages or neither.** A new text needs EN and DE. German uses Swiss spelling: ss, never ß.
 - **The old site's facts stay.** The "content clone" test lists every fact of the 2022 page; if one really changes, change the data file and that list together.
 - **Nothing invented.** Facts about the bar come from the current site, from Harry or from the owners. Unknowns go to "Open questions" in the spec.
+- **Nothing invented about an event either.** A poster without a time gives an event without a time (`date` without `from`): the card shows the day only.
 - **Imported events are never committed.** The build fetches the comedy feed (`events_feed` in `site.yml`), merges and publishes `/events.json`. To build offline or against a test feed: `bun src/build.ts --events <file or URL>`. Event times are shown in Zürich time whatever the build machine's zone.
 - **No words from `Intl`.** Date and time labels take their numbers from `wallClock()` and their words from `i18n.yml`; Intl's German names differ between the Mac and the build server, which broke CI once.
 - **The link check must pass.** `scripts/check-links.ts` runs in CI over the built site and fails on a missing file, a wrong case, a missing anchor, a path outside the base or a link relative to its page. `404.html` is shown at any address, which is why relative links are refused.
@@ -48,7 +49,8 @@ Look at the result in a real browser at desktop and 390 px, in both themes (`?th
 | A component | `site/templates/components/<name>.liquid` with its parameters in a top comment (the style guide prints it), plus its example in the `case` block of `layouts/styleguide.liquid`; a test fails without both |
 | A token | A line in `site/data/tokens.json`; it becomes `--<group>-<name>` and appears in the style guide by itself |
 | A page | `site/content/en/<slug>.md` and `site/content/de/<slug>.md`; `og_photo:` picks its link preview picture, `permalink:` names its output file (only 404 uses it) |
-| An event by hand | `site/events/<date>-<slug>.md` (format in `site/events/README.md`) |
+| An event by hand | `site/events/<name>.md` (format in `site/events/README.md`): one evening, a list of dates or a weekly evening; picture, short text in EN and DE and ticket link are optional, and without a link the card says people can just come |
+| A drink on the menu | An entry in `site/data/menu.yml` (name, text in EN and DE, price, optional `photo` added with `--plain --slug menu-<name>` plus alt text in EN and DE) |
 | A change to an imported event | an entry in `site/data/event-overrides.yml`; never edit the import |
 | Something the editor can change | A form in `src/editor/main.ts`, its rules and file writing in `src/editor/changes.ts` with tests, and the path inside `inEditScope` |
 | A decision | `docs/decisions/<date>-<slug>.md`, short, and update `docs/spec.md` if it changes the plan |

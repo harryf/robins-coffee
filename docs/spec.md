@@ -244,6 +244,7 @@ One branch and one pull request per milestone or smaller. Each milestone starts 
 | 8a | Editor: install, updates, inbox (built 16 Nov 2026) | The editor is installed from the site, shows its version and offers updates; a draft survives a reload; Elias sets up his phone from one screen; either of Harry and Elias says yes or no to the other's change inside the editor; German interface |
 | 8b | Events from Eventfrog, with kinds | Music and chess events the bar publishes on Eventfrog appear on the site, marked by kind, next to the comedy feed (waits for the bar's organiser account; by-hand events until then) |
 | 8c | Drinks menu as a book | Seasonal drinks with a name, a picture and an optional description, paged through like the book in the bar, changed from the editor (waits for photos of the book) |
+| 8d | Mac editor ("Studio"), menu, events by hand | A Mac app that runs the site on a local web server as its preview, reloads it on every change and publishes with one button; history in plain words; keys pasted once and kept in the Keychain. On the site: a drinks menu from `menu.yml` (first the five signature cocktails), hand events with a picture, a short text and an optional ticket link, one file for a list of dates or a weekly evening. In the Studio: forms for hours, photos, albums, menu and events, an Eventfrog import by address or key, Apple Vision for the crop focus and an alt text draft (20 Nov 2026, in work) |
 | 9 | Handover | robins-coffee.ch serves the new site; two approvers have each merged a change |
 | 10 | Google Business Profile | Hours on Google follow `hours.yml` |
 
@@ -260,7 +261,6 @@ One branch and one pull request per milestone or smaller. Each milestone starts 
 
 Open questions:
 
-- Which phone number is right: the old website says +41 79 176 74 46, the Google entry 044 253 62 02.
 - Access to the bar's Google listing (owner or manager login) for review texts and for stage 5; see `decisions/2026-11-15-google-listing.md`.
 - Contact form sender: the form writes an email in the visitor's mail app for now (`decisions/2026-11-15-contact-form.md`). A real sender (Worker route or form service) is chosen at the cut-over, when DNS control is known.
 - Vector logo files from the owners.

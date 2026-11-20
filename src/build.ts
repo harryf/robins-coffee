@@ -161,7 +161,7 @@ const getJson = async (src: string) => (/^https?:/.test(src) ? await (await fetc
 async function loadEvents(files: Files): Promise<SiteEvent[]> {
   const site = parseYaml(files["data/site.yml"]!);
   const overrides = parseYaml(files["data/event-overrides.yml"] ?? "")?.overrides ?? [];
-  const manual = fromManual(files);
+  const manual = fromManual(files, { timeZone: site.timezone });
   const feed = values.events ?? site.events_feed;
   try {
     const imported = fromIyfFeed(await getJson(feed), site.events_feed_venue);
@@ -183,7 +183,8 @@ async function loadEvents(files: Files): Promise<SiteEvent[]> {
 
 /** Flyer thumbnails of the events shown on the site, fetched and resized; a failed one is just left out. */
 async function buildEventImages(events: SiteEvent[], photos: Record<string, Photo>) {
-  for (const src of new Set(events.map((e) => e.image).filter((s): s is string => !!s))) {
+  // A hand event names a photo of the site ("photos/x.jpg"), which is built already; only addresses are fetched.
+  for (const src of new Set(events.map((e) => e.image).filter((s): s is string => !!s && /^https?:/.test(s)))) {
     try {
       const key = Bun.hash(src).toString(36).slice(0, 10);
       const original = join(CACHE, `event-${key}.orig`);

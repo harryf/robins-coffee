@@ -101,7 +101,7 @@ const fillDate = (pattern: string, p: WallClock, t: any) =>
 
 function eventLd(e: SiteEvent, site: any) {
   return {
-    "@type": e.category === "comedy" ? "ComedyEvent" : "Event", name: e.title, startDate: e.start, endDate: e.end,
+    "@type": e.category === "comedy" ? "ComedyEvent" : "Event", name: e.title, ...(e.all_day ? { startDate: e.start.slice(0, 10) } : { startDate: e.start, endDate: e.end }),
     eventStatus: "https://schema.org/EventScheduled", eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     location: { "@type": "Place", name: site.legal_name, address: { "@type": "PostalAddress", streetAddress: site.street, postalCode: site.postal_code, addressLocality: site.city, addressCountry: site.country } },
     ...(e.organiser ? { organizer: { "@type": "Organization", name: e.organiser } } : {}),
@@ -178,10 +178,12 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
   const now = opts.now ?? new Date();
   const allEvents: SiteEvent[] = data.events?.events ?? [];
   const ahead = upcoming(allEvents, now, 60);
+  for (const e of ahead) if (e.image && !/^https?:/.test(e.image) && !opts.photos[e.image]) throw new Error(`event ${e.id}: photo ${e.image} is missing`);
+  for (const s of data.menu?.sections ?? []) for (const d of s.drinks ?? []) if (d.photo && !opts.photos[d.photo]) throw new Error(`menu.yml: photo ${d.photo} of "${d.name}" is missing`);
   const eventView = (e: SiteEvent, lang: string, t: any) => {
     const p = wallClock(new Date(e.start), site.timezone);
     return {
-      ...e, when_label: `${fillDate(t.date_event, p, t)}, ${p.time}`, month_label: `${t.months[p.month - 1]} ${p.year}`,
+      ...e, when_label: e.all_day ? fillDate(t.date_event, p, t) : `${fillDate(t.date_event, p, t)}, ${p.time}`, text: e.text?.[lang] ?? e.text?.[defaultLang] ?? "", month_label: `${t.months[p.month - 1]} ${p.year}`,
       price_label: e.price_chf === null ? "" : e.price_chf === 0 ? t.free_entry : `CHF ${e.price_chf}`,
       language_label: t.event_languages?.[e.language] ?? "", img: e.image ? (opts.photos[e.image] ?? null) : null,
     };
@@ -243,6 +245,14 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
       events_url: page.lang === defaultLang ? "/events/" : `/${page.lang}/events/`,
       events_next: views.slice(0, data.home?.events_count ?? 4),
       events_months: months,
+      // The drinks menu in the page language; a drink without a picture is a card with words only.
+      menu: (data.menu?.sections ?? []).map((s: any) => ({
+        slug: s.slug, title: s.title?.[page.lang] ?? s.title?.[defaultLang], note: s.note?.[page.lang] ?? s.note?.[defaultLang] ?? "",
+        drinks: (s.drinks ?? []).map((d: any) => ({
+          name: d.name, text: d.text?.[page.lang] ?? d.text?.[defaultLang] ?? "", price_label: typeof d.price_chf === "number" ? `CHF ${d.price_chf}` : "",
+          img: d.photo ? opts.photos[d.photo] : null, alt: d.alt?.[page.lang] ?? d.alt?.[defaultLang] ?? "",
+        })),
+      })),
       events_json_ld: { "@context": "https://schema.org", "@graph": ahead.map((e) => eventLd(e, site)) },
       noindex: site.preview || page.data.noindex,
       guide: { components: parts("components"), sections: parts("sections"), layouts: parts("layouts"), contrast: contrastRows, sample: (() => { const h = pages.find((p) => p.lang === page.lang && p.slug === ""); return h ? { ...h.data, lang: h.lang, content: h.html } : null; })() },

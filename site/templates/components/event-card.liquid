@@ -1,4 +1,4 @@
-{% comment %} event-card: e (an event view: name, when_label, start, end, price_label, organiser, language_label, ticket_url, more_url, img), t. Hidden by site.js once the event has ended. {% endcomment %}
+{% comment %} event-card: e (an event view: name, when_label, start, end, price_label, organiser, language_label, text, ticket_url, more_url, img), t. Without a ticket link it says that people can just come. Hidden by site.js once the event has ended. {% endcomment %}
 <article class="event" data-end="{{ e.end }}">
   {%- if e.img %}
   <div class="event__thumb">{% render 'components/photo', img: e.img, alt: '', sizes: '6rem' %}</div>
@@ -6,8 +6,16 @@
   <div class="event__body">
     <p class="event__when"><time datetime="{{ e.start }}">{{ e.when_label }}</time></p>
     <h3 class="event__title">{% if e.more_url %}<a href="{{ e.more_url }}" rel="noopener">{{ e.name }}</a>{% else %}{{ e.name }}{% endif %}</h3>
-    <p class="event__meta">{{ e.price_label }}{% if e.organiser %} · {{ e.organiser }}{% endif %}{% if e.language_label != '' %} · {{ e.language_label }}{% endif %}</p>
+    {%- if e.text != '' %}
+    <p class="event__text">{{ e.text }}</p>
+    {%- endif %}
+    {%- if e.price_label != '' or e.organiser or e.language_label != '' %}
+    <p class="event__meta">{{ e.price_label }}{% if e.organiser %}{% if e.price_label != '' %} · {% endif %}{{ e.organiser }}{% endif %}{% if e.language_label != '' %} · {{ e.language_label }}{% endif %}</p>
+    {%- endif %}
   </div>
+  {%- if e.ticket_url == '' %}
+  <p class="event__walkin event__cta">{{ t.event_walk_in }}</p>
+  {%- endif %}
   {%- if e.ticket_url != '' %}
   <a class="btn btn--neon event__cta" href="{{ e.ticket_url }}" rel="noopener" aria-label="{{ t.tickets }}: {{ e.name }}, {{ e.when_label }}">{{ t.tickets }}</a>
   {%- endif %}

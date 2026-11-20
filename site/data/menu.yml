@@ -1,0 +1,33 @@
+# The drinks menu, shown on the home page. One block per part of the menu; a drink is
+# name, a line of text in EN and DE, a price in CHF and an optional picture (added with
+# `bun scripts/add-photo.ts <file> --plain --slug menu-<name>`, then its alt text here).
+# Names are the bar's own and are not translated.
+sections:
+  - slug: signatures
+    title: { en: "Signatures", de: "Signatures" }
+    drinks:
+      - name: "Pineapple Express"
+        text: { en: "Rum, Caribbean pineapple, agave and lime", de: "Rum, karibische Ananas, Agave und Limette" }
+        price_chf: 18
+        photo: "photos/menu-pineapple-express.jpg"
+        alt: { en: "Drawing of an amber drink in a martini glass with a slice of dried citrus.", de: "Zeichnung eines bernsteinfarbenen Drinks im Martiniglas mit einer getrockneten Zitrusscheibe." }
+      - name: "Lazy Monkey"
+        text: { en: "Pisco, lychee, orange and passion fruit with cinnamon foam", de: "Pisco, Litschi, Orange und Passionsfrucht mit Zimtschaum" }
+        price_chf: 18
+        photo: "photos/menu-lazy-monkey.jpg"
+        alt: { en: "Drawing of a foamy yellow drink in a stemmed glass, topped with rose petals.", de: "Zeichnung eines schaumigen gelben Drinks im Stielglas, mit Rosenblättern bestreut." }
+      - name: "Toffee Crush"
+        text: { en: "Vodka, coffee liqueur, caramel, vanilla, orange and lemon", de: "Wodka, Kaffeelikör, Karamell, Vanille, Orange und Zitrone" }
+        price_chf: 18
+        photo: "photos/menu-toffee-crush.jpg"
+        alt: { en: "Drawing of a creamy drink in a cut tumbler with a slice of dried orange on the foam.", de: "Zeichnung eines cremigen Drinks im geschliffenen Tumbler mit einer getrockneten Orangenscheibe auf dem Schaum." }
+      - name: "Hanging Garden"
+        text: { en: "Mastiha, gin, Aperol, rose and lemon", de: "Mastiha, Gin, Aperol, Rose und Zitrone" }
+        price_chf: 18
+        photo: "photos/menu-hanging-garden.jpg"
+        alt: { en: "Drawing of an orange drink with a thick foam top in a tumbler, with a rosebud on the rim.", de: "Zeichnung eines orangen Drinks mit dicker Schaumkrone im Tumbler, mit einer Rosenknospe am Rand." }
+      - name: "Black Boulevard"
+        text: { en: "Rye whiskey, Campari, Montenegro and honey syrup", de: "Rye Whiskey, Campari, Montenegro und Honigsirup" }
+        price_chf: 18
+        photo: "photos/menu-black-boulevard.jpg"
+        alt: { en: "Drawing of a dark red drink over a large ice cube in a cut tumbler, with orange peel.", de: "Zeichnung eines dunkelroten Drinks auf einem grossen Eiswürfel im geschliffenen Tumbler, mit Orangenzeste." }

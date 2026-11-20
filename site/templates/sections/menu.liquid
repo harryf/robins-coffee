@@ -1,0 +1,21 @@
+{% comment %} Home: the drinks menu from menu.yml, one block per part of the menu. Left out when the menu is empty. {% endcomment %}
+{%- if menu.size > 0 %}
+<section class="section section--surface" id="menu">
+  <div class="wrap">
+    <h2 class="h-xl">{{ t.menu_title }}</h2>
+    {%- for part in menu %}
+    <div class="menu-part">
+      <h3 class="eyebrow">{{ part.title }}</h3>
+      {%- if part.note != '' %}
+      <p class="menu-part__note">{{ part.note }}</p>
+      {%- endif %}
+      <div class="drinks">
+        {%- for d in part.drinks %}
+        {% render 'components/drink-card', d: d %}
+        {%- endfor %}
+      </div>
+    </div>
+    {%- endfor %}
+  </div>
+</section>
+{%- endif %}

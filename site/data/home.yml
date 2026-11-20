@@ -1,6 +1,6 @@
 # The home page is a stack of sections, top to bottom. A new section is a new
 # component in site/templates/sections/ plus one line here.
-sections: [hero, ticker, events, moments, about, visit, contact]
+sections: [hero, ticker, events, menu, moments, about, visit, contact]
 events_count: 4
 hero_photo: "moments/2026-11-07-elias-at-the-taps.jpg"
 # The hero of the day theme (coffee). Leave it out to show hero_photo in both themes.
