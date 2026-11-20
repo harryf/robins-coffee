@@ -14,7 +14,10 @@ import { HISTORY_FORMAT, HISTORY_LIMIT, parseHistory, type HistoryEntry } from "
 import type { PublishGit } from "./publish";
 
 /** The content paths: the same reach as inEditScope, as git pathspecs. */
-export const SCOPE_PATHSPEC = ["site/content", "site/moments", "site/events", "site/data", ":(exclude)site/data/tokens.json"];
+// Plain folders only: every git command here runs with literal paths, so a pattern such as
+// an exclude would be read as a file name. The design tokens share site/data; a commit that
+// only touched them shows up in the history, which is harmless.
+export const SCOPE_PATHSPEC = ["site/content", "site/moments", "site/events", "site/photos", "site/data"];
 const MAIN_REF = "refs/remotes/origin/main";
 
 export class GitError extends Error {}
