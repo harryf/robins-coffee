@@ -168,3 +168,7 @@ code.install { display: block; padding: var(--space-2) var(--space-3); backgroun
   .cal__dow { display: inline; margin-right: var(--space-2); }
   .cal__time { display: inline; margin-right: var(--space-2); }
 }
+/* A file field is as wide as its button and file name by itself, wider than a phone: it takes the width it is given. */
+.field, .picker { min-width: 0; }
+input[type="file"] { width: 100%; min-width: 0; max-width: 100%; }
+.picker > .button { justify-self: start; }

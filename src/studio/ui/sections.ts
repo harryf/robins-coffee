@@ -96,9 +96,10 @@ const history: Section = {
       if (!entries) return;
       closed.hidden = !dirty();
       if (!entries.length) return holder.replaceChildren(h("p", { class: "muted" }, t.history_empty));
-      holder.replaceChildren(h("ul", { class: "rows" }, ...entries.map((e) => h("li", { class: "row version" },
+      holder.replaceChildren(h("ul", { class: "rows" }, ...entries.map((e, at) => h("li", { class: "row version" },
         h("span", { class: "row__main" }, h("strong", {}, e.what), h("span", { class: "muted" }, when(e.date)), h("span", { class: "muted" }, e.who)),
-        asking === e.sha
+        // The newest entry is what is live: there is nothing to go back to.
+        at === 0 ? h("span", { class: "muted" }, t.history_current) : asking === e.sha
           // The confirm says in plain words what a restore does, and that nothing goes live by it.
           ? h("div", { class: "ask__box version__ask", role: "group" },
               h("p", { class: "ask__question" }, t.restore_sure(when(e.date), e.what)),
