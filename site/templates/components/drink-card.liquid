@@ -1,0 +1,15 @@
+{% comment %} drink-card: d (a drink view: name, text, price_label, img, alt). One drink of the menu; the picture is optional. {% endcomment %}
+<article class="drink">
+  {%- if d.img %}
+  <div class="drink__art">{% render 'components/photo', img: d.img, alt: d.alt, sizes: '(min-width: 40rem) 16rem, 46vw' %}</div>
+  {%- endif %}
+  <div class="drink__body">
+    <h3 class="drink__name">{{ d.name }}</h3>
+    {%- if d.text != '' %}
+    <p class="drink__text">{{ d.text }}</p>
+    {%- endif %}
+    {%- if d.price_label != '' %}
+    <p class="drink__price">{{ d.price_label }}</p>
+    {%- endif %}
+  </div>
+</article>

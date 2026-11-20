@@ -8,7 +8,9 @@
     "test": "bun test",
     "check": "bun src/build.ts && bun scripts/check-links.ts dist && bun test",
     "links": "bun scripts/check-links.ts dist",
-    "photo": "bun scripts/add-photo.ts"
+    "photo": "bun scripts/add-photo.ts",
+    "studio": "bun src/studio/server.ts",
+    "studio:app": "bun scripts/build-app.ts"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "^5.3.0",

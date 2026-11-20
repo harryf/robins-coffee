@@ -101,6 +101,8 @@
       {%- case c.name %}
       {%- when 'contact-form' %}
       <div class="sg-narrow">{% render 'components/contact-form', site: site, t: t %}</div>
+      {%- when 'drink-card' %}
+      <div class="drinks sg-narrow">{% render 'components/drink-card', d: menu[0].drinks[0] %}</div>
       {%- when 'event-card' %}
       <div class="events">
         {%- for e in events_next limit: 2 %}
@@ -152,6 +154,6 @@
   <p class="sg-entry__doc">{{ s.doc }}</p>
 </div>
 {% assign tpl = s.path %}
-{% render tpl, site: site, t: t, page: guide.sample, home: home, photos: photos, moments: moments, hours_rows: hours_rows, events_next: events_next, events_url: events_url, gallery_url: gallery_url %}
+{% render tpl, site: site, t: t, page: guide.sample, home: home, photos: photos, moments: moments, hours_rows: hours_rows, events_next: events_next, events_url: events_url, gallery_url: gallery_url, menu: menu %}
 {%- endfor %}
 {% endblock %}

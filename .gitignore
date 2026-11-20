@@ -7,3 +7,5 @@ ISA.md
 inbox/
 *.log
 .DS_Store
+*.app/
+.claude/

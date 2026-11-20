@@ -7,7 +7,7 @@ import { mkdtemp, mkdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { contrast, tokensCss } from "../src/tokens";
 import { cleanPhoto, MAX_EDGE } from "../scripts/add-photo";
-import { fromIyfFeed, fromManual, mergeEvents, upcoming, toIcs, type SiteEvent } from "../src/events";
+import { fromIyfFeed, fromManual, mergeEvents, upcoming, toIcs, zonedIso, REPEAT_DAYS, type SiteEvent } from "../src/events";
 
 const SITE = join(import.meta.dir, "..", "site");
 const files: Files = {};
@@ -115,7 +115,7 @@ describe("gallery", () => {
     const de = await page("de/gallery/index.html");
     for (const html of [en, de]) {
       expect(html.match(/class="moment"/g)?.length).toBe(momentPhotos.length);
-      expect(html.match(/data-lightbox-group/g)?.length).toBe(3);
+      expect(html.match(/data-lightbox-group/g)?.length).toBe(4);
     }
     const order = (html: string, words: string[]) => words.map((w) => html.indexOf(`>${w}</h2>`));
     const enAt = order(en, ["Behind the bar", "Halloween 2026", "More from the bar"]);
@@ -192,7 +192,7 @@ describe("gallery", () => {
 // Milestone 1: everything the 2022 WordPress page said (docs/spec.md, section 3)
 // must be on the new home page. If a fact changes, change the data file and this list.
 describe("content clone of the old site", () => {
-  const facts = ["2022", "Dennis Cobarrubias", "Sallahi", "Zähringerstrasse 33", "8001", "Zürich", "16:00", "10:00", "+41 79 176 74 46", "info@robins-coffee.ch", "https://maps.app.goo.gl/pUvDQa4cqUcahSdu6"];
+  const facts = ["2022", "Dennis Cobarrubias", "Sallahi", "Zähringerstrasse 33", "8001", "Zürich", "16:00", "10:00", "+41 44 253 62 02", "info@robins-coffee.ch", "https://maps.app.goo.gl/pUvDQa4cqUcahSdu6"];
   test("every fact of the old page is on the new home page, in both languages", async () => {
     const pages = await renderSite(files, { base: "/", photos });
     for (const out of ["index.html", "de/index.html"]) {
@@ -233,7 +233,7 @@ describe("events", () => {
     const first = imported[0]!;
     const twinByName: SiteEvent = { ...first, id: "eventfrog-1", source: "eventfrog", name: first.name.toUpperCase() + "!", ticket_url: "https://eventfrog.ch/x" };
     const twinByLink: SiteEvent = { ...first, id: "eventfrog-2", source: "eventfrog", name: "Another name" };
-    const other: SiteEvent = { ...first, id: "manual-dj", source: "manual", name: "DJ night", ticket_url: "", start: first.start, end: first.end };
+    const other: SiteEvent = { ...first, id: "manual-dj", source: "manual", name: "DJ night", ticket_url: "", ref: null, start: first.start, end: first.end };
     const merged = mergeEvents([imported, [twinByName, twinByLink, other]]);
     expect(merged.length).toBe(imported.length + 1);
     expect(merged.filter((e) => e.start === first.start).map((e) => e.id).sort()).toEqual([first.id, "manual-dj"].sort());
@@ -260,6 +260,57 @@ describe("events", () => {
     expect(got).toHaveLength(1);
     expect(got[0]).toMatchObject({ id: "manual-2026-12-31-nye", source: "manual", price_chf: 0, ticket_url: "" });
     expect(() => fromManual({ "events/x.md": "---\ntitle: T\n---\n" })).toThrow(/"start" is missing/);
+  });
+
+  test("a hand event can say its day in Zürich time, with or without a time", () => {
+    expect(zonedIso("2026-12-11", "19:30", "Europe/Zurich")).toBe("2026-12-11T19:30:00+01:00");
+    expect(zonedIso("2027-04-09", "19:30", "Europe/Zurich")).toBe("2027-04-09T19:30:00+02:00");
+    const timed = fromManual({ "events/a.md": '---\ntitle: A\ndate: 2026-12-31\nfrom: "21:00"\nto: "03:00"\n---\n' })[0]!;
+    expect(timed).toMatchObject({ id: "manual-a", start: "2026-12-31T21:00:00+01:00", end: "2027-01-01T03:00:00+01:00" });
+    expect(timed.all_day).toBeUndefined();
+    const day = fromManual({ "events/b.md": "---\ntitle: B\ndate: 2026-12-11\n---\n" })[0]!;
+    expect(day).toMatchObject({ all_day: true, start: "2026-12-11T00:00:00+01:00", end: "2026-12-12T00:00:00+01:00" });
+    expect(() => fromManual({ "events/c.md": "---\ntitle: C\ndate: 11.12.2026\n---\n" })).toThrow(/not a date/);
+  });
+
+  test("one file can hold a list of dates or repeat every week", () => {
+    const list = fromManual({ "events/chess.md": "---\ntitle: Chess\ndates: [2026-11-29, 2026-12-11]\ntext:\n  en: Hi\n  de: Hallo\n---\n" });
+    expect(list.map((e) => e.id)).toEqual(["manual-chess-2026-11-29", "manual-chess-2026-12-11"]);
+    expect(list[0]!.text).toEqual({ en: "Hi", de: "Hallo" });
+    const weekly = fromManual({ "events/pong.md": "---\ntitle: Pong\nevery: we\n---\n" }, { now: NOW });
+    // 15 Nov 2026 is a Sunday: the first Wednesday is the 18th, then one a week for ten weeks.
+    expect(weekly[0]!.start).toBe("2026-11-18T00:00:00+01:00");
+    expect(weekly).toHaveLength(Math.floor((REPEAT_DAYS - 3) / 7) + 1);
+    expect(weekly.every((e) => new Date(e.start.slice(0, 10) + "T12:00:00Z").getUTCDay() === 3)).toBe(true);
+    const capped = fromManual({ "events/pong.md": "---\ntitle: Pong\nevery: we\nuntil: 2026-12-02\n---\n" }, { now: NOW });
+    expect(capped.map((e) => e.start.slice(0, 10))).toEqual(["2026-11-18", "2026-11-25", "2026-12-02"]);
+    expect(() => fromManual({ "events/x.md": "---\ntitle: X\nevery: wednesday\n---\n" })).toThrow(/every/);
+  });
+
+  test("a card without a ticket link says people can just come, shows its text, and a day event shows no time", async () => {
+    const mine = fromManual({ "events/b.md": '---\ntitle: "Board games"\ndate: 2026-11-20\ntext:\n  en: "Bring a friend."\n  de: "Bring jemanden mit."\n---\n' });
+    const pages = await renderSite(withEvents(mine), { base: "/", photos, now: NOW });
+    const en = pages.find((p) => p.out === "events/index.html")!.html, de = pages.find((p) => p.out === "de/events/index.html")!.html;
+    expect(en).toContain("Just come by");
+    expect(en).toContain("Bring a friend.");
+    expect(de).toContain("Einfach vorbeikommen");
+    expect(de).toContain("Bring jemanden mit.");
+    expect(en).toMatch(/<time datetime="2026-11-20T00:00:00\+01:00">[^<,]*20[^<,]*<\/time>/);
+    expect(en).not.toContain("00:00</time>");
+    // Nothing known about price, organiser or language: no meta line at all, and no stray separator.
+    expect(en).not.toContain('class="event__meta"');
+    const own = fromManual({ "events/q.md": '---\ntitle: "Queen\'s Gambit"\norganiser: "Queen\'s Gambit"\ndate: 2026-11-20\nprice_chf: 0\n---\n' });
+    const page = (await renderSite(withEvents(own), { base: "/", photos, now: NOW })).find((p) => p.out === "events/index.html")!.html;
+    expect(page).toContain('<p class="event__meta">Free entry</p>');
+    expect(page).not.toContain("&amp;#39;");
+    const ics = toIcs(mine, { legal_name: "R", street: "S", postal_code: "1", city: "Z" }, NOW);
+    expect(ics).toContain("DTSTART;VALUE=DATE:20261120");
+    expect(ics).toContain("DTEND;VALUE=DATE:20261121");
+  });
+
+  test("an event that names a photo the site does not have fails the build", async () => {
+    const bad = fromManual({ "events/b.md": '---\ntitle: B\ndate: 2026-11-20\nimage: "photos/nope.jpg"\n---\n' });
+    expect(renderSite(withEvents(bad), { base: "/", photos, now: NOW })).rejects.toThrow(/photo photos\/nope.jpg is missing/);
   });
 
   test("the events page lists every date of the next 60 days once, in both languages, in Zürich time", async () => {
@@ -585,5 +636,42 @@ describe("day and night", () => {
     expect(html).toContain('sessionStorage.getItem("theme")');
     const de = (await renderSite(files, { base: "/", photos })).find((p) => p.out === "de/index.html")!.html;
     expect(de).toContain('aria-label="Nachtfarben"');
+  });
+});
+
+describe("menu", () => {
+  const menu = parseFrontMatter("---\n" + files["data/menu.yml"] + "\n---\n").data;
+  test("every drink has a name, a text in both languages, a price and, with a picture, alt text in both", () => {
+    expect(menu.sections.length).toBeGreaterThan(0);
+    for (const part of menu.sections) {
+      expect(part.slug).toMatch(/^[a-z0-9-]+$/);
+      for (const lang of ["en", "de"]) expect(part.title[lang]).toBeTruthy();
+      for (const d of part.drinks) {
+        expect(d.name).toBeTruthy();
+        expect(typeof d.price_chf).toBe("number");
+        for (const lang of ["en", "de"]) {
+          expect(d.text[lang]).toBeTruthy();
+          expect(d.text[lang]).not.toContain("ß");
+          if (d.photo) expect(d.alt[lang]).toBeTruthy();
+        }
+        if (d.photo) expect(photos[d.photo]).toBeDefined();
+      }
+    }
+  });
+  test("the home page shows every drink with its price in both languages", async () => {
+    const pages = await renderSite(files, { base: "/", photos });
+    for (const [out, lang] of [["index.html", "en"], ["de/index.html", "de"]] as const) {
+      const html = pages.find((p) => p.out === out)!.html;
+      expect(html).toContain('id="menu"');
+      for (const d of menu.sections.flatMap((p: any) => p.drinks)) {
+        expect(html).toContain(d.name);
+        expect(html).toContain(d.text[lang].replace(/&/g, "&amp;"));
+        expect(html).toContain(`CHF ${d.price_chf}`);
+      }
+    }
+  });
+  test("a menu photo that is missing fails the build", async () => {
+    const broken = { ...files, "data/menu.yml": files["data/menu.yml"]!.replace("photos/menu-lazy-monkey.jpg", "photos/nope.jpg") };
+    expect(renderSite(broken, { base: "/", photos })).rejects.toThrow(/photo photos\/nope.jpg of "Lazy Monkey" is missing/);
   });
 });

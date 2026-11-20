@@ -14,7 +14,9 @@ import { contrast } from "./tokens";
 /** Text files keyed by path relative to site/, for example "content/en/index.md". */
 export type Files = Record<string, string>;
 export type Variant = { w: number; path: string };
-export type Photo = { width: number; height: number; jpg: Variant[]; webp: Variant[]; /** The link preview picture (OG_SIZE), when the build made one. */ og?: string };
+export type Photo = { width: number; height: number; jpg: Variant[]; webp: Variant[]; /** The link preview picture (OG_SIZE), when the build made one. */ og?: string; /** Square cuts around the photo's focus, for small cards. */ sq?: { jpg: Variant[]; webp: Variant[] } };
+/** The square cut of a photo as a photo of its own; the whole photo when the build made no cut. */
+export const squareOf = (p: Photo | undefined | null): Photo | null => (!p ? null : p.sq ? { width: p.sq.jpg.at(-1)!.w, height: p.sq.jpg.at(-1)!.w, jpg: p.sq.jpg, webp: p.sq.webp } : p);
 export const OG_SIZE = { width: 1200, height: 630 };
 export type RenderOptions = {
   /** "/" on the domain, "/robins-coffee/" on GitHub Pages, or "relative" for file:// and the editor preview. */
@@ -101,7 +103,7 @@ const fillDate = (pattern: string, p: WallClock, t: any) =>
 
 function eventLd(e: SiteEvent, site: any) {
   return {
-    "@type": e.category === "comedy" ? "ComedyEvent" : "Event", name: e.title, startDate: e.start, endDate: e.end,
+    "@type": e.category === "comedy" ? "ComedyEvent" : "Event", name: e.title, ...(e.all_day ? { startDate: e.start.slice(0, 10) } : { startDate: e.start, endDate: e.end }),
     eventStatus: "https://schema.org/EventScheduled", eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     location: { "@type": "Place", name: site.legal_name, address: { "@type": "PostalAddress", streetAddress: site.street, postalCode: site.postal_code, addressLocality: site.city, addressCountry: site.country } },
     ...(e.organiser ? { organizer: { "@type": "Organization", name: e.organiser } } : {}),
@@ -178,12 +180,18 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
   const now = opts.now ?? new Date();
   const allEvents: SiteEvent[] = data.events?.events ?? [];
   const ahead = upcoming(allEvents, now, 60);
+  for (const e of ahead) if (e.image && !/^https?:/.test(e.image) && !opts.photos[e.image]) throw new Error(`event ${e.id}: photo ${e.image} is missing`);
+  for (const s of data.menu?.sections ?? []) for (const d of s.drinks ?? []) if (d.photo && !opts.photos[d.photo]) throw new Error(`menu.yml: photo ${d.photo} of "${d.name}" is missing`);
   const eventView = (e: SiteEvent, lang: string, t: any) => {
     const p = wallClock(new Date(e.start), site.timezone);
+    const price = e.price_chf === null ? "" : e.price_chf === 0 ? t.free_entry : `CHF ${e.price_chf}`;
+    // Price, organiser (unless it is the event's own name) and language, whichever are known.
+    const meta = [price, e.organiser && e.organiser !== e.name ? e.organiser : "", t.event_languages?.[e.language] ?? ""].filter(Boolean).join(" · ");
     return {
-      ...e, when_label: `${fillDate(t.date_event, p, t)}, ${p.time}`, month_label: `${t.months[p.month - 1]} ${p.year}`,
+      meta_label: meta,
+      ...e, when_label: e.all_day ? fillDate(t.date_event, p, t) : `${fillDate(t.date_event, p, t)}, ${p.time}`, text: e.text?.[lang] ?? e.text?.[defaultLang] ?? "", month_label: `${t.months[p.month - 1]} ${p.year}`,
       price_label: e.price_chf === null ? "" : e.price_chf === 0 ? t.free_entry : `CHF ${e.price_chf}`,
-      language_label: t.event_languages?.[e.language] ?? "", img: e.image ? (opts.photos[e.image] ?? null) : null,
+      language_label: t.event_languages?.[e.language] ?? "", img: e.image ? squareOf(opts.photos[e.image]) : null,
     };
   };
 
@@ -243,6 +251,14 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
       events_url: page.lang === defaultLang ? "/events/" : `/${page.lang}/events/`,
       events_next: views.slice(0, data.home?.events_count ?? 4),
       events_months: months,
+      // The drinks menu in the page language; a drink without a picture is a card with words only.
+      menu: (data.menu?.sections ?? []).map((s: any) => ({
+        slug: s.slug, title: s.title?.[page.lang] ?? s.title?.[defaultLang], note: s.note?.[page.lang] ?? s.note?.[defaultLang] ?? "",
+        drinks: (s.drinks ?? []).map((d: any) => ({
+          name: d.name, text: d.text?.[page.lang] ?? d.text?.[defaultLang] ?? "", price_label: typeof d.price_chf === "number" ? `CHF ${d.price_chf}` : "",
+          img: d.photo ? squareOf(opts.photos[d.photo]) : null, alt: d.alt?.[page.lang] ?? d.alt?.[defaultLang] ?? "",
+        })),
+      })),
       events_json_ld: { "@context": "https://schema.org", "@graph": ahead.map((e) => eventLd(e, site)) },
       noindex: site.preview || page.data.noindex,
       guide: { components: parts("components"), sections: parts("sections"), layouts: parts("layouts"), contrast: contrastRows, sample: (() => { const h = pages.find((p) => p.lang === page.lang && p.slug === ""); return h ? { ...h.data, lang: h.lang, content: h.html } : null; })() },

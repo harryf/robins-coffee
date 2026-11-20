@@ -11,7 +11,8 @@ city: "Zürich"
 country: "CH"
 latitude: 47.3757403
 longitude: 8.5444532
-phone: "+41 79 176 74 46"
+# The bar's landline, as on its Google listing (Harry, 20 Nov 2026).
+phone: "+41 44 253 62 02"
 email: "info@robins-coffee.ch"
 # The bar's own Google Maps entry (not the comedy club's entry at the same address).
 maps_url: "https://maps.app.goo.gl/pUvDQa4cqUcahSdu6"
