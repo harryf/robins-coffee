@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-20T13:32:57.852Z",
+ "generated_at": "2026-11-20T20:13:14.011Z",
  "events": [
   {
    "id": "iyf-gratis-zum-mitnehmen-2026-11-22",
@@ -14,7 +14,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/gratis-zum-mitnehmen.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7492505145781047015"
   },
   {
    "id": "iyf-jokesjokesjokes-2026-11-24",
@@ -29,7 +30,29 @@
    "image": "https://inyourfacecomedy.ch/assets/img/uploads/jokes-jokes-jokes_square.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7519756165779055364"
+  },
+  {
+   "source": "manual",
+   "name": "Beer Pong",
+   "title": "Beer Pong at ROBIN's",
+   "price_chf": null,
+   "ticket_url": "",
+   "more_url": null,
+   "image": "photos/event-beer-pong.jpg",
+   "category": "other",
+   "organiser": null,
+   "language": "",
+   "text": {
+    "en": "Every Wednesday. Beer for CHF 5 for students.",
+    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
+   },
+   "ref": null,
+   "id": "manual-beer-pong-2026-11-25",
+   "all_day": true,
+   "start": "2026-11-25T00:00:00+01:00",
+   "end": "2026-11-26T00:00:00+01:00"
   },
   {
    "id": "iyf-comedybrew-2026-11-26",
@@ -44,7 +67,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7466832108633224028"
   },
   {
    "id": "iyf-nerdycomedyshow-2026-11-28",
@@ -59,7 +83,29 @@
    "image": "https://inyourfacecomedy.ch/assets/img/uploads/nerdy-comedy-show-insta-post.jpeg",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7501658632838204314"
+  },
+  {
+   "source": "manual",
+   "name": "Queen's Gambit",
+   "title": "Queen's Gambit: chess for women",
+   "price_chf": null,
+   "ticket_url": "",
+   "more_url": null,
+   "image": "photos/event-queens-gambit.jpg",
+   "category": "other",
+   "organiser": "Queen's Gambit",
+   "language": "",
+   "text": {
+    "en": "A place for women to play chess.",
+    "de": "Ein Ort für Frauen zum Schachspielen."
+   },
+   "ref": null,
+   "id": "manual-queens-gambit-2026-11-29",
+   "all_day": true,
+   "start": "2026-11-29T00:00:00+01:00",
+   "end": "2026-11-30T00:00:00+01:00"
   },
   {
    "id": "iyf-jokesjokesjokes-2026-12-01",
@@ -74,7 +120,29 @@
    "image": "https://inyourfacecomedy.ch/assets/img/uploads/jokes-jokes-jokes_square.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7519756165829387013"
+  },
+  {
+   "source": "manual",
+   "name": "Beer Pong",
+   "title": "Beer Pong at ROBIN's",
+   "price_chf": null,
+   "ticket_url": "",
+   "more_url": null,
+   "image": "photos/event-beer-pong.jpg",
+   "category": "other",
+   "organiser": null,
+   "language": "",
+   "text": {
+    "en": "Every Wednesday. Beer for CHF 5 for students.",
+    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
+   },
+   "ref": null,
+   "id": "manual-beer-pong-2026-12-02",
+   "all_day": true,
+   "start": "2026-12-02T00:00:00+01:00",
+   "end": "2026-12-03T00:00:00+01:00"
   },
   {
    "id": "iyf-mike-casa-2026-12-02",
@@ -89,7 +157,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/mike-casa.jpeg",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7507006161725486601"
   },
   {
    "id": "iyf-comedybrew-2026-12-03",
@@ -104,7 +173,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7466832257447133527"
   },
   {
    "id": "iyf-pulpnonfiction-2026-12-06",
@@ -119,7 +189,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/uploads/pulpnonfiction_square.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7480253427534024794"
   },
   {
    "id": "iyf-jokesjokesjokes-2026-12-08",
@@ -134,7 +205,29 @@
    "image": "https://inyourfacecomedy.ch/assets/img/uploads/jokes-jokes-jokes_square.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7519756165888107299"
+  },
+  {
+   "source": "manual",
+   "name": "Beer Pong",
+   "title": "Beer Pong at ROBIN's",
+   "price_chf": null,
+   "ticket_url": "",
+   "more_url": null,
+   "image": "photos/event-beer-pong.jpg",
+   "category": "other",
+   "organiser": null,
+   "language": "",
+   "text": {
+    "en": "Every Wednesday. Beer for CHF 5 for students.",
+    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
+   },
+   "ref": null,
+   "id": "manual-beer-pong-2026-12-09",
+   "all_day": true,
+   "start": "2026-12-09T00:00:00+01:00",
+   "end": "2026-12-10T00:00:00+01:00"
   },
   {
    "id": "iyf-comedybrew-2026-12-10",
@@ -149,7 +242,29 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7466832348371257785"
+  },
+  {
+   "source": "manual",
+   "name": "Queen's Gambit",
+   "title": "Queen's Gambit: chess for women",
+   "price_chf": null,
+   "ticket_url": "",
+   "more_url": null,
+   "image": "photos/event-queens-gambit.jpg",
+   "category": "other",
+   "organiser": "Queen's Gambit",
+   "language": "",
+   "text": {
+    "en": "A place for women to play chess.",
+    "de": "Ein Ort für Frauen zum Schachspielen."
+   },
+   "ref": null,
+   "id": "manual-queens-gambit-2026-12-11",
+   "all_day": true,
+   "start": "2026-12-11T00:00:00+01:00",
+   "end": "2026-12-12T00:00:00+01:00"
   },
   {
    "id": "iyf-jokesjokesjokes-2026-12-15",
@@ -164,7 +279,29 @@
    "image": "https://inyourfacecomedy.ch/assets/img/uploads/jokes-jokes-jokes_square.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7519756165938438986"
+  },
+  {
+   "source": "manual",
+   "name": "Beer Pong",
+   "title": "Beer Pong at ROBIN's",
+   "price_chf": null,
+   "ticket_url": "",
+   "more_url": null,
+   "image": "photos/event-beer-pong.jpg",
+   "category": "other",
+   "organiser": null,
+   "language": "",
+   "text": {
+    "en": "Every Wednesday. Beer for CHF 5 for students.",
+    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
+   },
+   "ref": null,
+   "id": "manual-beer-pong-2026-12-16",
+   "all_day": true,
+   "start": "2026-12-16T00:00:00+01:00",
+   "end": "2026-12-17T00:00:00+01:00"
   },
   {
    "id": "iyf-promessi-spassi-2026-12-16",
@@ -179,7 +316,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/promessi-spassi.jpeg",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "it"
+   "language": "it",
+   "ref": "7478864081170004456"
   },
   {
    "id": "iyf-comedybrew-2026-12-17",
@@ -194,7 +332,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7466832472350693337"
   },
   {
    "id": "iyf-jokesjokesjokes-2026-12-22",
@@ -209,7 +348,29 @@
    "image": "https://inyourfacecomedy.ch/assets/img/uploads/jokes-jokes-jokes_square.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7519756165992964957"
+  },
+  {
+   "source": "manual",
+   "name": "Beer Pong",
+   "title": "Beer Pong at ROBIN's",
+   "price_chf": null,
+   "ticket_url": "",
+   "more_url": null,
+   "image": "photos/event-beer-pong.jpg",
+   "category": "other",
+   "organiser": null,
+   "language": "",
+   "text": {
+    "en": "Every Wednesday. Beer for CHF 5 for students.",
+    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
+   },
+   "ref": null,
+   "id": "manual-beer-pong-2026-12-23",
+   "all_day": true,
+   "start": "2026-12-23T00:00:00+01:00",
+   "end": "2026-12-24T00:00:00+01:00"
   },
   {
    "id": "iyf-comedybrew-2026-12-24",
@@ -224,7 +385,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7466832589996740615"
   },
   {
    "id": "iyf-nerdycomedyshow-2026-12-26",
@@ -239,7 +401,50 @@
    "image": "https://inyourfacecomedy.ch/assets/img/uploads/nerdy-comedy-show-insta-post.jpeg",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7501658845556549750"
+  },
+  {
+   "source": "manual",
+   "name": "Queen's Gambit",
+   "title": "Queen's Gambit: chess for women",
+   "price_chf": null,
+   "ticket_url": "",
+   "more_url": null,
+   "image": "photos/event-queens-gambit.jpg",
+   "category": "other",
+   "organiser": "Queen's Gambit",
+   "language": "",
+   "text": {
+    "en": "A place for women to play chess.",
+    "de": "Ein Ort für Frauen zum Schachspielen."
+   },
+   "ref": null,
+   "id": "manual-queens-gambit-2026-12-27",
+   "all_day": true,
+   "start": "2026-12-27T00:00:00+01:00",
+   "end": "2026-12-28T00:00:00+01:00"
+  },
+  {
+   "source": "manual",
+   "name": "Beer Pong",
+   "title": "Beer Pong at ROBIN's",
+   "price_chf": null,
+   "ticket_url": "",
+   "more_url": null,
+   "image": "photos/event-beer-pong.jpg",
+   "category": "other",
+   "organiser": null,
+   "language": "",
+   "text": {
+    "en": "Every Wednesday. Beer for CHF 5 for students.",
+    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
+   },
+   "ref": null,
+   "id": "manual-beer-pong-2026-12-30",
+   "all_day": true,
+   "start": "2026-12-30T00:00:00+01:00",
+   "end": "2026-12-31T00:00:00+01:00"
   },
   {
    "id": "iyf-comedybrew-2026-12-31",
@@ -254,7 +459,29 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521657850856244379"
+  },
+  {
+   "source": "manual",
+   "name": "Beer Pong",
+   "title": "Beer Pong at ROBIN's",
+   "price_chf": null,
+   "ticket_url": "",
+   "more_url": null,
+   "image": "photos/event-beer-pong.jpg",
+   "category": "other",
+   "organiser": null,
+   "language": "",
+   "text": {
+    "en": "Every Wednesday. Beer for CHF 5 for students.",
+    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
+   },
+   "ref": null,
+   "id": "manual-beer-pong-2027-01-06",
+   "all_day": true,
+   "start": "2027-01-06T00:00:00+01:00",
+   "end": "2027-01-07T00:00:00+01:00"
   },
   {
    "id": "iyf-comedybrew-2027-01-07",
@@ -269,7 +496,50 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521848404105780352"
+  },
+  {
+   "source": "manual",
+   "name": "Queen's Gambit",
+   "title": "Queen's Gambit: chess for women",
+   "price_chf": null,
+   "ticket_url": "",
+   "more_url": null,
+   "image": "photos/event-queens-gambit.jpg",
+   "category": "other",
+   "organiser": "Queen's Gambit",
+   "language": "",
+   "text": {
+    "en": "A place for women to play chess.",
+    "de": "Ein Ort für Frauen zum Schachspielen."
+   },
+   "ref": null,
+   "id": "manual-queens-gambit-2027-01-08",
+   "all_day": true,
+   "start": "2027-01-08T00:00:00+01:00",
+   "end": "2027-01-09T00:00:00+01:00"
+  },
+  {
+   "source": "manual",
+   "name": "Beer Pong",
+   "title": "Beer Pong at ROBIN's",
+   "price_chf": null,
+   "ticket_url": "",
+   "more_url": null,
+   "image": "photos/event-beer-pong.jpg",
+   "category": "other",
+   "organiser": null,
+   "language": "",
+   "text": {
+    "en": "Every Wednesday. Beer for CHF 5 for students.",
+    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
+   },
+   "ref": null,
+   "id": "manual-beer-pong-2027-01-13",
+   "all_day": true,
+   "start": "2027-01-13T00:00:00+01:00",
+   "end": "2027-01-14T00:00:00+01:00"
   },
   {
    "id": "iyf-comedybrew-2027-01-14",
@@ -284,7 +554,29 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521849396004157848"
+  },
+  {
+   "source": "manual",
+   "name": "Beer Pong",
+   "title": "Beer Pong at ROBIN's",
+   "price_chf": null,
+   "ticket_url": "",
+   "more_url": null,
+   "image": "photos/event-beer-pong.jpg",
+   "category": "other",
+   "organiser": null,
+   "language": "",
+   "text": {
+    "en": "Every Wednesday. Beer for CHF 5 for students.",
+    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
+   },
+   "ref": null,
+   "id": "manual-beer-pong-2027-01-20",
+   "all_day": true,
+   "start": "2027-01-20T00:00:00+01:00",
+   "end": "2027-01-21T00:00:00+01:00"
   },
   {
    "id": "iyf-promessi-spassi-2027-01-20",
@@ -299,7 +591,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/promessi-spassi.jpeg",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "it"
+   "language": "it",
+   "ref": "7523079901512996148"
   },
   {
    "id": "iyf-comedybrew-2027-01-21",
@@ -314,7 +607,29 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521849439973049496"
+  },
+  {
+   "source": "manual",
+   "name": "Beer Pong",
+   "title": "Beer Pong at ROBIN's",
+   "price_chf": null,
+   "ticket_url": "",
+   "more_url": null,
+   "image": "photos/event-beer-pong.jpg",
+   "category": "other",
+   "organiser": null,
+   "language": "",
+   "text": {
+    "en": "Every Wednesday. Beer for CHF 5 for students.",
+    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
+   },
+   "ref": null,
+   "id": "manual-beer-pong-2027-01-27",
+   "all_day": true,
+   "start": "2027-01-27T00:00:00+01:00",
+   "end": "2027-01-28T00:00:00+01:00"
   },
   {
    "id": "iyf-comedybrew-2027-01-28",
@@ -329,7 +644,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521849483501540122"
   },
   {
    "id": "iyf-digital-daddy-in-english-2027-01-29",
@@ -344,7 +660,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/uploads/digital-daddy-in-english_feature.webp",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521622493477487873"
   },
   {
    "id": "iyf-mike-casa-schwiizerduetsch-2027-01-30",
@@ -359,7 +676,29 @@
    "image": "https://inyourfacecomedy.ch/assets/img/uploads/mike-casa-schwiizerduetsch_feature.webp",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "de"
+   "language": "de",
+   "ref": "7524856337496327654"
+  },
+  {
+   "source": "manual",
+   "name": "Queen's Gambit",
+   "title": "Queen's Gambit: chess for women",
+   "price_chf": null,
+   "ticket_url": "",
+   "more_url": null,
+   "image": "photos/event-queens-gambit.jpg",
+   "category": "other",
+   "organiser": "Queen's Gambit",
+   "language": "",
+   "text": {
+    "en": "A place for women to play chess.",
+    "de": "Ein Ort für Frauen zum Schachspielen."
+   },
+   "ref": null,
+   "id": "manual-queens-gambit-2027-01-31",
+   "all_day": true,
+   "start": "2027-01-31T00:00:00+01:00",
+   "end": "2027-02-01T00:00:00+01:00"
   },
   {
    "id": "iyf-comedybrew-2027-02-04",
@@ -374,7 +713,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521849527034225223"
   },
   {
    "id": "iyf-comedybrew-2027-02-11",
@@ -389,7 +729,29 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521849570705320899"
+  },
+  {
+   "source": "manual",
+   "name": "Queen's Gambit",
+   "title": "Queen's Gambit: chess for women",
+   "price_chf": null,
+   "ticket_url": "",
+   "more_url": null,
+   "image": "photos/event-queens-gambit.jpg",
+   "category": "other",
+   "organiser": "Queen's Gambit",
+   "language": "",
+   "text": {
+    "en": "A place for women to play chess.",
+    "de": "Ein Ort für Frauen zum Schachspielen."
+   },
+   "ref": null,
+   "id": "manual-queens-gambit-2027-02-12",
+   "all_day": true,
+   "start": "2027-02-12T00:00:00+01:00",
+   "end": "2027-02-13T00:00:00+01:00"
   },
   {
    "id": "iyf-promessi-spassi-2027-02-17",
@@ -404,7 +766,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/promessi-spassi.jpeg",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "it"
+   "language": "it",
+   "ref": "7523081074156537283"
   },
   {
    "id": "iyf-comedybrew-2027-02-18",
@@ -419,7 +782,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521849614238005738"
   },
   {
    "id": "iyf-comedybrew-2027-02-25",
@@ -434,7 +798,29 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521849657779077770"
+  },
+  {
+   "source": "manual",
+   "name": "Queen's Gambit",
+   "title": "Queen's Gambit: chess for women",
+   "price_chf": null,
+   "ticket_url": "",
+   "more_url": null,
+   "image": "photos/event-queens-gambit.jpg",
+   "category": "other",
+   "organiser": "Queen's Gambit",
+   "language": "",
+   "text": {
+    "en": "A place for women to play chess.",
+    "de": "Ein Ort für Frauen zum Schachspielen."
+   },
+   "ref": null,
+   "id": "manual-queens-gambit-2027-02-28",
+   "all_day": true,
+   "start": "2027-02-28T00:00:00+01:00",
+   "end": "2027-03-01T00:00:00+01:00"
   },
   {
    "id": "iyf-comedybrew-2027-03-04",
@@ -449,7 +835,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521849701395648652"
   },
   {
    "id": "iyf-comedybrew-2027-03-11",
@@ -464,7 +851,29 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521849745020607145"
+  },
+  {
+   "source": "manual",
+   "name": "Queen's Gambit",
+   "title": "Queen's Gambit: chess for women",
+   "price_chf": null,
+   "ticket_url": "",
+   "more_url": null,
+   "image": "photos/event-queens-gambit.jpg",
+   "category": "other",
+   "organiser": "Queen's Gambit",
+   "language": "",
+   "text": {
+    "en": "A place for women to play chess.",
+    "de": "Ein Ort für Frauen zum Schachspielen."
+   },
+   "ref": null,
+   "id": "manual-queens-gambit-2027-03-12",
+   "all_day": true,
+   "start": "2027-03-12T00:00:00+01:00",
+   "end": "2027-03-13T00:00:00+01:00"
   },
   {
    "id": "iyf-digital-daddy-en-francais-2027-03-12",
@@ -479,7 +888,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/uploads/digital-daddy-en-francais_feature.webp",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "fr"
+   "language": "fr",
+   "ref": "7521622522732761079"
   },
   {
    "id": "iyf-promessi-spassi-2027-03-17",
@@ -494,7 +904,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/promessi-spassi.jpeg",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "it"
+   "language": "it",
+   "ref": "7523082599197049535"
   },
   {
    "id": "iyf-comedybrew-2027-03-18",
@@ -509,7 +920,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521849788557484401"
   },
   {
    "id": "iyf-comedybrew-2027-03-25",
@@ -524,7 +936,29 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521849832178247936"
+  },
+  {
+   "source": "manual",
+   "name": "Queen's Gambit",
+   "title": "Queen's Gambit: chess for women",
+   "price_chf": null,
+   "ticket_url": "",
+   "more_url": null,
+   "image": "photos/event-queens-gambit.jpg",
+   "category": "other",
+   "organiser": "Queen's Gambit",
+   "language": "",
+   "text": {
+    "en": "A place for women to play chess.",
+    "de": "Ein Ort für Frauen zum Schachspielen."
+   },
+   "ref": null,
+   "id": "manual-queens-gambit-2027-03-28",
+   "all_day": true,
+   "start": "2027-03-28T00:00:00+01:00",
+   "end": "2027-03-29T00:00:00+02:00"
   },
   {
    "id": "iyf-comedybrew-2027-04-01",
@@ -539,7 +973,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521849875715127482"
   },
   {
    "id": "iyf-digital-daddy-auf-deutsch-2027-04-03",
@@ -554,7 +989,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/uploads/digital-daddy-auf-deutsch_feature.webp",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "de"
+   "language": "de",
+   "ref": "7521622525819769980"
   },
   {
    "id": "iyf-comedybrew-2027-04-08",
@@ -569,7 +1005,29 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521849919251944075"
+  },
+  {
+   "source": "manual",
+   "name": "Queen's Gambit",
+   "title": "Queen's Gambit: chess for women",
+   "price_chf": null,
+   "ticket_url": "",
+   "more_url": null,
+   "image": "photos/event-queens-gambit.jpg",
+   "category": "other",
+   "organiser": "Queen's Gambit",
+   "language": "",
+   "text": {
+    "en": "A place for women to play chess.",
+    "de": "Ein Ort für Frauen zum Schachspielen."
+   },
+   "ref": null,
+   "id": "manual-queens-gambit-2027-04-09",
+   "all_day": true,
+   "start": "2027-04-09T00:00:00+02:00",
+   "end": "2027-04-10T00:00:00+02:00"
   },
   {
    "id": "iyf-comedybrew-2027-04-15",
@@ -584,7 +1042,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521849962788828138"
   },
   {
    "id": "iyf-promessi-spassi-2027-04-21",
@@ -599,7 +1058,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/promessi-spassi.jpeg",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "it"
+   "language": "it",
+   "ref": "7523082714464924176"
   },
   {
    "id": "iyf-comedybrew-2027-04-22",
@@ -614,7 +1074,29 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521850006371848276"
+  },
+  {
+   "source": "manual",
+   "name": "Queen's Gambit",
+   "title": "Queen's Gambit: chess for women",
+   "price_chf": null,
+   "ticket_url": "",
+   "more_url": null,
+   "image": "photos/event-queens-gambit.jpg",
+   "category": "other",
+   "organiser": "Queen's Gambit",
+   "language": "",
+   "text": {
+    "en": "A place for women to play chess.",
+    "de": "Ein Ort für Frauen zum Schachspielen."
+   },
+   "ref": null,
+   "id": "manual-queens-gambit-2027-04-25",
+   "all_day": true,
+   "start": "2027-04-25T00:00:00+02:00",
+   "end": "2027-04-26T00:00:00+02:00"
   },
   {
    "id": "iyf-comedybrew-2027-04-29",
@@ -629,7 +1111,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521850049900342376"
   },
   {
    "id": "iyf-comedybrew-2027-05-06",
@@ -644,7 +1127,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521850093441414623"
   },
   {
    "id": "iyf-comedybrew-2027-05-13",
@@ -659,7 +1143,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521850137028635246"
   },
   {
    "id": "iyf-comedybrew-2027-05-20",
@@ -674,7 +1159,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521850180515184930"
   },
   {
    "id": "iyf-comedybrew-2027-05-27",
@@ -689,7 +1175,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521850224043677967"
   },
   {
    "id": "iyf-comedybrew-2027-06-03",
@@ -704,7 +1191,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521850267790272482"
   },
   {
    "id": "iyf-comedybrew-2027-06-10",
@@ -719,7 +1207,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521850311369095528"
   },
   {
    "id": "iyf-comedybrew-2027-06-17",
@@ -734,7 +1223,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521850354993989600"
   },
   {
    "id": "iyf-comedybrew-2027-06-24",
@@ -749,7 +1239,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521850398665085301"
   },
   {
    "id": "iyf-comedybrew-2027-07-01",
@@ -764,7 +1255,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521850442151632430"
   },
   {
    "id": "iyf-comedybrew-2027-07-08",
@@ -779,7 +1271,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521850485734649633"
   },
   {
    "id": "iyf-comedybrew-2027-07-15",
@@ -794,7 +1287,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521850529271535798"
   },
   {
    "id": "iyf-comedybrew-2027-07-22",
@@ -809,7 +1303,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521850572758081511"
   },
   {
    "id": "iyf-comedybrew-2027-07-29",
@@ -824,7 +1319,8 @@
    "image": "https://inyourfacecomedy.ch/assets/img/thumbs/comedybrew.png",
    "category": "comedy",
    "organiser": "IN YOUR FACE Comedy",
-   "language": "en"
+   "language": "en",
+   "ref": "7521850616202684879"
   }
  ]
 }
