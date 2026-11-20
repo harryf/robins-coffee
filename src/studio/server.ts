@@ -6,7 +6,7 @@
 // may call the API and which files it may write; this file wires the parts together.
 import { readConfig, saveFolder } from "./config";
 import { readReport, studioVersion, type UpdateReport } from "./update";
-import { contentApi, type ContentDeps } from "./content-api";
+import { contentApi, workingPhoto, type ContentDeps } from "./content-api";
 import { parseArgs } from "node:util";
 import { existsSync } from "node:fs";
 import { mkdir, realpath } from "node:fs/promises";
@@ -159,7 +159,7 @@ export async function startStudio(options: StudioOptions) {
   // Read once: the version cannot change while this server runs, an update happens before it starts.
   const version: StudioState["version"] = { ...(await studioVersion(root)), update: await readReport(root) };
 
-  const contentRoutes = contentApi({ root, write, changed: () => { send("state"); void site_.build(); }, readKey: (name) => keys.read(name), fetchFn: options.fetchFn, look: options.look });
+  const contentRoutes = contentApi({ root, write, changed: () => { send("state"); void site_.build(); }, readKey: (name) => keys.read(name), fetchFn: options.fetchFn, look: options.look, previewDir: site_.dir, git, busy: () => publishing.running || starting });
 
   async function api(req: Request, url: URL): Promise<Response> {
     const route = `${req.method} ${url.pathname.slice("/_studio/api/".length)}`;
@@ -307,6 +307,7 @@ export async function startStudio(options: StudioOptions) {
           }
         }
         if (req.method !== "GET") return refuse(405, "method");
+        if (url.pathname.startsWith("/_studio/photo/")) return workingPhoto(root, url.pathname);
         if (url.pathname === "/_studio") return new Response(null, { status: 302, headers: { Location: "/_studio/" } });
         if (url.pathname === "/_studio/") {
           const html = `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="studio-token" content="${self.token}"><title>${STRINGS.en.app_name}</title><link rel="stylesheet" href="/_studio/app.css"></head><body><div id="app"></div><script type="module" src="/_studio/app.js"></script></body></html>\n`;

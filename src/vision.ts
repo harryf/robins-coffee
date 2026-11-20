@@ -5,7 +5,7 @@ import { existsSync, statSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 
-export type Seen = { focus?: { x: number; y: number }; box?: { x: number; y: number; w: number; h: number }; labels: { name: string; confidence: number }[]; text: string[]; faces: { x: number; y: number; w: number; h: number }[] };
+export type Seen = { focus?: { x: number; y: number }; box?: { x: number; y: number; w: number; h: number }; labels: { name: string; confidence: number }[]; text: string[]; faces: { x: number; y: number; w: number; h: number }[]; /** When the picture was taken, as its EXIF data says it: "2026:11:07 21:14:05". */ taken?: string };
 
 const run = async (cmd: string[], timeoutMs: number) => {
   const p = Bun.spawn(cmd, { stdout: "pipe", stderr: "pipe", stdin: "ignore" });
@@ -27,12 +27,15 @@ export async function visionTool(root: string): Promise<string> {
   return bin;
 }
 
-/** What Vision sees in one picture file. */
-export async function look(root: string, file: string): Promise<Seen> {
-  const { code, out, err } = await run([await visionTool(root), file], 60_000);
+/**
+ * What Vision sees in one picture file. `original` names the file as it came from the
+ * camera when `file` is a cleaned copy: only the moment it was taken is read from it.
+ */
+export async function look(root: string, file: string, original?: string): Promise<Seen> {
+  const { code, out, err } = await run([await visionTool(root), file, ...(original ? [original] : [])], 60_000);
   if (code !== 0) throw new Error(err.trim() || "The picture could not be read.");
   const j = JSON.parse(out);
-  return { focus: j.focus, box: j.box, labels: j.labels ?? [], text: j.text ?? [], faces: j.faces ?? [] };
+  return { focus: j.focus, box: j.box, labels: j.labels ?? [], text: j.text ?? [], faces: j.faces ?? [], ...(typeof j.taken === "string" ? { taken: j.taken } : {}) };
 }
 
 export type Tool = { name: string; found: boolean; needed: boolean; why: string; install: string };

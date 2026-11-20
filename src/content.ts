@@ -149,3 +149,126 @@ export function removeDrink(yamlText: string, part: string, name: string): strin
   drinks.items.splice(at, 1);
   return doc.toString({ lineWidth: 0 });
 }
+
+/** Where a drink of that name sits in that part; `at` is -1 when it is not there. */
+const findDrink = (doc: any, part: string, name: string) => {
+  const section = (doc.get("sections") as any)?.items.find((s: any) => s.get("slug") === part);
+  const drinks = section?.get("drinks") as any;
+  const at: number = drinks?.items?.findIndex((x: any) => x.get("name") === name) ?? -1;
+  return { drinks, at };
+};
+
+/** True when a part of the menu has a drink of that name. */
+export function hasDrink(yamlText: string, part: string, name: string): boolean {
+  return findDrink(parseDocument(yamlText || "sections: []\n"), part, name.trim()).at >= 0;
+}
+
+/**
+ * menu.yml with a drink changed: `was` says which one it was before the form was opened.
+ * It keeps its place in the list, also under a new name. Moved to another part it goes
+ * to the end of that part. A new name that another drink of the part already has is refused.
+ */
+export function changeDrink(yamlText: string, was: { part: string; name: string }, part: string, d: DrinkInput, partTitle?: { en: string; de: string }): string {
+  const problems = drinkProblems(d);
+  if (problems.length) throw new Error(problems.join(", "));
+  const doc = parseDocument(yamlText);
+  const old = findDrink(doc, was.part, was.name);
+  if (old.at < 0) throw new Error("drink_not_found");
+  const name = d.name.trim();
+  if ((part !== was.part || name !== was.name) && findDrink(doc, part, name).at >= 0) throw new Error("drink_exists");
+  if (part !== was.part) return setDrink(removeDrink(yamlText, was.part, was.name), part, d, partTitle);
+  // Same part: setDrink replaces by name, so the old entry takes the new name first and keeps its place.
+  old.drinks.items[old.at].set("name", name);
+  return setDrink(doc.toString({ lineWidth: 0 }), part, d);
+}
+
+export type MomentEdit = { caption: { en: string; de: string }; alt: { en: string; de: string }; album?: string | null; feed?: boolean };
+
+/**
+ * The text file of a photo with a new caption, alt text, album and home page switch.
+ * Its date, its notes and any line this form does not know stay as they are.
+ */
+export function editMoment(mdText: string, m: MomentEdit): string {
+  const found = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/.exec(mdText);
+  if (!found) throw new Error("photo_not_found");
+  for (const v of [m?.caption?.en, m?.caption?.de, m?.alt?.en, m?.alt?.de]) if (typeof v !== "string" || !v.trim()) throw new Error("both_languages");
+  if (m.album != null && m.album !== "" && (typeof m.album !== "string" || !/^[a-z0-9-]+$/.test(m.album))) throw new Error("album_unknown");
+  const doc = parseDocument(found[1]!);
+  const texts = (v: { en: string; de: string }) => doc.createNode({ en: v.en.trim(), de: noSharpS(v.de.trim()) });
+  if (m.album) doc.set("album", m.album); else doc.delete("album");
+  if (m.feed === false) doc.set("feed", false); else doc.delete("feed");
+  doc.set("caption", texts(m.caption));
+  doc.set("alt", texts(m.alt));
+  // The order every moment file has: date, album, feed, caption, alt, then anything else.
+  const order = ["date", "album", "feed", "caption", "alt"];
+  const rank = (pair: any) => { const at = order.indexOf(String(pair.key?.value ?? pair.key)); return at < 0 ? order.length : at; };
+  (doc.contents as any).items.sort((a: any, b: any) => rank(a) - rank(b));
+  return `---\n${doc.toString({ lineWidth: 0, defaultStringType: "QUOTE_DOUBLE", defaultKeyType: "PLAIN" }).trimEnd()}\n---\n${found[2]}`;
+}
+
+/** albums.yml without a cover that names this photo: an album whose cover photo is gone would stop the build. */
+export function dropCover(yamlText: string, momentId: string): string {
+  const doc = parseDocument(yamlText);
+  let changed = false;
+  for (const album of ((doc.get("albums") as any)?.items ?? []) as any[]) if (album.get("cover") === momentId) { album.delete("cover"); changed = true; }
+  return changed ? doc.toString({ lineWidth: 0 }) : yamlText;
+}
+
+/** "2026:11:07 21:14:05", as a camera writes the moment a picture was taken, to "2026-11-07"; null for anything else. */
+export function exifDay(taken: unknown): string | null {
+  const m = typeof taken === "string" ? /^(\d{4})[:-](\d{2})[:-](\d{2})(?:[ T]|$)/.exec(taken.trim()) : null;
+  if (!m) return null;
+  const day = `${m[1]}-${m[2]}-${m[3]}`;
+  const at = Date.parse(`${day}T00:00:00Z`);
+  // A camera with a flat battery says 0000 or 1970; a real day reads back as itself.
+  return !Number.isNaN(at) && new Date(at).toISOString().slice(0, 10) === day && m[1]! >= "1990" ? day : null;
+}
+
+/**
+ * The day a photo is filed under, worked out so nobody has to type it: the day the
+ * picture says it was taken, else the day of its file, else today. `from` says which.
+ * A day in the future is not believed.
+ */
+export function photoDay(known: { taken?: unknown; fileDay?: string | null; today: string }): { day: string; from: "picture" | "file" | "today" } {
+  const taken = exifDay(known.taken);
+  if (taken && taken <= known.today) return { day: taken, from: "picture" };
+  if (typeof known.fileDay === "string" && DAY.test(known.fileDay) && known.fileDay <= known.today) return { day: known.fileDay, from: "file" };
+  return { day: known.today, from: "today" };
+}
+
+/** What an event file says, as the fields of the form that edits it. */
+export function eventFields(data: Record<string, any>): EventInput {
+  const day = (v: any) => (v instanceof Date ? v.toISOString().slice(0, 10) : String(v));
+  const stamp = (v: any) => (v instanceof Date ? v.toISOString().replace(".000Z", "Z") : String(v));
+  const e: EventInput = { title: String(data.title ?? "") };
+  if (data.name) e.name = String(data.name);
+  if (data.start || data.end) { e.start = stamp(data.start ?? ""); e.end = stamp(data.end ?? ""); }
+  else {
+    if (Array.isArray(data.dates)) e.dates = data.dates.map(day).sort();
+    if (data.every) e.every = String(data.every);
+    if (data.date) e.date = day(data.date);
+    if (data.until) e.until = day(data.until);
+    if (data.from) e.from = String(data.from);
+    if (data.to) e.to = String(data.to);
+  }
+  if (data.text && typeof data.text === "object") e.text = { en: String(data.text.en ?? ""), de: String(data.text.de ?? "") };
+  if (data.image) e.image = String(data.image);
+  e.ticket_url = String(data.ticket_url ?? "");
+  e.price_chf = typeof data.price_chf === "number" ? data.price_chf : null;
+  if (["comedy", "music", "other"].includes(data.category)) e.category = data.category;
+  if (data.organiser) e.organiser = String(data.organiser);
+  if (data.source_url) e.source_url = String(data.source_url);
+  return e;
+}
+
+/** The notes (lines starting with #) in the head of an event file, put back into its rewritten text so an edit does not lose them. */
+export function keepComments(oldText: string, newText: string): string {
+  const head = /^---\n([\s\S]*?)\n---/.exec(oldText)?.[1] ?? "";
+  const notes = head.split("\n").filter((line) => line.startsWith("#"));
+  if (!notes.length) return newText;
+  const lines = newText.split("\n");
+  let at = 1;
+  while (/^(title|name): /.test(lines[at] ?? "")) at++;
+  lines.splice(at, 0, ...notes);
+  return lines.join("\n");
+}
