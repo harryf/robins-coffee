@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-20T19:31:49.614Z",
+ "generated_at": "2026-11-20T19:33:43.950Z",
  "events": [
   {
    "id": "iyf-gratis-zum-mitnehmen-2026-11-22",
@@ -41,7 +41,7 @@
    "image": "photos/event-beer-pong.jpg",
    "category": "other",
    "organiser": null,
-   "language": "en",
+   "language": "",
    "text": {
     "en": "Every Wednesday. Beer for CHF 5 for students.",
     "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
@@ -91,7 +91,7 @@
    "image": "photos/event-queens-gambit.jpg",
    "category": "other",
    "organiser": "Queen's Gambit",
-   "language": "en",
+   "language": "",
    "text": {
     "en": "A place for women to play chess.",
     "de": "Ein Ort für Frauen zum Schachspielen."
@@ -126,7 +126,7 @@
    "image": "photos/event-beer-pong.jpg",
    "category": "other",
    "organiser": null,
-   "language": "en",
+   "language": "",
    "text": {
     "en": "Every Wednesday. Beer for CHF 5 for students.",
     "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
@@ -206,7 +206,7 @@
    "image": "photos/event-beer-pong.jpg",
    "category": "other",
    "organiser": null,
-   "language": "en",
+   "language": "",
    "text": {
     "en": "Every Wednesday. Beer for CHF 5 for students.",
     "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
@@ -241,7 +241,7 @@
    "image": "photos/event-queens-gambit.jpg",
    "category": "other",
    "organiser": "Queen's Gambit",
-   "language": "en",
+   "language": "",
    "text": {
     "en": "A place for women to play chess.",
     "de": "Ein Ort für Frauen zum Schachspielen."
@@ -276,7 +276,7 @@
    "image": "photos/event-beer-pong.jpg",
    "category": "other",
    "organiser": null,
-   "language": "en",
+   "language": "",
    "text": {
     "en": "Every Wednesday. Beer for CHF 5 for students.",
     "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
@@ -341,7 +341,7 @@
    "image": "photos/event-beer-pong.jpg",
    "category": "other",
    "organiser": null,
-   "language": "en",
+   "language": "",
    "text": {
     "en": "Every Wednesday. Beer for CHF 5 for students.",
     "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
@@ -391,7 +391,7 @@
    "image": "photos/event-queens-gambit.jpg",
    "category": "other",
    "organiser": "Queen's Gambit",
-   "language": "en",
+   "language": "",
    "text": {
     "en": "A place for women to play chess.",
     "de": "Ein Ort für Frauen zum Schachspielen."
@@ -411,7 +411,7 @@
    "image": "photos/event-beer-pong.jpg",
    "category": "other",
    "organiser": null,
-   "language": "en",
+   "language": "",
    "text": {
     "en": "Every Wednesday. Beer for CHF 5 for students.",
     "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
@@ -446,7 +446,7 @@
    "image": "photos/event-beer-pong.jpg",
    "category": "other",
    "organiser": null,
-   "language": "en",
+   "language": "",
    "text": {
     "en": "Every Wednesday. Beer for CHF 5 for students.",
     "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
@@ -481,7 +481,7 @@
    "image": "photos/event-queens-gambit.jpg",
    "category": "other",
    "organiser": "Queen's Gambit",
-   "language": "en",
+   "language": "",
    "text": {
     "en": "A place for women to play chess.",
     "de": "Ein Ort für Frauen zum Schachspielen."
@@ -501,7 +501,7 @@
    "image": "photos/event-beer-pong.jpg",
    "category": "other",
    "organiser": null,
-   "language": "en",
+   "language": "",
    "text": {
     "en": "Every Wednesday. Beer for CHF 5 for students.",
     "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
@@ -536,7 +536,7 @@
    "image": "photos/event-beer-pong.jpg",
    "category": "other",
    "organiser": null,
-   "language": "en",
+   "language": "",
    "text": {
     "en": "Every Wednesday. Beer for CHF 5 for students.",
     "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
@@ -586,7 +586,7 @@
    "image": "photos/event-beer-pong.jpg",
    "category": "other",
    "organiser": null,
-   "language": "en",
+   "language": "",
    "text": {
     "en": "Every Wednesday. Beer for CHF 5 for students.",
     "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
@@ -651,7 +651,7 @@
    "image": "photos/event-queens-gambit.jpg",
    "category": "other",
    "organiser": "Queen's Gambit",
-   "language": "en",
+   "language": "",
    "text": {
     "en": "A place for women to play chess.",
     "de": "Ein Ort für Frauen zum Schachspielen."
@@ -701,7 +701,7 @@
    "image": "photos/event-queens-gambit.jpg",
    "category": "other",
    "organiser": "Queen's Gambit",
-   "language": "en",
+   "language": "",
    "text": {
     "en": "A place for women to play chess.",
     "de": "Ein Ort für Frauen zum Schachspielen."
@@ -766,7 +766,7 @@
    "image": "photos/event-queens-gambit.jpg",
    "category": "other",
    "organiser": "Queen's Gambit",
-   "language": "en",
+   "language": "",
    "text": {
     "en": "A place for women to play chess.",
     "de": "Ein Ort für Frauen zum Schachspielen."
@@ -816,7 +816,7 @@
    "image": "photos/event-queens-gambit.jpg",
    "category": "other",
    "organiser": "Queen's Gambit",
-   "language": "en",
+   "language": "",
    "text": {
     "en": "A place for women to play chess.",
     "de": "Ein Ort für Frauen zum Schachspielen."
@@ -896,7 +896,7 @@
    "image": "photos/event-queens-gambit.jpg",
    "category": "other",
    "organiser": "Queen's Gambit",
-   "language": "en",
+   "language": "",
    "text": {
     "en": "A place for women to play chess.",
     "de": "Ein Ort für Frauen zum Schachspielen."
@@ -961,7 +961,7 @@
    "image": "photos/event-queens-gambit.jpg",
    "category": "other",
    "organiser": "Queen's Gambit",
-   "language": "en",
+   "language": "",
    "text": {
     "en": "A place for women to play chess.",
     "de": "Ein Ort für Frauen zum Schachspielen."
@@ -1026,7 +1026,7 @@
    "image": "photos/event-queens-gambit.jpg",
    "category": "other",
    "organiser": "Queen's Gambit",
-   "language": "en",
+   "language": "",
    "text": {
     "en": "A place for women to play chess.",
     "de": "Ein Ort für Frauen zum Schachspielen."
