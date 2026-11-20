@@ -7,7 +7,7 @@
 // configuration (GIT_CONFIG_COUNT / KEY / VALUE), scoped to github.com.
 import { inEditScope } from "../editor/scope";
 import { existsSync } from "node:fs";
-import { mkdir, realpath, rm } from "node:fs/promises";
+import { lstat, mkdir, realpath, rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type { FileChange, Status } from "./describe";
 import { HISTORY_FORMAT, HISTORY_LIMIT, parseHistory, type HistoryEntry } from "./history";
@@ -152,6 +152,8 @@ export function studioGit(root: string, options: GitOptions) {
         if (there && Buffer.from(await Bun.file(join(root, path)).arrayBuffer()).equals(Buffer.from(wanted))) continue;
         await mkdir(dirname(join(root, path)), { recursive: true });
         if (!(await insideSite(path))) throw new GitError(`outside the content folders: ${path}`);
+        // A link standing where the file should be is taken away first: the write must land here, not where it points.
+        if ((await lstat(join(root, path)).catch(() => null))?.isSymbolicLink()) await rm(join(root, path));
         await Bun.write(join(root, path), wanted);
         there ? count.changed++ : count.back++;
       }

@@ -6,7 +6,8 @@
 // so the Swift source holds no path. The bundle is gitignored; build it again after
 // moving the folder.
 import { parseArgs } from "node:util";
-import { chmod, mkdir, rm } from "node:fs/promises";
+import { chmod, mkdir, rename, rm } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const ROOT = resolve(import.meta.dir, "..");
@@ -64,7 +65,7 @@ Needs the Swift compiler: xcode-select --install`);
   const app = join(resolve(values.out!), `${APP_NAME}.app`);
   const binary = join(app, "Contents", "MacOS", EXECUTABLE);
   const source = join(ROOT, "app", "Studio.swift");
-  const version = (await Bun.file(join(ROOT, "src", "editor", "version.json")).json()).version as string;
+  const version = (await Bun.file(join(ROOT, "src", "studio", "version.json")).json()).version as string;
   const background = JSON.parse(await Bun.file(join(ROOT, "site", "data", "tokens.json")).text()).color.night.bg as string;
   const result = { app, repository: ROOT, source, version, built: false };
   const say = (line: string) => values.json || console.log(line);
@@ -81,16 +82,24 @@ Needs the Swift compiler: xcode-select --install`);
   if (values["dry-run"]) {
     say(`would build ${app}\n  from ${source}\n  for the repository ${ROOT}`);
   } else {
-    await rm(app, { recursive: true, force: true });
-    await mkdir(join(app, "Contents", "MacOS"), { recursive: true });
-    await Bun.write(join(app, "Contents", "Info.plist"), infoPlist(ROOT, version, background));
-    const proc = Bun.spawn([swiftc, "-O", "-o", binary, source], { stdout: "inherit", stderr: "inherit" });
+    // Built beside the app and swapped in at the end: a build that fails leaves the app
+    // that is there (and maybe running) as it was.
+    const fresh = `${app}.new`, old = `${app}.old`;
+    await rm(fresh, { recursive: true, force: true });
+    await mkdir(join(fresh, "Contents", "MacOS"), { recursive: true });
+    await Bun.write(join(fresh, "Contents", "Info.plist"), infoPlist(ROOT, version, background));
+    const freshBinary = join(fresh, "Contents", "MacOS", EXECUTABLE);
+    const proc = Bun.spawn([swiftc, "-O", "-o", freshBinary, source], { stdout: "inherit", stderr: "inherit" });
     if ((await proc.exited) !== 0) {
-      await rm(app, { recursive: true, force: true });
-      console.error("swiftc could not build the app (see above).");
+      await rm(fresh, { recursive: true, force: true });
+      console.error("swiftc could not build the app (see above). The app that was there is untouched.");
       process.exit(1);
     }
-    await chmod(binary, 0o755);
+    await chmod(freshBinary, 0o755);
+    await rm(old, { recursive: true, force: true });
+    if (existsSync(app)) await rename(app, old);
+    await rename(fresh, app);
+    await rm(old, { recursive: true, force: true });
     result.built = true;
     say(`built ${app}\n  it starts the Studio for ${ROOT}\n  open it with: open "${app}"`);
   }

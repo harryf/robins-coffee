@@ -131,6 +131,17 @@ export function groupGallery<M extends { id: string; album?: string }>(moments: 
   return { albums: sections, loose: moments.filter((m) => !m.album) };
 }
 
+/**
+ * The output file a page's `permalink` names: plain lower case folders and a name
+ * ending in .html, nothing else. A page text is content that anyone with the editor can
+ * change, and it must never choose a file outside the built site ("../../x").
+ */
+export function pageFile(permalink: unknown, source = "a page"): string {
+  const out = String(permalink).replace(/^\//, "");
+  if (typeof permalink !== "string" || !/^[a-z0-9-]+(\/[a-z0-9-]+)*\.html$/.test(out)) throw new Error(`${source}: permalink must be a plain file name like /404.html`);
+  return out;
+}
+
 export async function renderSite(files: Files, opts: RenderOptions): Promise<Page[]> {
   const data: Record<string, any> = {};
   const templates: Record<string, string> = {};
@@ -209,7 +220,7 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
     const dir = (lang === defaultLang ? "" : `${lang}/`) + (slug ? `${slug}/` : "");
     const { data: fm, body } = parseFrontMatter(text);
     // `permalink` names the output file itself (404.html must sit at the root for GitHub Pages).
-    const out = fm.permalink ? String(fm.permalink).replace(/^\//, "") : dir + "index.html";
+    const out = fm.permalink ? pageFile(fm.permalink, path) : dir + "index.html";
     pages.push({ lang: lang!, slug, url: fm.permalink ? "/" + out : "/" + dir, out, depth: out.split("/").length - 1, data: fm, html: marked.parse(body, { async: false }) as string });
   }
 

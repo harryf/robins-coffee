@@ -8,6 +8,7 @@
 // the device (store.ts). GitHub is asked only when a change is sent or decided.
 import { renderSite, type Files, type Photo } from "../render";
 import { DAYS, weekFromYaml, weekToYaml, validateWeek, hoursEditable, validateMoment, momentChanges, momentId, slugify, branchName, describe, staleChanges, localLabel, whatChanged, verdict, type Change, type Week, type NewMoment, type Verdict } from "./changes";
+import { inEditScope } from "./scope";
 import { github, GitHubError, type Pull } from "./github";
 import { cleanInBrowser, type CleanPhoto } from "./photo";
 import { loadDraft, saveDraft } from "./store";
@@ -354,7 +355,11 @@ async function status(number: number, fresh = false) {
       const pull: Pull = await gh.pull(number);
       if (pull.merged) return out.replaceChildren(h("p", { class: "lead" }, t.published));
       if (pull.state !== "open") return out.replaceChildren(h("p", {}, t.closed_unpublished));
-      const [paths, reviews] = await Promise.all([gh.changedFiles(number).catch(() => []), gh.reviews(number).catch(() => [])]);
+      // null: the list of changed files could not be read (or is too long to be read whole), so nothing is known about it.
+      const [listed, reviews] = await Promise.all([gh.changedFiles(number).then((p) => (p.length < 100 ? p : null), () => null), gh.reviews(number).catch(() => [])]);
+      const paths = listed ?? [];
+      // A yes here is for content only. A change that also touches code, the design or the checks themselves needs a developer's eyes on GitHub.
+      const contentOnly = listed !== null && listed.length > 0 && listed.every(inEditScope);
       const v = verdict(reviews, pull.user.login, pull.head.sha);
       // The preview is published only after the tests, the build and the link check have passed,
       // and it says which commit it was built from. Ready means: built from the commit the branch is at now.
@@ -378,12 +383,13 @@ async function status(number: number, fresh = false) {
           ready && v.state !== "approved" && who?.owner ? act(t.publish_alone, publish) : null,
           twice(t.take_back, t.take_back_sure, async () => { try { await gh.withdraw(number, pull.head.ref); clearTimeout(timer); out.replaceChildren(h("p", { class: "lead" }, t.taken_back)); } catch (e) { note.replaceChildren(problemsBox([say(e)])); } })]
         : [
-          ready ? act(t.yes, async () => { if (v.state !== "approved") await gh.approve(number, pull.head.sha); await publish(); }, true) : null,
+          ready && contentOnly ? act(t.yes, async () => { if (v.state !== "approved") await gh.approve(number, pull.head.sha); await publish(); }, true) : null,
           v.state === "rejected" && v.by === who?.login ? null : act(t.no_confirm, async () => { await gh.reject(number, reason.value); clearTimeout(timer); out.replaceChildren(h("p", { class: "lead" }, t.said_no)); })];
       out.replaceChildren(...[
         h("p", {}, h("strong", {}, localLabel(pull.title, t)), t.by(pull.user.login)),
         paths.length ? h("div", {}, h("p", {}, t.what_changed), h("ul", { class: "ed-list" }, ...whatChanged(paths, t).map((w) => h("li", {}, w)))) : null,
         v.state === "rejected" ? h("p", {}, t.rejected_by(v.by, v.reason), " ", outside(t.open_on_github, pull.html_url)) : v.state === "approved" ? h("p", {}, t.approved_by(v.by)) : mine ? h("p", { class: "ed-note" }, t.needs_other) : null,
+        !contentOnly ? h("p", { class: "ed-note" }, t.not_content_only, " ", outside(t.open_on_github, pull.html_url)) : null,
         ready ? h("p", {}, t.checks_passed, outside(t.look_at_built, previewUrl), ".") : h("p", { class: "ed-note" }, slow ? t.slow : t.still_building),
         token && !mine && !(v.state === "rejected" && v.by === who?.login) ? h("div", { class: "form" }, field(t.no_reason, reason)) : null,
         h("p", { class: "ed-row" }, ...actions), note].filter((c): c is HTMLElement => c !== null));
