@@ -20,6 +20,9 @@ export const previewOrigin = (self: Self) => `http://localhost:${self.port}`;
 /** Any request at all: only under one of the server's two names, which stops a foreign name pointed at 127.0.0.1. */
 export const knownHost = (req: Request, self: Self) => [studioHost(self), `localhost:${self.port}`].includes(req.headers.get("host") ?? "");
 
+/** The preview (the built site) answers under the localhost name only. */
+export const previewHostOnly = (req: Request, self: Self) => req.headers.get("host") === `localhost:${self.port}`;
+
 /** The editing screen and its API answer under the 127.0.0.1 name only. */
 export const studioHostOnly = (req: Request, self: Self) => req.headers.get("host") === studioHost(self);
 

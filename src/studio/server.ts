@@ -17,7 +17,7 @@ import { tokensCss } from "../tokens";
 import { studioGitHub } from "./checks";
 import type { FileChange } from "./describe";
 import { studioGit, type StudioGit } from "./git";
-import { knownHost, previewFile, previewOrigin, refuseApi, safeEditPath, studioHostOnly, studioOrigin, type Self } from "./guard";
+import { knownHost, previewFile, previewOrigin, refuseApi, safeEditPath, studioHostOnly, studioOrigin, type Self, previewHostOnly } from "./guard";
 import { isKeyName, keychain, KEY_NAMES, validKey, type Keychain } from "./keychain";
 import { preview as makePreview, type BuildState } from "./preview";
 import { publish, type PublishGitHub, type PublishResult, type Step } from "./publish";
@@ -292,6 +292,9 @@ export async function startStudio(options: StudioOptions) {
         return refuse(404, "no such thing");
       }
       if (req.method !== "GET" && req.method !== "HEAD") return refuse(405, "method");
+      // The built site is never served under the screen's own name: a script in a page of the
+      // site could otherwise read the screen's token and use the API.
+      if (!previewHostOnly(req, self)) return refuse(403, "host");
       return previewResponse(url);
     },
   });

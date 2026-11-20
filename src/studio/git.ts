@@ -5,6 +5,7 @@
 // The GitHub token never appears in a command line or an address. Commands that talk
 // to GitHub get it as an Authorization header through git's environment based
 // configuration (GIT_CONFIG_COUNT / KEY / VALUE), scoped to github.com.
+import { inEditScope } from "../editor/scope";
 import { existsSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { join } from "node:path";
@@ -85,6 +86,11 @@ export function studioGit(root: string, options: GitOptions) {
     async commit(message, author) {
       const named = await ok(["config", "user.name"]);
       const who: Record<string, string> = named ? {} : { GIT_AUTHOR_NAME: author.name, GIT_AUTHOR_EMAIL: author.email, GIT_COMMITTER_NAME: author.name, GIT_COMMITTER_EMAIL: author.email };
+      // Only what this publish staged goes out: something staged earlier by hand, outside the
+      // content folders, would otherwise ride along into a public branch.
+      const staged = (await run(["diff", "--cached", "--name-only", "--no-renames", "-z"])).split("\0").filter(Boolean);
+      const foreign = staged.filter((p) => !inEditScope(p));
+      if (foreign.length) throw new GitError(`staged outside the content folders: ${foreign.slice(0, 5).join(", ")}`);
       await run(["commit", "--quiet", "-m", message], who);
     },
     head: async () => (await run(["rev-parse", "HEAD"])).trim(),

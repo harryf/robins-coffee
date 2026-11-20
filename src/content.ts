@@ -6,6 +6,8 @@ import { parse as parseYaml, parseDocument } from "yaml";
 const q = (s: string) => JSON.stringify(String(s));
 export const slugify = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/ß/g, "ss").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "event";
 const DAY = /^\d{4}-\d{2}-\d{2}$/, TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+/** A full time as it is written into a file: nothing but digits, the T, colons and an offset. */
+export const STAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(\.\d{1,3})?(Z|[+-]\d{2}:\d{2})$/;
 const noSharpS = (s: string) => s.replace(/ß/g, "ss");
 
 export type EventInput = {
@@ -23,9 +25,15 @@ export type EventInput = {
 /** What is wrong with an event, as message keys the screen translates; empty when it is fine. */
 export function eventProblems(e: EventInput): string[] {
   const out: string[] = [];
+  // Shape first: everything below may then treat a field as the text it should be.
+  if (!e || typeof e !== "object") return ["event_shape_wrong"];
+  for (const v of [e.title, e.name, e.organiser, e.ticket_url, e.source_url, e.image, e.date, e.until, e.from, e.to, e.every, e.start, e.end, e.text?.en, e.text?.de]) if (v != null && typeof v !== "string") return ["event_shape_wrong"];
+  if (e.dates !== undefined && (!Array.isArray(e.dates) || e.dates.some((d) => typeof d !== "string"))) return ["event_shape_wrong"];
+  if (e.text !== undefined && (e.text === null || typeof e.text !== "object")) return ["event_shape_wrong"];
+  if (e.category !== undefined && !["comedy", "music", "other"].includes(e.category)) return ["event_shape_wrong"];
   if (!e.title?.trim()) out.push("event_title_missing");
   const whens = [e.start ? 1 : 0, e.date ? 1 : 0, e.dates?.length ? 1 : 0, e.every ? 1 : 0].reduce((a, b) => a + b, 0);
-  if (e.start) { if (!e.end || Number.isNaN(Date.parse(e.start)) || Number.isNaN(Date.parse(e.end)) || Date.parse(e.end) < Date.parse(e.start)) out.push("event_time_wrong"); }
+  if (e.start != null || e.end != null) { if (typeof e.start !== "string" || typeof e.end !== "string" || !STAMP.test(e.start) || !STAMP.test(e.end) || Number.isNaN(Date.parse(e.start)) || Number.isNaN(Date.parse(e.end)) || Date.parse(e.end) < Date.parse(e.start)) out.push("event_time_wrong"); }
   else if (!e.date && !e.dates?.length && !e.every) out.push("event_date_missing");
   if (whens > 1 && !(e.every && e.date && whens === 2)) out.push("event_date_twice");
   for (const d of [e.date, e.until, ...(e.dates ?? [])]) if (d && !DAY.test(d)) out.push("event_date_wrong");
@@ -35,7 +43,8 @@ export function eventProblems(e: EventInput): string[] {
   if (e.ticket_url && !/^https:\/\/[^\s]+$/.test(e.ticket_url)) out.push("event_link_wrong");
   if (!!e.text?.en?.trim() !== !!e.text?.de?.trim()) out.push("both_languages");
   if (e.image && !/^photos\/[a-z0-9-]+\.jpg$/.test(e.image)) out.push("event_image_wrong");
-  if (e.price_chf != null && !(e.price_chf >= 0)) out.push("event_price_wrong");
+  if (e.price_chf != null && !(typeof e.price_chf === "number" && e.price_chf >= 0 && Number.isFinite(e.price_chf))) out.push("event_price_wrong");
+  if (e.source_url && !/^https:\/\/[^\s]+$/.test(e.source_url)) out.push("event_link_wrong");
   return [...new Set(out)];
 }
 
@@ -91,6 +100,8 @@ export type DrinkInput = { name: string; text: { en: string; de: string }; price
 
 export function drinkProblems(d: DrinkInput): string[] {
   const out: string[] = [];
+  if (!d || typeof d !== "object") return ["drink_name_missing"];
+  for (const v of [d.name, d.photo, d.text?.en, d.text?.de, d.alt?.en, d.alt?.de]) if (v != null && typeof v !== "string") return ["both_languages"];
   if (!d.name?.trim()) out.push("drink_name_missing");
   if (!d.text?.en?.trim() || !d.text?.de?.trim()) out.push("both_languages");
   if (!(typeof d.price_chf === "number" && d.price_chf >= 0)) out.push("drink_price_wrong");

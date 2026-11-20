@@ -9,7 +9,7 @@ import { cleanPhoto } from "../../scripts/add-photo";
 import { momentMarkdown } from "../moment";
 import { parseFrontMatter } from "../render";
 import { eventFile, eventProblems, addAlbum, setDrink, removeDrink, drinkProblems, slugify, type EventInput } from "../content";
-import { importFromPage, listOrganiserEvents, eventfrogImage, eventfrogUrl, type Imported } from "../eventfrog";
+import { importFromPage, listOrganiserEvents, eventfrogImage, eventfrogUrl, fetchChecked, type Imported } from "../eventfrog";
 import { draftAlt, type Focus } from "../focus";
 import { look as realLook, toolReport, type Seen } from "../vision";
 
@@ -99,8 +99,8 @@ export function contentApi(deps: ContentDeps) {
     const path = `photos/event-${slug}.jpg`;
     if (existsSync(join(root, "site", path))) return path;
     try {
-      const res = await fetchFn(address, { signal: AbortSignal.timeout(20_000) });
-      if (!res.ok) return null;
+      const res = await fetchChecked(address, (u) => { const ok = eventfrogImage(u); if (!ok) throw new Error("not an Eventfrog picture"); return ok; }, fetchFn as any);
+      if (!res.ok || !res.arrayBuffer) return null;
       const bytes = new Uint8Array(await res.arrayBuffer());
       if (!bytes.length || bytes.length > MAX_PHOTO) return null;
       await deps.write(`site/${path}`, (await cleanPhoto(bytes)).data);
@@ -218,7 +218,7 @@ export function contentApi(deps: ContentDeps) {
         let added = 0, skipped = 0;
         for (const e of list) {
           try {
-            if (typeof e?.title !== "string" || Number.isNaN(Date.parse(e.start)) || Number.isNaN(Date.parse(e.end))) throw new Error("shape");
+            if (typeof e?.title !== "string" || typeof e.start !== "string" || typeof e.end !== "string") throw new Error("shape");
             const url = e.url ? eventfrogUrl(e.url).href : "";
             const image = await importPicture(e.image, slugify(e.title));
             const file = eventFile({ title: e.title.trim(), start: e.start, end: e.end, ticket_url: url, source_url: url || undefined, price_chf: typeof e.price_chf === "number" ? e.price_chf : null, category, organiser: typeof e.organiser === "string" ? e.organiser : undefined, image: image ?? undefined });

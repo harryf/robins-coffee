@@ -45,6 +45,22 @@ describe("event files", () => {
     expect(eventProblems({ title: "A", date: "2026-12-03", image: "../../x.jpg" })).toEqual(["event_image_wrong"]);
     expect(() => eventFile({ title: "" })).toThrow();
   });
+  test("ANTI: a loose date never becomes a file name or a line of YAML", () => {
+    for (const start of ["(/../../x/) 1 Jan 2027 20:00", '1 Jan 2027 (a\nimage: "https://evil.example/x.jpg"\n#)', "2027-01-01", "2027-01-01 20:00", "2027-01-01T20:00:00+01:00\nimage: x"]) {
+      expect([start, eventProblems({ title: "T", start, end: start })]).toEqual([start, ["event_time_wrong"]]);
+      expect(() => eventFile({ title: "T", start, end: start })).toThrow();
+    }
+    expect(eventProblems({ title: "T", start: "2027-01-01T20:00:00+01:00", end: "2027-01-01T22:00:00+01:00" })).toEqual([]);
+    expect(eventProblems({ title: "T", date: "2026-12-03", price_chf: "5\nimage: x" as any })).toEqual(["event_price_wrong"]);
+    expect(eventProblems({ title: { en: "T" } as any, date: "2026-12-03" })).toContain("event_shape_wrong");
+    expect(eventProblems({ title: "T", date: "2026-12-03", category: "other\nimage: x" as any })).toEqual(["event_shape_wrong"]);
+    expect(eventProblems({ title: "T", date: "2026-12-03", source_url: "x\ny" })).toEqual(["event_link_wrong"]);
+    // Text that is allowed to be anything is always written as a quoted string.
+    const wild = eventFile({ title: 'A "title"\nimage: x\n---', date: "2026-12-03", organiser: "O: #1\n- x", text: { en: "a\nb: c", de: "d" } });
+    const [back] = fromManual({ [wild.path]: wild.text });
+    expect(back).toMatchObject({ title: 'A "title"\nimage: x\n---', organiser: "O: #1\n- x", image: null, text: { en: "a\nb: c", de: "d" } });
+    expect(wild.path).toBe("events/2026-12-03-a-title-image-x.md");
+  });
   test("German text never keeps a sharp s, and a slug is plain", () => {
     expect(eventFile({ title: "Strassenfest", date: "2026-12-03", text: { en: "Street party.", de: "Grosses Straßenfest." } }).text).toContain("Grosses Strassenfest.");
     expect(slugify("Queen's Gambit: Schach für Frauen!")).toBe("queen-s-gambit-schach-fur-frauen");
@@ -114,7 +130,16 @@ describe("eventfrog", () => {
     const ok = await importFromPage("https://eventfrog.ch/de/p/x-1.html", async (url) => { asked = url; return { ok: true, status: 200, text: async () => html, url }; });
     expect(asked).toBe("https://eventfrog.ch/de/p/x-1.html");
     expect(ok.events).toHaveLength(1);
-    expect(importFromPage("https://eventfrog.ch/de/p/x-1.html", async () => ({ ok: true, status: 200, text: async () => html, url: "https://evil.example/" }))).rejects.toThrow();
+    // A redirect is never followed blind: the fetch is told not to follow, and a hop to another host is refused before it is asked.
+    const asks: { url: string; redirect: string }[] = [];
+    const hop = (to: string) => async (url: string, init: any) => { asks.push({ url, redirect: init.redirect }); return asks.length === 1 ? { ok: false, status: 302, text: async () => "", headers: { get: () => to } } : { ok: true, status: 200, text: async () => html }; };
+    expect(importFromPage("https://eventfrog.ch/de/p/x-1.html", hop("https://evil.example/steal"))).rejects.toThrow(/eventfrog/);
+    await Bun.sleep(5);
+    expect(asks).toEqual([{ url: "https://eventfrog.ch/de/p/x-1.html", redirect: "manual" }]);
+    asks.length = 0;
+    expect((await importFromPage("https://eventfrog.ch/de/p/x-1.html", hop("/de/p/x-2.html"))).events).toHaveLength(1);
+    expect(asks.map((a) => a.url)).toEqual(["https://eventfrog.ch/de/p/x-1.html", "https://eventfrog.ch/de/p/x-2.html"]);
+    expect(importFromPage("https://eventfrog.ch/a.html", async () => ({ ok: false, status: 301, text: async () => "", headers: { get: () => "https://eventfrog.ch/a.html" } }))).rejects.toThrow(/Too many redirects/);
     expect(importFromPage("https://eventfrog.ch/de/p/x-1.html", async () => ({ ok: false, status: 404, text: async () => "" }))).rejects.toThrow(/404/);
     expect(eventfrogImage("https://res.eventfrog.net/a.webp")).toBe("https://res.eventfrog.net/a.webp");
     expect(eventfrogImage("https://evil.example/a.webp")).toBeNull();
@@ -292,4 +317,27 @@ describe("studio: content routes", () => {
 import { buildEnv } from "../src/studio/preview";
 test("studio: the preview's build never thinks it runs on GitHub", () => {
   expect(buildEnv({ PATH: "/bin", GITHUB_ACTIONS: "true", CI: "true", HOME: undefined })).toEqual({ PATH: "/bin" });
+});
+
+import { studioGit } from "../src/studio/git";
+test("ANTI: a file staged by hand outside the content folders never rides along in a publish commit", async () => {
+  const repo = mkdtempSync(join(tmp2(), "studio-staged-"));
+  const git = (...args: string[]) => Bun.spawnSync(["git", "-c", "user.name=T", "-c", "user.email=t@example.com", ...args], { cwd: repo });
+  git("init", "-q", "-b", "main");
+  mkdir2(join(repo, "site", "data"), { recursive: true });
+  await Bun.write(join(repo, "site", "data", "hours.yml"), "a: 1\n");
+  git("add", "-A");
+  git("commit", "-q", "-m", "first");
+  await Bun.write(join(repo, "notes.env"), "SOMETHING=1\n");
+  git("add", "notes.env");
+  await Bun.write(join(repo, "site", "data", "hours.yml"), "a: 2\n");
+  const studio = studioGit(repo, { remote: repo, token: async () => null });
+  await studio.stage(["site/data/hours.yml"]);
+  expect(studio.commit("Opening hours updated", { name: "T", email: "t@example.com" })).rejects.toThrow(/staged outside the content folders: notes\.env/);
+  await Bun.sleep(300);
+  expect(git("log", "--format=%s").stdout.toString().trim()).toBe("first");
+  git("rm", "-q", "--cached", "notes.env");
+  await studio.commit("Opening hours updated", { name: "T", email: "t@example.com" });
+  expect(git("log", "-1", "--format=%s").stdout.toString().trim()).toBe("Opening hours updated");
+  expect(git("show", "--name-only", "--format=").stdout.toString().trim()).toBe("site/data/hours.yml");
 });

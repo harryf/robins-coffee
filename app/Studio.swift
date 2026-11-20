@@ -200,7 +200,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
     func isOwn(_ url: URL?) -> Bool {
         guard let url = url else { return false }
         if url.scheme == "about" { return true }
-        return "\(url.scheme ?? "")://\(url.host ?? ""):\(url.port ?? 80)" == origin && url.path.hasPrefix("/_studio")
+        return "\(url.scheme ?? "")://\(url.host ?? ""):\(url.port ?? 80)" == origin && (url.path == "/_studio" || url.path.hasPrefix("/_studio/"))
     }
 
     func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {

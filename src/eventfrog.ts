@@ -86,14 +86,28 @@ export function parseEventfrogPage(html: string): { kind: "event" | "series"; ev
   return { kind: "event", events: [one] };
 }
 
-type Fetch = (url: string, init?: any) => Promise<{ ok: boolean; status: number; text(): Promise<string>; url?: string }>;
+type Fetch = (url: string, init?: any) => Promise<{ ok: boolean; status: number; text(): Promise<string>; url?: string; headers?: { get(name: string): string | null }; arrayBuffer?: () => Promise<ArrayBuffer> }>;
+
+/**
+ * A GET that never asks an address before `check` has passed it: redirects are not
+ * followed by the fetch itself but walked here, at most three, each hop checked first.
+ * `check` returns the address to ask, or throws.
+ */
+export async function fetchChecked(address: string, check: (url: string) => string, fetchFn: Fetch, headers: Record<string, string> = {}) {
+  let next = check(address);
+  for (let hop = 0; hop < 4; hop++) {
+    const res = await fetchFn(next, { headers, redirect: "manual", signal: AbortSignal.timeout(20_000) });
+    const to = res.status >= 300 && res.status < 400 ? res.headers?.get("location") : null;
+    if (!to) return res;
+    next = check(new URL(to, next).href);
+  }
+  throw new Error("Too many redirects.");
+}
 
 /** Fetch a pasted address and read its evenings. */
 export async function importFromPage(address: string, fetchFn: Fetch): Promise<{ kind: "event" | "series"; events: Imported[] }> {
-  const url = eventfrogUrl(address);
-  const res = await fetchFn(url.href, { headers: { Accept: "text/html", "User-Agent": "Mozilla/5.0 (site editor)" }, redirect: "follow", signal: AbortSignal.timeout(20_000) });
+  const res = await fetchChecked(address, (u) => eventfrogUrl(u).href, fetchFn, { Accept: "text/html", "User-Agent": "Mozilla/5.0 (site editor)" });
   if (!res.ok) throw new Error(`Eventfrog answered ${res.status} for that address.`);
-  if (res.url) eventfrogUrl(res.url); // a redirect must stay on Eventfrog
   return parseEventfrogPage(await res.text());
 }
 

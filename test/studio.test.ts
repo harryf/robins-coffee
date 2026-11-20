@@ -645,6 +645,9 @@ describe("studio: the server", () => {
     })();
   }
 
+  /** The preview, asked the way a browser asks it: under the localhost name. */
+  const pv = (path: string) => fetch(`${at}${path}`, { headers: { Host: `localhost:${studio.port}` } });
+
   beforeAll(async () => {
     // A copy of the site as it is in this folder, as its own repository with its own "GitHub".
     ({ root, bare } = repoWithRemote((to) => {
@@ -676,12 +679,12 @@ describe("studio: the server", () => {
     expect(screen.status).toBe(200);
     const html = await screen.text();
     expect(html).toContain(`<meta name="studio-token" content="${studio.token}">`);
-    const home = await fetch(`${at}/`);
+    const home = await pv(`/`);
     expect(home.status).toBe(200);
     expect(await home.text()).toContain("ROBIN");
-    expect((await fetch(`${at}/de/`)).status).toBe(200);
-    expect((await fetch(`${at}/assets/site.css`)).headers.get("content-type")).toContain("text/css");
-    const missing = await fetch(`${at}/no-such-page/`);
+    expect((await pv(`/de/`)).status).toBe(200);
+    expect((await pv(`/assets/site.css`)).headers.get("content-type")).toContain("text/css");
+    const missing = await pv(`/no-such-page/`);
     expect(missing.status).toBe(404);
     expect((await fetch(`${at}/_studio/app.js`)).status).toBe(200);
   });
@@ -703,12 +706,12 @@ describe("studio: the server", () => {
   });
 
   test("the reload script is added to served pages only, never to a built file, and carries no token", async () => {
-    const served = await (await fetch(`${at}/`)).text();
+    const served = await (await pv(`/`)).text();
     expect(served).toContain(RELOAD_SCRIPT);
     expect(served).not.toContain(studio.token);
-    expect((await (await fetch(`${at}/no-such-page/`)).text())).toContain(RELOAD_SCRIPT);
+    expect((await (await pv(`/no-such-page/`)).text())).toContain(RELOAD_SCRIPT);
     for (const p of new Bun.Glob("**/*.html").scanSync({ cwd: join(root, ".cache", "studio", "preview") })) expect([p, readFileSync(join(root, ".cache", "studio", "preview", p), "utf8").includes("/_studio/events")]).toEqual([p, false]);
-    expect(await (await fetch(`${at}/assets/js/site.js`)).text()).not.toContain("/_studio/");
+    expect(await (await pv(`/assets/js/site.js`)).text()).not.toContain("/_studio/");
   });
 
   test("ANTI: it listens on 127.0.0.1 only", async () => {
@@ -743,6 +746,8 @@ describe("studio: the server", () => {
     expect((await fetch(`${at}/_studio/`, { headers: { Host: `localhost:${studio.port}` } })).status).toBe(403);
     expect((await fetch(`${at}/`, { headers: { Host: `localhost:${studio.port}` } })).status).toBe(200);
     expect((await fetch(`${at}/`, { headers: { Host: "evil.example" } })).status).toBe(403);
+    // ANTI: the built site is never served under the screen's own name, where its scripts could read the token.
+    for (const path of ["/", "/index.html", "/de/", "/_studiox", "/no-such-page/"]) expect([path, (await fetch(`${at}${path}`)).status]).toEqual([path, 403]);
   });
 
   test("ANTI: a write outside the edit scope or with a climbing path is refused", async () => {
@@ -759,7 +764,7 @@ describe("studio: the server", () => {
   test("a saved change to the hours rewrites hours.yml by the editor's rules, rebuilds the preview and tells open tabs to reload", async () => {
     const hours = await (await call("GET", "hours")).json();
     expect(hours.editable).toBe(true);
-    expect(await (await fetch(`${at}/`)).text()).not.toContain("11:35");
+    expect(await (await pv(`/`)).text()).not.toContain("11:35");
     const reload = nextEvent("reload");
     await Bun.sleep(100);
     const res = await call("PUT", "hours", { week: { ...hours.week, su: { closed: false, open: "11:35", close: "22:00" } } });
@@ -768,7 +773,7 @@ describe("studio: the server", () => {
     expect(hoursFile().startsWith("# Opening hours.")).toBe(true);
     expect(await reload).toBe(true);
     await studio.settled();
-    expect(await (await fetch(`${at}/`)).text()).toContain("11:35");
+    expect(await (await pv(`/`)).text()).toContain("11:35");
     const now = await state();
     expect(now.build.status).toBe("ok");
     expect(now.changes).toEqual([{ path: "site/data/hours.yml", status: "modified", publishable: true }]);
@@ -792,11 +797,11 @@ describe("studio: the server", () => {
     writeFileSync(join(root, "site", "data", "hours.yml"), hoursFile().replace("11:35", "11:40"));
     expect(await reload).toBe(true);
     await studio.settled();
-    expect(await (await fetch(`${at}/`)).text()).toContain("11:40");
+    expect(await (await pv(`/`)).text()).toContain("11:40");
   }, 60_000);
 
   test("a build that fails is reported and the last good preview stays; discarding the file mends it", async () => {
-    const good = await (await fetch(`${at}/`)).text();
+    const good = await (await pv(`/`)).text();
     const failed = nextEvent("state");
     expect((await call("PUT", "file", { path: "site/data/home.yml", text: "sections: [no-such-section\n" })).status).toBe(200);
     await failed;
@@ -807,7 +812,7 @@ describe("studio: the server", () => {
     expect(broken.build.log).toContain("YAMLParseError");
     expect(broken.build.log).toContain("sections: [no-such-section");
     expect(broken.build.log).not.toMatch(/node_modules|^\s*at /m);
-    const still = await fetch(`${at}/`);
+    const still = await pv(`/`);
     expect(still.status).toBe(200);
     expect(await still.text()).toBe(good);
     // And what does not build is not published.
