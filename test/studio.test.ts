@@ -883,7 +883,8 @@ describe("studio: the server", () => {
     expect(after.changes).toEqual([]);
     expect(gh.calls.at(-1)).toMatch(/^merge #21 edit\/\d{4}-\d{2}-\d{2}-opening-hours-updated$/);
     expect(sh(bare, "log", "-1", "--format=%s", "main").trim()).toBe("Opening hours updated");
-    expect(hoursFile()).toContain("11:4");
+    // 11:40 where the hand edit test ran before this one (macOS), 11:35 where it is skipped.
+    expect(hoursFile()).toMatch(/11:(35|40)/);
     const { entries } = await (await call("GET", "history")).json();
     expect(entries.map((e: { what: string }) => e.what)).toEqual(["Opening hours updated", "First version"]);
     expect(JSON.stringify(after)).not.toContain(DUMMY_TOKEN);
