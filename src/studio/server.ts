@@ -4,6 +4,8 @@
 //
 // It listens on 127.0.0.1 only and stops with the process. src/studio/guard.ts says who
 // may call the API and which files it may write; this file wires the parts together.
+import { readConfig, saveFolder } from "./config";
+import { readReport, studioVersion, type UpdateReport } from "./update";
 import { contentApi, type ContentDeps } from "./content-api";
 import { parseArgs } from "node:util";
 import { existsSync } from "node:fs";
@@ -55,6 +57,8 @@ export type StudioState = {
   keys: Record<string, boolean> | null;
   publish: { running: boolean; steps: Step[]; result: PublishResult | null };
   preview: string;
+  /** The Studio's own version, the commit the folder is on, and what the look for a newer one found at start. */
+  version: { number: string; commit: string; update: UpdateReport | null };
 };
 
 const json = (data: unknown, status = 200) => Response.json(data, { status, headers: { "Cache-Control": "no-store" } });
@@ -125,6 +129,7 @@ export async function startStudio(options: StudioOptions) {
       keys: has,
       publish: publishing,
       preview: previewOrigin(self) + "/",
+      version,
     };
   }
 
@@ -150,6 +155,9 @@ export async function startStudio(options: StudioOptions) {
     send("state");
     void site_.build();
   }
+
+  // Read once: the version cannot change while this server runs, an update happens before it starts.
+  const version: StudioState["version"] = { ...(await studioVersion(root)), update: await readReport(root) };
 
   const contentRoutes = contentApi({ root, write, changed: () => { send("state"); void site_.build(); }, readKey: (name) => keys.read(name), fetchFn: options.fetchFn, look: options.look });
 
@@ -211,6 +219,15 @@ export async function startStudio(options: StudioOptions) {
         }
         void runPublish();
         return json({ ok: true }, 202);
+      case "GET folder":
+        return json({ current: root, saved: (await readConfig()).folder ?? null });
+      case "PUT folder": {
+        try {
+          return json({ ok: true, folder: await saveFolder(String((await body()).path ?? "")) });
+        } catch (error) {
+          return refuse(422, error instanceof Error ? error.message : "folder_missing");
+        }
+      }
       case "GET history":
         return json({ entries: await git.history() });
       case "POST open": {

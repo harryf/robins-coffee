@@ -6,6 +6,7 @@ import { KEY_NAMES } from "../keychain";
 import { STRINGS, type Lang } from "../strings";
 import { h, type Ctx, type Section } from "./dom";
 import { CONTENT_SECTIONS } from "./content";
+import { systemCards } from "./system";
 
 const HOURS_PATH = "site/data/hours.yml";
 
@@ -121,6 +122,7 @@ const settings: Section = {
     return h("div", { class: "form" },
       h("div", { class: "card" }, h("label", { class: "card__title", for: "studio-lang" }, t.language), language),
       h("h2", {}, t.keys_title), h("p", { class: "muted" }, t.keys_help), ...cards,
+      ...systemCards(ctx),
     );
   },
 };

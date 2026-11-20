@@ -75,7 +75,7 @@ The code is in `src/editor/` and is bundled by the normal build into `dist/edit/
 ## The Studio (Mac)
 
 ```
-bun run studio            # editing screen at http://127.0.0.1:4750/_studio/, preview at http://localhost:4750/
+bun run studio            # updates the folder when main moved, then: editing screen at http://127.0.0.1:4750/_studio/, preview at http://localhost:4750/
 bun run studio:app        # builds "ROBINs Studio.app", a window around the same thing
 ```
 
