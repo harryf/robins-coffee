@@ -77,7 +77,7 @@ export function fromManual(files: Files, opts: { now?: Date; timeZone?: string }
     const base = {
       source: "manual" as const, name: data.name ?? data.title, title: data.title,
       price_chf: typeof data.price_chf === "number" ? data.price_chf : null, ticket_url: data.ticket_url ?? "", more_url: data.more_url ?? null,
-      image: data.image ?? null, category: data.category ?? "other", organiser: data.organiser ?? null, language: data.language ?? "en",
+      image: data.image ?? null, category: data.category ?? "other", organiser: data.organiser ?? null, language: data.language ?? "",
       text: data.text && typeof data.text === "object" ? data.text : null,
     };
     if (data.start || data.end) {

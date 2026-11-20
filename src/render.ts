@@ -182,7 +182,11 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
   for (const s of data.menu?.sections ?? []) for (const d of s.drinks ?? []) if (d.photo && !opts.photos[d.photo]) throw new Error(`menu.yml: photo ${d.photo} of "${d.name}" is missing`);
   const eventView = (e: SiteEvent, lang: string, t: any) => {
     const p = wallClock(new Date(e.start), site.timezone);
+    const price = e.price_chf === null ? "" : e.price_chf === 0 ? t.free_entry : `CHF ${e.price_chf}`;
+    // Price, organiser (unless it is the event's own name) and language, whichever are known.
+    const meta = [price, e.organiser && e.organiser !== e.name ? e.organiser : "", t.event_languages?.[e.language] ?? ""].filter(Boolean).join(" · ");
     return {
+      meta_label: meta,
       ...e, when_label: e.all_day ? fillDate(t.date_event, p, t) : `${fillDate(t.date_event, p, t)}, ${p.time}`, text: e.text?.[lang] ?? e.text?.[defaultLang] ?? "", month_label: `${t.months[p.month - 1]} ${p.year}`,
       price_label: e.price_chf === null ? "" : e.price_chf === 0 ? t.free_entry : `CHF ${e.price_chf}`,
       language_label: t.event_languages?.[e.language] ?? "", img: e.image ? (opts.photos[e.image] ?? null) : null,

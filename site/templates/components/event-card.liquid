@@ -1,4 +1,4 @@
-{% comment %} event-card: e (an event view: name, when_label, start, end, price_label, organiser, language_label, text, ticket_url, more_url, img), t. Without a ticket link it says that people can just come. Hidden by site.js once the event has ended. {% endcomment %}
+{% comment %} event-card: e (an event view: name, when_label, start, end, meta_label, text, ticket_url, more_url, img), t. Without a ticket link it says that people can just come. Hidden by site.js once the event has ended. {% endcomment %}
 <article class="event" data-end="{{ e.end }}">
   {%- if e.img %}
   <div class="event__thumb">{% render 'components/photo', img: e.img, alt: '', sizes: '6rem' %}</div>
@@ -9,8 +9,8 @@
     {%- if e.text != '' %}
     <p class="event__text">{{ e.text }}</p>
     {%- endif %}
-    {%- if e.price_label != '' or e.organiser or e.language_label != '' %}
-    <p class="event__meta">{{ e.price_label }}{% if e.organiser %}{% if e.price_label != '' %} · {% endif %}{{ e.organiser }}{% endif %}{% if e.language_label != '' %} · {{ e.language_label }}{% endif %}</p>
+    {%- if e.meta_label != '' %}
+    <p class="event__meta">{{ e.meta_label }}</p>
     {%- endif %}
   </div>
   {%- if e.ticket_url == '' %}

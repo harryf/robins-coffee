@@ -297,6 +297,12 @@ describe("events", () => {
     expect(de).toContain("Bring jemanden mit.");
     expect(en).toMatch(/<time datetime="2026-11-20T00:00:00\+01:00">[^<,]*20[^<,]*<\/time>/);
     expect(en).not.toContain("00:00</time>");
+    // Nothing known about price, organiser or language: no meta line at all, and no stray separator.
+    expect(en).not.toContain('class="event__meta"');
+    const own = fromManual({ "events/q.md": '---\ntitle: "Queen\'s Gambit"\norganiser: "Queen\'s Gambit"\ndate: 2026-11-20\nprice_chf: 0\n---\n' });
+    const page = (await renderSite(withEvents(own), { base: "/", photos, now: NOW })).find((p) => p.out === "events/index.html")!.html;
+    expect(page).toContain('<p class="event__meta">Free entry</p>');
+    expect(page).not.toContain("&amp;#39;");
     const ics = toIcs(mine, { legal_name: "R", street: "S", postal_code: "1", city: "Z" }, NOW);
     expect(ics).toContain("DTSTART;VALUE=DATE:20261120");
     expect(ics).toContain("DTEND;VALUE=DATE:20261121");
