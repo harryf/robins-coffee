@@ -21,6 +21,15 @@ export type PreviewOptions = {
 const FEED_MAX_AGE = 10 * 60_000;
 
 /** What a failed build said, without the parts only a programmer reads: code excerpts, stack frames, object dumps. */
+/**
+ * The environment of the preview's build. It is a build on a person's Mac even when the
+ * Studio itself runs inside a CI job (its tests do): with GitHub's marker set, bun and
+ * the build print annotations for GitHub instead of plain lines.
+ */
+export function buildEnv(env: Record<string, string | undefined> = process.env): Record<string, string> {
+  return Object.fromEntries(Object.entries(env).filter((pair): pair is [string, string] => pair[1] !== undefined && pair[0] !== "GITHUB_ACTIONS" && pair[0] !== "CI"));
+}
+
 export function plainLog(log: string): string {
   const noise = /^\s*(at |\d+ \||\^+\s*$|(pos|linePos|code|errno|syscall): |\[Object|\],?$|\},?$|Bun v)/;
   const lines = log.split("\n").filter((line) => line.trim() && !noise.test(line));
@@ -79,7 +88,7 @@ export function preview(options: PreviewOptions) {
     await mkdir(work, { recursive: true });
     const events = await feed();
     if (stopped) return;
-    const proc = Bun.spawn([process.execPath, join("src", "build.ts"), "--base", "/", "--out", join(".cache", "studio", "next"), ...(events ? ["--events", events] : [])], { cwd: root, stdin: "ignore", stdout: "pipe", stderr: "pipe" });
+    const proc = Bun.spawn([process.execPath, join("src", "build.ts"), "--base", "/", "--out", join(".cache", "studio", "next"), ...(events ? ["--events", events] : [])], { cwd: root, stdin: "ignore", stdout: "pipe", stderr: "pipe", env: buildEnv() });
     running = proc;
     const [out, err, code] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited]);
     running = null;

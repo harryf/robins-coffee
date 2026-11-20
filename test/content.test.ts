@@ -288,3 +288,8 @@ describe("studio: content routes", () => {
     expect(parseYaml(out)).toEqual({ "photos/a.jpg": [0.5, 0.2], "photos/b.jpg": [0.33, 0.67] });
   });
 });
+
+import { buildEnv } from "../src/studio/preview";
+test("studio: the preview's build never thinks it runs on GitHub", () => {
+  expect(buildEnv({ PATH: "/bin", GITHUB_ACTIONS: "true", CI: "true", HOME: undefined })).toEqual({ PATH: "/bin" });
+});
