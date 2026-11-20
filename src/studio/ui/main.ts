@@ -1,6 +1,7 @@
 // The editing screen's shell: sections on the left, the open section in the middle,
 // unpublished changes and Publish on the right. It only draws; every rule lives in the
 // server and the pure files next to it. Sections come from the registry in sections.ts.
+import { updateLine } from "./system";
 import { describeChanges } from "../describe";
 import type { PublishResult } from "../publish";
 import type { StudioState } from "../server";
@@ -32,6 +33,7 @@ let notice: string | null = null;
 const app = document.getElementById("app")!;
 const nav = h("nav", { class: "side__nav" });
 const sideHead = h("p", { class: "side__brand" });
+const sideVersion = h("p", { class: "side__version" });
 const title = h("h1", { class: "bar__title" });
 const buildPill = h("p", { class: "pill", role: "status" });
 const previewButton = h("button", { class: "button", type: "button", onclick: () => void api("POST", "open", { path: "/" }) });
@@ -40,7 +42,7 @@ const body = h("div", { class: "section" });
 const changes = h("aside", { class: "changes" });
 app.append(
   h("div", { class: "shell" },
-    h("aside", { class: "side" }, sideHead, nav),
+    h("aside", { class: "side" }, sideHead, nav, sideVersion),
     h("main", { class: "main" }, h("header", { class: "bar" }, title, buildPill, previewButton), buildProblem, body),
     changes,
   ),
@@ -142,6 +144,12 @@ function draw() {
   document.title = t.app_name;
   sideHead.textContent = t.app_name;
   nav.setAttribute("aria-label", t.nav_label);
+  // The version, and one word when the last start could not update: the details are under Settings.
+  const versionNow = state?.version;
+  const updateNote = updateLine(t, versionNow);
+  sideVersion.textContent = versionNow ? t.version_short(versionNow.number) : "";
+  sideVersion.title = versionNow ? t.version_line(versionNow.number, versionNow.commit) + (updateNote ? `. ${updateNote.text}` : "") : "";
+  sideVersion.dataset.status = updateNote?.tone === "problem" ? "problem" : "ok";
   nav.replaceChildren(...SECTIONS.map((s) => h("button", { class: "side__link", type: "button", "aria-current": s === current ? "page" : undefined, onclick: () => {
     current = s;
     history.replaceState(null, "", `#${s.id}`);

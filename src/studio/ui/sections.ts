@@ -1,11 +1,12 @@
-// The registry of sections. To add a form (photos, albums, menu, events): write a
+// The registry of sections. To add a screen (photos, menu, events): write a
 // Section and put it in SECTIONS. The shell reads this list and nothing else.
 import { DAYS, type Week } from "../../editor/changes";
 import type { HistoryEntry } from "../history";
 import { KEY_NAMES } from "../keychain";
 import { STRINGS, type Lang } from "../strings";
 import { h, type Ctx, type Section } from "./dom";
-import { CONTENT_SECTIONS } from "./content";
+import { CONTENT_SECTIONS, toolsBlock } from "./content";
+import { systemCards } from "./system";
 
 const HOURS_PATH = "site/data/hours.yml";
 
@@ -69,22 +70,54 @@ const hours: Section = {
 const history: Section = {
   id: "history",
   title: (t) => t.sec_history,
-  render({ t, api, lang }) {
-    const root = h("div", {}, h("p", { class: "muted" }, t.loading));
+  render(ctx) {
+    const { t, api, lang } = ctx;
+    const said = h("div", { role: "status" });
+    const closed = h("p", { class: "problem", hidden: true }, t.restore_closed);
+    const holder = h("div", {}, h("p", { class: "muted" }, t.loading));
+    let entries: HistoryEntry[] | null = null;
+    let asking: string | null = null;
+    const when = (iso: string) => new Date(iso).toLocaleString(lang === "de" ? "de-CH" : "en-GB", { dateStyle: "medium", timeStyle: "short" });
+    const dirty = () => (ctx.state()?.changes.length ?? 0) > 0;
+
+    async function restore(entry: HistoryEntry) {
+      asking = null;
+      const res = await api("POST", "restore", { sha: entry.sha });
+      if (res.status === 200) {
+        const n = Number(res.data.changed) + Number(res.data.back) + Number(res.data.removed);
+        said.replaceChildren(h("p", { class: "ok" }, n ? t.restore_done(n) : t.restore_same));
+      } else {
+        const known = (t as unknown as Record<string, unknown>)["e_" + String(res.data.error)];
+        said.replaceChildren(h("p", { class: "problem" }, typeof known === "string" ? known : t.failed(String(res.data.error ?? res.status))));
+      }
+      draw();
+    }
+
+    function draw() {
+      if (!entries) return;
+      closed.hidden = !dirty();
+      if (!entries.length) return holder.replaceChildren(h("p", { class: "muted" }, t.history_empty));
+      holder.replaceChildren(h("ul", { class: "rows" }, ...entries.map((e, at) => h("li", { class: "row version" },
+        h("span", { class: "row__main" }, h("strong", {}, e.what), h("span", { class: "muted" }, when(e.date)), h("span", { class: "muted" }, e.who)),
+        // The newest entry is what is live: there is nothing to go back to.
+        at === 0 ? h("span", { class: "muted" }, t.history_current) : asking === e.sha
+          // The confirm says in plain words what a restore does, and that nothing goes live by it.
+          ? h("div", { class: "ask__box version__ask", role: "group" },
+              h("p", { class: "ask__question" }, t.restore_sure(when(e.date), e.what)),
+              h("button", { class: "button button--danger", type: "button", onclick: () => void restore(e) }, t.restore_yes),
+              h("button", { class: "button button--quiet", type: "button", onclick: () => { asking = null; draw(); } }, t.cancel))
+          : h("button", { class: "button", type: "button", disabled: dirty(), onclick: () => { asking = e.sha; said.replaceChildren(); draw(); } }, t.history_restore),
+      ))));
+    }
+
     void api("GET", "history").then((res) => {
-      if (res.status !== 200) return root.replaceChildren(h("p", { class: "problem" }, t.failed(String(res.data.error ?? res.status))));
-      const entries = res.data.entries as HistoryEntry[];
-      if (!entries.length) return root.replaceChildren(h("p", { class: "muted" }, t.history_empty));
-      const when = (iso: string) => new Date(iso).toLocaleString(lang === "de" ? "de-CH" : "en-GB", { dateStyle: "medium", timeStyle: "short" });
-      root.replaceChildren(
-        h("p", { class: "muted" }, t.history_help),
-        h("table", { class: "history" },
-          h("thead", {}, h("tr", {}, h("th", { scope: "col" }, t.history_when), h("th", { scope: "col" }, t.history_what), h("th", { scope: "col" }, t.history_who))),
-          h("tbody", {}, ...entries.map((e) => h("tr", {}, h("td", { class: "history__when" }, when(e.date)), h("td", {}, e.what), h("td", { class: "muted" }, e.who)))),
-        ),
-      );
+      if (res.status !== 200) return holder.replaceChildren(h("p", { class: "problem" }, t.failed(String(res.data.error ?? res.status))));
+      entries = res.data.entries as HistoryEntry[];
+      draw();
     });
-    return root;
+    // Restore is open only while nothing is unpublished: every new state may open or close it.
+    ctx.onState(() => draw());
+    return h("div", { class: "form" }, h("p", { class: "muted" }, t.history_help), closed, said, holder);
   },
 };
 
@@ -121,6 +154,9 @@ const settings: Section = {
     return h("div", { class: "form" },
       h("div", { class: "card" }, h("label", { class: "card__title", for: "studio-lang" }, t.language), language),
       h("h2", {}, t.keys_title), h("p", { class: "muted" }, t.keys_help), ...cards,
+      ...systemCards(ctx),
+      // The tools of this Mac used to be a sidebar entry of their own; they belong here.
+      toolsBlock(ctx),
     );
   },
 };

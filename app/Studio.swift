@@ -99,8 +99,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
 
     func applicationDidFinishLaunching(_ note: Notification) {
         buildMenu()
-        let repository = (Bundle.main.object(forInfoDictionaryKey: "StudioRepository") as? String) ?? ""
-        guard !repository.isEmpty, FileManager.default.fileExists(atPath: "\(repository)/src/studio/server.ts") else {
+        // The folder chosen under Settings wins over the one the app was built for.
+        let built = (Bundle.main.object(forInfoDictionaryKey: "StudioRepository") as? String) ?? ""
+        let chosen = chosenFolder()
+        let repository = (chosen != nil && FileManager.default.fileExists(atPath: "\(chosen!)/src/studio/launch.ts")) ? chosen! : built
+        guard !repository.isEmpty, FileManager.default.fileExists(atPath: "\(repository)/src/studio/launch.ts") else {
             return stop(words.noFolderTitle, words.noFolderText(repository.isEmpty ? "?" : repository))
         }
         guard let bun = findBun() else { return stop(words.noBunTitle, words.noBunText) }
@@ -109,7 +112,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
 
         let process = Process()
         process.executableURL = URL(fileURLWithPath: bun)
-        process.arguments = ["src/studio/server.ts", "--port", String(port), "--lifeline"]
+        // The launcher first brings the folder up to the newest version, then starts the server.
+        process.arguments = ["src/studio/launch.ts", "--port", String(port), "--lifeline"]
         process.currentDirectoryURL = URL(fileURLWithPath: repository)
         // git and friends must be found by the server; a login shell's PATH is not inherited by an app.
         var env = ProcessInfo.processInfo.environment
@@ -129,7 +133,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         lifeline = input
 
         showWindow()
-        waitForServer(until: Date().addingTimeInterval(40))
+        // Long enough for an update with new packages before the server answers.
+        waitForServer(until: Date().addingTimeInterval(240))
+    }
+
+    /// The folder saved by the Settings screen (src/studio/config.ts writes this file), if any.
+    func chosenFolder() -> String? {
+        let file = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/ROBINs Studio/config.json")
+        guard let data = try? Data(contentsOf: file), let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let folder = json["folder"] as? String, folder.hasPrefix("/") else { return nil }
+        return folder
     }
 
     func showWindow() {
