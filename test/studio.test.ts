@@ -576,7 +576,7 @@ describe("studio: the guard", () => {
 describe("studio: keys", () => {
   test("a key is one line without spaces", () => {
     expect(validKey("example-key-with_40.printable-characters")).toBe(true);
-    for (const bad of ["", "short", "two words here", "line\nbreak12345", "tab\there12345"]) expect(validKey(bad)).toBe(false);
+    for (const bad of ["", "short", "two words here", "line\nbreak12345", "tab\there12345", 'quote"inside12345', "back\\slash12345", "semi;colon12345", "dollar$(x)12345"]) expect(validKey(bad)).toBe(false);
   });
 
   test.skipIf(process.platform !== "darwin")("the macOS Keychain keeps a dummy key under a test service, says only that it is there, and forgets it again", async () => {
@@ -874,6 +874,16 @@ describe("studio: the server", () => {
   test("history comes from git, newest first", async () => {
     const { entries } = await (await call("GET", "history")).json();
     expect(entries).toEqual([{ sha: sh(root, "rev-parse", "origin/main").trim(), date: expect.any(String), who: "Test", what: "First version", pull: null }]);
+  });
+
+  test("ANTI: the raw file route takes text for text files only; bytes and pictures have no way in through it", async () => {
+    const before = (await state()).changes.map((c) => c.path);
+    expect((await call("PUT", "file", { path: "site/moments/2026-01-01-raw.jpg", base64: Buffer.from("raw bytes").toString("base64") })).status).toBe(403);
+    expect((await call("PUT", "file", { path: "site/moments/2026-01-01-raw.jpg", text: "x" })).status).toBe(403);
+    expect((await call("PUT", "file", { path: "site/data/hours.yml", base64: Buffer.from("a: 1").toString("base64") })).status).toBe(400);
+    expect((await call("PUT", "file", { path: "site/moments/IMG_1.HEIC", text: "x" })).status).toBe(403);
+    expect(existsSync(join(root, "site/moments/2026-01-01-raw.jpg"))).toBe(false);
+    expect((await state()).changes.map((c) => c.path)).toEqual(before);
   });
 
   test("Publish from the screen: the change goes out on an edit/ branch, is merged, and the folder is back on main with nothing left to publish", async () => {

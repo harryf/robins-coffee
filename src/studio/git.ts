@@ -56,7 +56,7 @@ export type GitOptions = {
 export function studioGit(root: string, options: GitOptions) {
   const bin = options.bin ?? "git";
   const run = async (args: string[], extraEnv: Record<string, string> = {}): Promise<string> => {
-    const proc = Bun.spawn([bin, ...args], { cwd: root, env: { ...process.env, ...extraEnv }, stdin: "ignore", stdout: "pipe", stderr: "pipe" });
+    const proc = Bun.spawn([bin, ...args], { cwd: root, env: { ...process.env, GIT_LITERAL_PATHSPECS: "1", ...extraEnv }, stdin: "ignore", stdout: "pipe", stderr: "pipe" });
     const [out, err, code] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited]);
     if (code !== 0) throw new GitError(`git ${args[0]}: ${(err.trim() || out.trim() || `exit ${code}`).split("\n").slice(-3).join(" ")}`);
     return out;

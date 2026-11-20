@@ -7,7 +7,7 @@
 import { contentApi, type ContentDeps } from "./content-api";
 import { parseArgs } from "node:util";
 import { existsSync } from "node:fs";
-import { mkdir } from "node:fs/promises";
+import { mkdir, realpath } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { parse as parseYaml } from "yaml";
 import { hoursEditable, validateWeek, weekFromYaml, weekToYaml, DAYS, type Week } from "../editor/changes";
@@ -95,6 +95,8 @@ export async function startStudio(options: StudioOptions) {
 
   const site_ = makePreview({ root, events: options.events, onChange: () => send("state"), onBuild: (_state, fresh) => send(fresh ? "reload" : "state") });
   let publishing: StudioState["publish"] = { running: false, steps: [], result: null };
+  /** True between a Publish request and the start of its run, so a second request cannot slip in while the build settles. */
+  let starting = false;
 
   /** What a list file gained and lost, which its path alone cannot say. */
   async function withHints(changes: FileChange[]): Promise<FileChange[]> {
@@ -138,7 +140,11 @@ export async function startStudio(options: StudioOptions) {
   }
 
   async function write(path: string, data: string | Uint8Array) {
+    if (!inEditScope(path)) throw new Error("outside the content folders");
     await mkdir(dirname(join(root, path)), { recursive: true });
+    // Where the folder really is: a link inside site/ must not lead a write out of it.
+    const home = await realpath(join(root, "site"));
+    if (!(await realpath(dirname(join(root, path))) + "/").startsWith(home + "/")) throw new Error("outside the content folders");
     await Bun.write(join(root, path), data);
     // The folder watcher sees it too; asking here as well keeps a save from waiting on it.
     send("state");
@@ -176,11 +182,12 @@ export async function startStudio(options: StudioOptions) {
         return (await file.exists()) ? new Response(file, { headers: { "Cache-Control": "no-store" } }) : refuse(404, "no such file");
       }
       case "PUT file": {
-        const { path: asked, text, base64 } = await body();
+        // Text only. A picture has one way in, the photo route, which re-encodes it without its metadata.
+        const { path: asked, text } = await body();
         const path = safeEditPath(asked);
-        if (!path) return refuse(403, "outside the content folders");
-        if (typeof text !== "string" && typeof base64 !== "string") return refuse(400, "text or base64 is needed");
-        await write(path, typeof text === "string" ? text : Buffer.from(base64, "base64"));
+        if (!path || !/\.(md|yml)$/.test(path)) return refuse(403, "outside the content folders");
+        if (typeof text !== "string") return refuse(400, "text is needed");
+        await write(path, text);
         return json({ ok: true });
       }
       case "POST discard": {
@@ -193,9 +200,10 @@ export async function startStudio(options: StudioOptions) {
         return json({ ok: true });
       }
       case "POST publish":
-        if (publishing.running) return json({ ok: false, reason: "busy" }, 409);
+        if (publishing.running || starting) return json({ ok: false, reason: "busy" }, 409);
+        starting = true;
         // What does not build here would fail the check on GitHub too: say so now, not in five minutes.
-        await site_.settled();
+        await site_.settled().finally(() => { starting = false; });
         if (site_.state().status !== "ok") {
           publishing = { running: false, steps: [], result: { ok: false, reason: "build" } };
           send("state");
@@ -255,6 +263,8 @@ export async function startStudio(options: StudioOptions) {
       const url = new URL(req.url);
       if (!knownHost(req, self)) return refuse(403, "host");
       if (url.pathname === "/_studio/events") {
+        const from = req.headers.get("origin");
+        if (from !== null && from !== studioOrigin(self) && from !== previewOrigin(self)) return refuse(403, "origin");
         let mine: ReadableStreamDefaultController<Uint8Array>;
         return new Response(new ReadableStream<Uint8Array>({
           start(controller) {

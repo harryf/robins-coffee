@@ -32,7 +32,8 @@ export function refuseApi(req: Request, self: Self): string | null {
   const origin = req.headers.get("origin");
   if (origin !== null && origin !== studioOrigin(self)) return "origin";
   const token = req.headers.get(TOKEN_HEADER) ?? "";
-  if (token.length !== self.token.length || !crypto.timingSafeEqual(Buffer.from(token), Buffer.from(self.token))) return "token";
+  const given = Buffer.from(token), wanted = Buffer.from(self.token);
+  if (given.length !== wanted.length || !crypto.timingSafeEqual(given, wanted)) return "token";
   return null;
 }
 

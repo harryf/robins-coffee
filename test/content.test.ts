@@ -341,3 +341,8 @@ test("ANTI: a file staged by hand outside the content folders never rides along 
   expect(git("log", "-1", "--format=%s").stdout.toString().trim()).toBe("Opening hours updated");
   expect(git("show", "--name-only", "--format=").stdout.toString().trim()).toBe("site/data/hours.yml");
 });
+
+test("ANTI: the edit scope takes each folder's own kind of file in lower case, nothing else", () => {
+  for (const ok of ["site/data/hours.yml", "site/data/menu.yml", "site/events/README.md", "site/events/beer-pong.md", "site/content/en/404.md", "site/moments/2026-11-20-mulled-wine.jpg", "site/moments/2026-11-20-mulled-wine.md", "site/photos/menu-lazy-monkey.jpg"]) expect([ok, inEditScope(ok)]).toEqual([ok, true]);
+  for (const bad of ["site/moments/IMG_1.HEIC", "site/moments/original.png", "site/photos/x.jpeg", "site/photos/sub/x.jpg", "site/data/TOKENS.JSON", "site/data/tokens.json", "site/data/Hours.yml", "site/data/x.json", "site/events/x.sh", "site/content/en/x.html", "site/templates/a.md", "site/data/../templates/a.yml", "package.json", ".github/workflows/deploy.yml"]) expect([bad, inEditScope(bad)]).toEqual([bad, false]);
+});

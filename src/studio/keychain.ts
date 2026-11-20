@@ -8,7 +8,9 @@ export type KeyName = (typeof KEY_NAMES)[number];
 export const isKeyName = (name: string): name is KeyName => (KEY_NAMES as readonly string[]).includes(name);
 
 /** One line, nothing a paste accident brings along: no spaces, no control characters. */
-export const validKey = (value: string) => /^[\x21-\x7e]{8,400}$/.test(value);
+// Letters, digits and the few marks keys use. No space, quote or backslash: the value is
+// handed to the keychain tool as one word of a command line on its standard input.
+export const validKey = (value: string) => /^[A-Za-z0-9_.\-=:+\/~@%]{8,400}$/.test(value);
 
 const SECURITY = "/usr/bin/security";
 
@@ -30,8 +32,11 @@ export function keychain(service = "robins-studio") {
     },
     async save(name: KeyName, value: string): Promise<void> {
       if (!validKey(value)) throw new Error("not a key");
-      // A trailing -w makes the tool ask for the value (twice) on standard input.
-      const { code } = await run(["add-generic-password", "-U", "-s", service, "-a", name, "-l", `${service}: ${name}`, "-w"], `${value}\n${value}\n`);
+      // The tool's command mode (-i) reads the whole command from standard input, so the value
+      // is in no argument list. Asking with a bare -w would read from the terminal instead of
+      // standard input when the Studio was started from one.
+      if (!/^[a-z0-9-]+$/.test(service)) throw new Error("not a service name");
+      const { code } = await run(["-i"], `add-generic-password -U -s ${service} -a ${name} -l ${service}-${name} -w ${value}\n`);
       if (code !== 0) throw new Error(`the keychain refused (${code})`);
     },
     async remove(name: KeyName): Promise<void> {
