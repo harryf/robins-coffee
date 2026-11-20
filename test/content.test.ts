@@ -252,34 +252,32 @@ describe("studio: content routes", () => {
     expect((await call("POST look", { base64: "" }))!.status).toBe(400);
     expect((await call("POST look", { base64: Buffer.from("not a picture").toString("base64") }))!.status).toBe(422);
   });
-  test("a photo post writes a cleaned picture, its text and its focus; a second one of the same name is refused", async () => {
-    const post = { base64: await picture(), kind: "moment", slug: "Mulled Wine!", date: "2026-11-20", caption: { en: "Warm.", de: "Warm, mit Spaß." }, alt: { en: "A glass.", de: "Ein Glas." }, album: "drinks", focus: [0.251, 0.75] };
+  test("a photo post writes a cleaned picture, its text and its focus, under a name made from the caption", async () => {
+    const post = { base64: await picture(), date: "2026-11-20", caption: { en: "Mulled Wine!", de: "Warm, mit Spaß." }, alt: { en: "A glass.", de: "Ein Glas." }, album: "drinks", focus: [0.251, 0.75] };
     const res = (await call("POST photo", post))!;
-    expect(res).toEqual({ status: 200, data: { ok: true, path: "moments/2026-11-20-mulled-wine.jpg" } });
+    expect(res).toEqual({ status: 200, data: { ok: true, id: "2026-11-20-mulled-wine", path: "moments/2026-11-20-mulled-wine.jpg", album: "drinks" } });
     const meta = await sharp2(join(root, "site/moments/2026-11-20-mulled-wine.jpg")).metadata();
     expect(meta.exif).toBeUndefined();
     const md = read2(join(root, "site/moments/2026-11-20-mulled-wine.md"), "utf8");
     expect(md).toContain("album: drinks");
     expect(md).toContain("Warm, mit Spass.");
     expect(parseYaml(read2(join(root, "site/data/focus.yml"), "utf8"))["moments/2026-11-20-mulled-wine.jpg"]).toEqual([0.25, 0.75]);
-    expect((await call("POST photo", post))!.data.error).toBe("photo_exists");
-    expect((await call("POST photo", { ...post, slug: "x", album: "nope" }))!.data.error).toBe("album_unknown");
-    expect((await call("POST photo", { ...post, slug: "y", alt: { en: "Only English", de: "" } }))!.data.error).toBe("both_languages");
-    expect((await call("POST photo", { ...post, slug: "../../etc" }))!.data.path).toBe("moments/2026-11-20-etc.jpg");
+    expect((await call("POST photo", { ...post, album: "nope" }))!.data.error).toBe("album_unknown");
+    expect((await call("POST photo", { ...post, alt: { en: "Only English", de: "" } }))!.data.error).toBe("both_languages");
+    expect((await call("POST photo", { ...post, caption: { en: "../../etc", de: "x" } }))!.data.path).toBe("moments/2026-11-20-etc.jpg");
     for (const p of written) expect([p, inEditScope(p)]).toEqual([p, true]);
   });
-  test("a plain picture goes to site/photos and can then be used by a drink and an event", async () => {
-    expect((await call("POST photo", { base64: await picture(), kind: "plain", slug: "event board games" }))!.data.path).toBe("photos/event-board-games.jpg");
-    expect((await call("POST drink", { part: "signatures", drink: { name: "Hot Toddy", text: { en: "Whisky", de: "Whisky" }, price_chf: 14, photo: "photos/event-board-games.jpg", alt: { en: "A", de: "B" } } }))!.status).toBe(200);
+  test("a drink and an event take a picture that is on the site, and an event is listed with its fields", async () => {
+    const shot = { base64: await picture(), focus: [0.5, 0.5] };
+    expect((await call("POST drink", { part: "signatures", drink: { name: "Hot Toddy", text: { en: "Whisky", de: "Whisky" }, price_chf: 14, alt: { en: "A", de: "B" } }, picture: shot }))!.data).toEqual({ ok: true, photo: "photos/menu-hot-toddy.jpg" });
     expect((await call("POST drink", { part: "signatures", drink: { name: "X", text: { en: "a", de: "b" }, price_chf: 1, photo: "photos/nope.jpg", alt: { en: "A", de: "B" } } }))!.data.error).toBe("event_image_wrong");
     expect((await call("DELETE drink", { part: "signatures", name: "Hot Toddy" }))!.status).toBe(200);
-    const made = (await call("POST event", { event: { title: "Board Games", date: "2026-12-03", from: "19:00", image: "photos/event-board-games.jpg" } }))!;
+    const made = (await call("POST event", { event: { title: "Board Games", date: "2026-12-03", from: "19:00", image: "photos/menu-hot-toddy.jpg" } }))!;
     expect(made.data.path).toBe("site/events/2026-12-03-board-games.md");
     expect((await call("POST event", { event: { title: "Board Games", date: "2026-12-03" } }))!.data.error).toBe("event_exists");
     expect((await call("POST event", { event: { title: "", date: "x" } }))!.data.problems).toEqual(expect.arrayContaining(["event_title_missing", "event_date_wrong"]));
     const seen = (await call("GET content"))!.data;
-    expect(seen.events).toEqual([{ path: "site/events/2026-12-03-board-games.md", title: "Board Games", when: { kind: "day", day: "2026-12-03" }, ticket: false, source: "hand" }]);
-    expect(seen.photos).toContain("photos/event-board-games.jpg");
+    expect(seen.events).toEqual([{ path: "site/events/2026-12-03-board-games.md", title: "Board Games", source: "hand", fields: { title: "Board Games", date: "2026-12-03", from: "19:00", image: "photos/menu-hot-toddy.jpg", ticket_url: "", price_chf: null, category: "other" } }]);
     expect(seen.tools.map((x: any) => x.name)).toContain("git");
     expect((await call("DELETE event", { path: "site/events/../data/menu.yml" }))!.status).toBe(404);
     expect((await call("DELETE event", { path: made.data.path }))!.status).toBe(200);
