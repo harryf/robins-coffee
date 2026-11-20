@@ -23,6 +23,13 @@ export type SiteEvent = {
   all_day?: boolean;
   /** One or two sentences under the name, per language. */
   text?: Record<string, string> | null;
+  /** The Eventfrog number of the evening, when a link carries one: the same evening from two sources is shown once. */
+  ref?: string | null;
+};
+/** The long number at the end of an Eventfrog event address. */
+export const eventfrogRef = (...urls: (string | null | undefined)[]): string | null => {
+  for (const u of urls) { const m = /eventfrog\.[a-z]+\/.*-(\d{12,})\.html/.exec(u ?? ""); if (m) return m[1]!; }
+  return null;
 };
 export type Override = { id: string; hide?: boolean; featured?: boolean; name?: string; image?: string };
 
@@ -37,7 +44,7 @@ export function fromIyfFeed(feed: any, venue = "robins"): SiteEvent[] {
       id: `iyf-${e.id}`, source: "iyf", name: e.name, title: e.title, start: e.start, end: e.end,
       price_chf: typeof e.price_chf === "number" ? e.price_chf : null,
       ticket_url: tracked(e.go_url ?? e.ticket_url), more_url: e.url ? tracked(e.url) : null,
-      image: e.thumbnail ?? e.image ?? null, category: "comedy", organiser: "IN YOUR FACE Comedy", language: e.language ?? "en",
+      image: e.thumbnail ?? e.image ?? null, category: "comedy", organiser: "IN YOUR FACE Comedy", language: e.language ?? "en", ref: eventfrogRef(e.ticket_url, e.go_url),
     }));
 }
 
@@ -79,6 +86,7 @@ export function fromManual(files: Files, opts: { now?: Date; timeZone?: string }
       price_chf: typeof data.price_chf === "number" ? data.price_chf : null, ticket_url: data.ticket_url ?? "", more_url: data.more_url ?? null,
       image: data.image ?? null, category: data.category ?? "other", organiser: data.organiser ?? null, language: data.language ?? "",
       text: data.text && typeof data.text === "object" ? data.text : null,
+      ref: eventfrogRef(data.source_url, data.ticket_url),
     };
     if (data.start || data.end) {
       for (const k of ["start", "end"]) if (!data[k]) throw new Error(`${p}: "${k}" is missing`);
@@ -121,14 +129,14 @@ const instant = (iso: string) => new Date(iso).getTime();
 
 /**
  * One list from many: earlier lists win. Two records are the same event when they
- * share a ticket link and a start, or a start and a normalised name. Overrides are
+ * share a ticket link and a start, a start and a normalised name, or an Eventfrog number. Overrides are
  * applied last; the result is sorted by start.
  */
 export function mergeEvents(lists: SiteEvent[][], overrides: Override[] = []): SiteEvent[] {
   const seen = new Set<string>();
   const out: SiteEvent[] = [];
   for (const e of lists.flat()) {
-    const keys = [`${instant(e.start)}|${norm(e.name)}`, ...(e.ticket_url ? [`${instant(e.start)}|${e.ticket_url.split("?")[0]}|${e.ticket_url.match(/show=[^&]+/)?.[0] ?? ""}`] : [])];
+    const keys = [`${instant(e.start)}|${norm(e.name)}`, ...(e.ref ? [`ef|${e.ref}`] : []), ...(e.ticket_url ? [`${instant(e.start)}|${e.ticket_url.split("?")[0]}|${e.ticket_url.match(/show=[^&]+/)?.[0] ?? ""}`] : [])];
     if (keys.some((k) => seen.has(k))) continue;
     keys.forEach((k) => seen.add(k));
     out.push(e);

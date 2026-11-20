@@ -14,7 +14,9 @@ import { contrast } from "./tokens";
 /** Text files keyed by path relative to site/, for example "content/en/index.md". */
 export type Files = Record<string, string>;
 export type Variant = { w: number; path: string };
-export type Photo = { width: number; height: number; jpg: Variant[]; webp: Variant[]; /** The link preview picture (OG_SIZE), when the build made one. */ og?: string };
+export type Photo = { width: number; height: number; jpg: Variant[]; webp: Variant[]; /** The link preview picture (OG_SIZE), when the build made one. */ og?: string; /** Square cuts around the photo's focus, for small cards. */ sq?: { jpg: Variant[]; webp: Variant[] } };
+/** The square cut of a photo as a photo of its own; the whole photo when the build made no cut. */
+export const squareOf = (p: Photo | undefined | null): Photo | null => (!p ? null : p.sq ? { width: p.sq.jpg.at(-1)!.w, height: p.sq.jpg.at(-1)!.w, jpg: p.sq.jpg, webp: p.sq.webp } : p);
 export const OG_SIZE = { width: 1200, height: 630 };
 export type RenderOptions = {
   /** "/" on the domain, "/robins-coffee/" on GitHub Pages, or "relative" for file:// and the editor preview. */
@@ -189,7 +191,7 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
       meta_label: meta,
       ...e, when_label: e.all_day ? fillDate(t.date_event, p, t) : `${fillDate(t.date_event, p, t)}, ${p.time}`, text: e.text?.[lang] ?? e.text?.[defaultLang] ?? "", month_label: `${t.months[p.month - 1]} ${p.year}`,
       price_label: e.price_chf === null ? "" : e.price_chf === 0 ? t.free_entry : `CHF ${e.price_chf}`,
-      language_label: t.event_languages?.[e.language] ?? "", img: e.image ? (opts.photos[e.image] ?? null) : null,
+      language_label: t.event_languages?.[e.language] ?? "", img: e.image ? squareOf(opts.photos[e.image]) : null,
     };
   };
 
@@ -254,7 +256,7 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
         slug: s.slug, title: s.title?.[page.lang] ?? s.title?.[defaultLang], note: s.note?.[page.lang] ?? s.note?.[defaultLang] ?? "",
         drinks: (s.drinks ?? []).map((d: any) => ({
           name: d.name, text: d.text?.[page.lang] ?? d.text?.[defaultLang] ?? "", price_label: typeof d.price_chf === "number" ? `CHF ${d.price_chf}` : "",
-          img: d.photo ? opts.photos[d.photo] : null, alt: d.alt?.[page.lang] ?? d.alt?.[defaultLang] ?? "",
+          img: d.photo ? squareOf(opts.photos[d.photo]) : null, alt: d.alt?.[page.lang] ?? d.alt?.[defaultLang] ?? "",
         })),
       })),
       events_json_ld: { "@context": "https://schema.org", "@graph": ahead.map((e) => eventLd(e, site)) },

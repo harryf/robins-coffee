@@ -72,6 +72,19 @@ The editor's version is in `src/editor/version.json`. Raise `version` with every
 
 The code is in `src/editor/` and is bundled by the normal build into `dist/edit/`. It does not run from a file on disk (`build:local`); use a pull request preview to try it, or `bun run build` and any static file server on `dist/`. Why it works this way: [sign-in](docs/decisions/2026-11-16-editor-login.md), [inbox, versions and drafts](docs/decisions/2026-11-16-editor-inbox-updates.md).
 
+## The Studio (Mac)
+
+```
+bun run studio            # editing screen at http://127.0.0.1:4750/_studio/, preview at http://localhost:4750/
+bun run studio:app        # builds "ROBINs Studio.app", a window around the same thing
+```
+
+The Studio edits the files in this folder. The preview is the real build of those files and reloads by itself after every change, also one made by hand. "Publish" sends the content changes as a pull request on an `edit/...` branch; for the owner it waits for the `build` check, merges and brings the folder back to `main`. Keys (GitHub, Eventfrog) are pasted under Settings and kept in the macOS Keychain. The code is in `src/studio/`, the app shell in `app/`; a new form is one entry in `src/studio/ui/sections.ts`.
+
+Its sections: opening hours, photos (Apple Vision looks at a picture first: where to cut, the words on it, an alt text draft, a face count), albums, the drinks menu, events (by hand, from a pasted Eventfrog address, or from the bar's own Eventfrog list with a key), "This Mac" (which tools are installed and how to install a missing one), history and settings.
+
+Use a clone of its own for the Studio, kept on `main`, and not the folder you write code in: Publish runs only from `main`, and the preview shows whatever the folder holds. `docs/decisions/2026-11-20-studio.md` has the reasons and the limits.
+
 ## How a change goes live
 
 Open a pull request. CI builds it, tests it, checks every link in the built site (pages, anchors, images, upper and lower case) and posts a preview under `/pr-preview/pr-<number>/`. Merging to `main` deploys.

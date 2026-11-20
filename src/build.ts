@@ -12,11 +12,13 @@ import { renderSite, sitemapXml, resolveUrl, parseFrontMatter, OG_SIZE, type Fil
 import { tokensCss } from "./tokens";
 import { parse as parseYaml } from "yaml";
 import { fromIyfFeed, fromManual, mergeEvents, upcoming, toIcs, type SiteEvent } from "./events";
+import { cropBox, readFocus, type Focus } from "./focus";
 
 const ROOT = join(import.meta.dir, "..");
 const SITE = join(ROOT, "site");
 const CACHE = join(ROOT, ".cache", "photos");
 const WIDTHS = [480, 640, 800, 1200, 1800];
+const SQUARES = [200, 400, 800];
 const TEXT = /\.(md|yml|json|liquid)$/;
 
 const { values } = parseArgs({ args: Bun.argv.slice(2), options: { base: { type: "string", default: "/" }, out: { type: "string", default: "dist" }, origin: { type: "string" }, events: { type: "string" } } });
@@ -30,7 +32,7 @@ async function readSite(): Promise<Files> {
 }
 
 /** Resize every photo (the moments feed and plain section photos) into webp and jpg at a few widths; cached by content hash. */
-async function buildPhotos(): Promise<Record<string, Photo>> {
+async function buildPhotos(focus: Record<string, Focus>): Promise<Record<string, Photo>> {
   const photos: Record<string, Photo> = {};
   await mkdir(CACHE, { recursive: true });
   await mkdir(join(OUT, "photos"), { recursive: true });
@@ -50,6 +52,20 @@ async function buildPhotos(): Promise<Record<string, Photo>> {
       }
       await cp(cached, join(OUT, "photos", file));
       photo[ext].push({ w, path: `photos/${file}` });
+    }
+    // Square cuts for small cards (event thumbnails, the menu), around the photo's focus.
+    const at = focus[p] ?? [0.5, 0.5];
+    const box = cropBox(meta.width!, meta.height!, 1, at);
+    photo.sq = { jpg: [], webp: [] };
+    for (const w of SQUARES.filter((s) => s <= box.width).concat(box.width < SQUARES[0]! ? [box.width] : [])) for (const ext of ["jpg", "webp"] as const) {
+      const file = `${name}-sq${w}-${hash}-${Math.round(at[0] * 100)}-${Math.round(at[1] * 100)}.${ext}`;
+      const cached = join(CACHE, file);
+      if (!existsSync(cached)) {
+        const img = sharp(bytes).extract(box).resize({ width: w, height: w });
+        await (ext === "jpg" ? img.jpeg({ quality: 78, progressive: true, mozjpeg: true }) : img.webp({ quality: 74 })).toFile(cached);
+      }
+      await cp(cached, join(OUT, "photos", file));
+      photo.sq[ext].push({ w, path: `photos/${file}` });
     }
     photos[p] = photo;
   }
@@ -77,7 +93,7 @@ async function buildAssets(files: Files): Promise<string> {
  * kept from the top (faces sit high in a photo), darkened towards the bottom, with the wordmark on it. No text is drawn, so the
  * picture is the same on every machine. Made for the hero photo and any page's `og_photo`.
  */
-async function buildOg(files: Files, photos: Record<string, Photo>) {
+async function buildOg(files: Files, photos: Record<string, Photo>, focus: Record<string, Focus>) {
   const night = JSON.parse(files["data/tokens.json"]!).color.night;
   const keys = new Set<string>([parseYaml(files["data/home.yml"]!).hero_photo]);
   for (const [p, text] of Object.entries(files)) if (p.startsWith("content/") && parseFrontMatter(text).data.og_photo) keys.add(parseFrontMatter(text).data.og_photo);
@@ -89,7 +105,9 @@ async function buildOg(files: Files, photos: Record<string, Photo>) {
     if (!photos[key]) throw new Error(`link preview: photo ${key} is missing`);
     const bytes = new Uint8Array(await Bun.file(join(SITE, key)).arrayBuffer());
     const file = `og/${key.slice(key.indexOf("/") + 1, -4)}-${Bun.hash(bytes).toString(36).slice(0, 8)}.jpg`;
-    await sharp(bytes).resize({ width, height, fit: "cover", position: "north" })
+    // Cut around the photo's focus when it has one; otherwise keep the top, where faces usually are.
+    const cut = focus[key] ? sharp(bytes).extract(cropBox(photos[key]!.width, photos[key]!.height, width / height, focus[key])).resize({ width, height }) : sharp(bytes).resize({ width, height, fit: "cover", position: "north" });
+    await cut
       .composite([{ input: shade }, { input: wordmark.data, left: 64, top: height - wordmark.info.height - 52 }])
       .jpeg({ quality: 82, mozjpeg: true }).toFile(join(OUT, file));
     photos[key]!.og = file;
@@ -208,8 +226,10 @@ const started = performance.now();
 await rm(OUT, { recursive: true, force: true });
 await mkdir(OUT, { recursive: true });
 const files = await readSite();
-const photos = await buildPhotos();
-await buildOg(files, photos);
+const focus = readFocus(parseYaml(files["data/focus.yml"] ?? "") ?? {});
+for (const p of Object.keys(focus)) if (!existsSync(join(SITE, p))) throw new Error(`focus.yml: ${p} is not a photo of the site`);
+const photos = await buildPhotos(focus);
+await buildOg(files, photos, focus);
 await buildIcons(files);
 // The version in asset addresses changes when the stylesheet or the editor's script
 // does, so a browser never keeps an old copy of either after a deploy.

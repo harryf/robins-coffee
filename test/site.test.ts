@@ -233,7 +233,7 @@ describe("events", () => {
     const first = imported[0]!;
     const twinByName: SiteEvent = { ...first, id: "eventfrog-1", source: "eventfrog", name: first.name.toUpperCase() + "!", ticket_url: "https://eventfrog.ch/x" };
     const twinByLink: SiteEvent = { ...first, id: "eventfrog-2", source: "eventfrog", name: "Another name" };
-    const other: SiteEvent = { ...first, id: "manual-dj", source: "manual", name: "DJ night", ticket_url: "", start: first.start, end: first.end };
+    const other: SiteEvent = { ...first, id: "manual-dj", source: "manual", name: "DJ night", ticket_url: "", ref: null, start: first.start, end: first.end };
     const merged = mergeEvents([imported, [twinByName, twinByLink, other]]);
     expect(merged.length).toBe(imported.length + 1);
     expect(merged.filter((e) => e.start === first.start).map((e) => e.id).sort()).toEqual([first.id, "manual-dj"].sort());
