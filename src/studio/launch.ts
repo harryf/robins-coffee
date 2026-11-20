@@ -9,7 +9,7 @@ import { mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { authEnv } from "./git";
 import { keychain } from "./keychain";
-import { reportPath, selfUpdate, type UpdateReport } from "./update";
+import { readReport, reportPath, selfUpdate, type UpdateReport } from "./update";
 
 const root = join(import.meta.dir, "..", "..");
 const args = Bun.argv.slice(2);
@@ -32,6 +32,7 @@ else {
     const token = await keychain().read("github").catch(() => null);
     const names = async (cmd: string[]) => (await run(cmd, { GIT_LITERAL_PATHSPECS: "1" })).split("\0").filter(Boolean);
     report = await selfUpdate({
+      previous: await readReport(root),
       git: (a, remote) => run(["git", ...a], { GIT_LITERAL_PATHSPECS: "1", GIT_TERMINAL_PROMPT: "0", ...(remote ? authEnv(token) : {}) }, remote ? 30_000 : 60_000),
       uncommitted: async () => [...(await names(["git", "diff", "--name-only", "--no-renames", "-z", "HEAD", "--"])), ...(await names(["git", "ls-files", "--others", "--exclude-standard", "-z"]))],
       install: async () => void (await run([process.execPath, "install", "--frozen-lockfile"], {}, 180_000)),

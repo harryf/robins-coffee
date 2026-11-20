@@ -134,7 +134,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
 
         showWindow()
         // Long enough for an update with new packages before the server answers.
-        waitForServer(until: Date().addingTimeInterval(240))
+        waitForServer(until: Date().addingTimeInterval(540))
     }
 
     /// The folder saved by the Settings screen (src/studio/config.ts writes this file), if any.

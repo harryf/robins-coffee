@@ -7,7 +7,7 @@ import sharp from "sharp";
 import { parseArgs } from "node:util";
 import { mkdir, rm, cp } from "node:fs/promises";
 import { existsSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { join, dirname, resolve, sep } from "node:path";
 import { renderSite, sitemapXml, resolveUrl, parseFrontMatter, OG_SIZE, type Files, type Photo } from "./render";
 import { tokensCss } from "./tokens";
 import { parse as parseYaml } from "yaml";
@@ -245,6 +245,8 @@ await Bun.write(join(OUT, "events.ics"), toIcs(upcoming(events, now), parseYaml(
 const pages = await renderSite(files, { base, photos, version, origin: values.origin, now });
 await buildEditorData(files, photos, version);
 for (const page of pages) {
+  // The second lock on the same door as pageFile() in the renderer: nothing is written outside the output folder.
+  if (!resolve(OUT, page.out).startsWith(resolve(OUT) + sep)) throw new Error(`page ${page.out} would be written outside ${values.out}/`);
   await mkdir(dirname(join(OUT, page.out)), { recursive: true });
   await Bun.write(join(OUT, page.out), page.html);
 }

@@ -26,6 +26,8 @@ export type UpdateDeps = {
   install: () => Promise<void>;
   rebuildApp: () => Promise<void>;
   hasApp: () => boolean;
+  /** What the start before this one reported: a step that failed then is tried again now. */
+  previous?: UpdateReport | null;
   now?: () => Date;
 };
 
@@ -45,7 +47,19 @@ export async function selfUpdate(deps: UpdateDeps): Promise<UpdateReport> {
   }
   const from = (await git(["rev-parse", "HEAD"])).trim();
   const to = (await git(["rev-parse", MAIN_REF])).trim();
-  if (from === to) return { result: "current", from, to, at };
+  if (from === to) {
+    // The code is new already, but packages or the window program did not follow last time: finish the job.
+    const owed = deps.previous?.result === "failed" && (deps.previous.reason === "install" || deps.previous.reason === "app") ? deps.previous : null;
+    if (!owed) return { result: "current", from, to, at };
+    if (owed.reason === "install") {
+      try { await deps.install(); } catch { return { ...owed, at }; }
+    }
+    if (deps.hasApp()) {
+      try { await deps.rebuildApp(); } catch { return { ...owed, reason: "app", at }; }
+      return { result: "updated", from: owed.from, to, appRebuilt: true, at };
+    }
+    return { result: "updated", from: owed.from, to, at };
+  }
   const ancestor = await git(["merge-base", "--is-ancestor", from, to]).then(() => true, () => false);
   if (!ancestor) return { result: "skipped", reason: "diverged", from, to, at };
   const incoming = (await git(["diff", "--name-only", "--no-renames", "-z", from, to])).split("\0").filter(Boolean);

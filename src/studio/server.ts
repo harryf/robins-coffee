@@ -9,7 +9,7 @@ import { readReport, studioVersion, type UpdateReport } from "./update";
 import { contentApi, workingPhoto, type ContentDeps } from "./content-api";
 import { parseArgs } from "node:util";
 import { existsSync } from "node:fs";
-import { mkdir, realpath } from "node:fs/promises";
+import { lstat, mkdir, readdir, realpath, unlink } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { parse as parseYaml } from "yaml";
 import { hoursEditable, validateWeek, weekFromYaml, weekToYaml, DAYS, type Week } from "../editor/changes";
@@ -64,11 +64,22 @@ export type StudioState = {
 const json = (data: unknown, status = 200) => Response.json(data, { status, headers: { "Cache-Control": "no-store" } });
 const refuse = (status: number, error: string) => json({ error }, status);
 
+/** "owner/name" of a GitHub address as git writes it (https or ssh), or null for anything else. */
+export const githubRepo = (address: string): string | null => /^(?:https:\/\/github\.com\/|git@github\.com:|ssh:\/\/git@github\.com\/)([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+?)(?:\.git)?\/?$/.exec(address.trim())?.[1] ?? null;
+
+async function originRepo(root: string): Promise<string | null> {
+  const proc = Bun.spawn(["git", "remote", "get-url", "origin"], { cwd: root, stdin: "ignore", stdout: "pipe", stderr: "ignore" });
+  const out = await new Response(proc.stdout).text();
+  return (await proc.exited) === 0 ? githubRepo(out) : null;
+}
+
 export async function startStudio(options: StudioOptions) {
   const { root } = options;
   const site = parseYaml(await Bun.file(join(root, "site", "data", "site.yml")).text());
   const keys = options.keys ?? keychain();
-  const git: StudioGit = studioGit(root, { remote: options.remote ?? `https://github.com/${site.repo}.git`, token: () => keys.read("github").catch(() => null) });
+  // site.yml is a content file: when the folder's own origin is on GitHub, that is the repository, whatever the file says.
+  const repo = (await originRepo(root)) ?? String(site.repo);
+  const git: StudioGit = studioGit(root, { remote: options.remote ?? `https://github.com/${repo}.git`, token: () => keys.read("github").catch(() => null) });
   const makeGitHub = options.github ?? studioGitHub;
   const open = options.open ?? ((url: string) => void Bun.spawn(["/usr/bin/open", url], { stdin: "ignore", stdout: "ignore", stderr: "ignore" }));
 
@@ -138,7 +149,7 @@ export async function startStudio(options: StudioOptions) {
     send("state");
     const token = await keys.read("github").catch(() => null);
     const result: PublishResult = token
-      ? await publish({ git: hinted, github: makeGitHub(site.repo, token), report: (step) => { publishing.steps.push(step); send("state"); } })
+      ? await publish({ git: hinted, github: makeGitHub(repo, token), report: (step) => { publishing.steps.push(step); send("state"); } })
       : { ok: false, reason: "no_key" };
     publishing = { running: false, steps: publishing.steps, result };
     send("state");
@@ -150,11 +161,15 @@ export async function startStudio(options: StudioOptions) {
     // Where the folder really is: a link inside site/ must not lead a write out of it.
     const home = await realpath(join(root, "site"));
     if (!(await realpath(dirname(join(root, path))) + "/").startsWith(home + "/")) throw new Error("outside the content folders");
+    // And the file itself: a link standing where the file should be would carry the write somewhere else.
+    if ((await lstat(join(root, path)).catch(() => null))?.isSymbolicLink()) await unlink(join(root, path));
     await Bun.write(join(root, path), data);
     // The folder watcher sees it too; asking here as well keeps a save from waiting on it.
     send("state");
     void site_.build();
   }
+
+  for (const name of await readdir(join(root, ".cache", "studio")).catch(() => [] as string[])) if (name.startsWith("look-")) await unlink(join(root, ".cache", "studio", name)).catch(() => {});
 
   // Read once: the version cannot change while this server runs, an update happens before it starts.
   const version: StudioState["version"] = { ...(await studioVersion(root)), update: await readReport(root) };
