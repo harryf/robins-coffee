@@ -7,8 +7,8 @@
 // configuration (GIT_CONFIG_COUNT / KEY / VALUE), scoped to github.com.
 import { inEditScope } from "../editor/scope";
 import { existsSync } from "node:fs";
-import { rm } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, realpath, rm } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import type { FileChange, Status } from "./describe";
 import { HISTORY_FORMAT, HISTORY_LIMIT, parseHistory, type HistoryEntry } from "./history";
 import type { PublishGit } from "./publish";
@@ -18,6 +18,8 @@ export const SCOPE_PATHSPEC = ["site/content", "site/moments", "site/events", "s
 const MAIN_REF = "refs/remotes/origin/main";
 
 export class GitError extends Error {}
+/** A restore that was not started; the message is a key the screen has words for. */
+export class RestoreRefused extends Error {}
 
 /** What a command that talks to GitHub gets in its environment, and nothing else carries the token. */
 export function authEnv(token: string | null): Record<string, string> {
@@ -105,8 +107,58 @@ export function studioGit(root: string, options: GitOptions) {
     deleteBranch: async (name) => void (await run(["branch", "--quiet", "-D", name])),
   };
 
+  const history = async (): Promise<HistoryEntry[]> => parseHistory(await run(["log", `-${HISTORY_LIMIT}`, `--format=${HISTORY_FORMAT}`, MAIN_REF, "--", ...SCOPE_PATHSPEC]));
+  /** A file of a commit as bytes: a photo is not text. */
+  const blob = async (sha: string, path: string): Promise<Uint8Array> => {
+    const proc = Bun.spawn([bin, "cat-file", "blob", `${sha}:${path}`], { cwd: root, stdin: "ignore", stdout: "pipe", stderr: "pipe" });
+    const [out, err, code] = await Promise.all([new Response(proc.stdout).arrayBuffer(), new Response(proc.stderr).text(), proc.exited]);
+    if (code !== 0) throw new GitError(`git cat-file: ${err.trim() || `exit ${code}`}`);
+    return new Uint8Array(out);
+  };
+  /** The folder of a content path, really inside site/: a link must not lead a write or a removal out of it. */
+  const insideSite = async (path: string): Promise<boolean> => {
+    const home = await realpath(join(root, "site")).catch(() => null);
+    const dir = await realpath(dirname(join(root, path))).catch(() => null);
+    return !!home && !!dir && (dir + "/").startsWith(home + "/");
+  };
+
   return {
     ...git,
+    /**
+     * The content files of the working copy as they were at one commit of the history:
+     * changed files written back, files added since removed, files removed since brought
+     * back. Only paths inside the edit scope are read, written or removed. Nothing is
+     * staged or committed and no branch moves, so the result is an unpublished change
+     * like any other. Refused (RestoreRefused) while other unpublished changes exist and
+     * for a commit that is not one of the history's own entries.
+     */
+    async restoreContent(sha: string): Promise<{ changed: number; back: number; removed: number }> {
+      if (typeof sha !== "string" || !/^[0-9a-f]{40}$/.test(sha) || !(await history()).some((e) => e.sha === sha)) throw new RestoreRefused("restore_unknown");
+      if ((await against(await base())).length) throw new RestoreRefused("restore_changes");
+      // What the commit holds: ordinary files only, never a link or a nested repository.
+      const then = new Set<string>();
+      for (const row of (await run(["ls-tree", "-r", "-z", sha, "--", "site"])).split("\0")) {
+        const found = /^(100644|100755) blob [0-9a-f]+\t(.+)$/s.exec(row);
+        if (found && inEditScope(found[2]!)) then.add(found[2]!);
+      }
+      const now = (await run(["ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", "site"])).split("\0").filter((p) => p && inEditScope(p) && existsSync(join(root, p)));
+      const count = { changed: 0, back: 0, removed: 0 };
+      for (const path of then) {
+        const wanted = await blob(sha, path);
+        const there = existsSync(join(root, path));
+        if (there && Buffer.from(await Bun.file(join(root, path)).arrayBuffer()).equals(Buffer.from(wanted))) continue;
+        await mkdir(dirname(join(root, path)), { recursive: true });
+        if (!(await insideSite(path))) throw new GitError(`outside the content folders: ${path}`);
+        await Bun.write(join(root, path), wanted);
+        there ? count.changed++ : count.back++;
+      }
+      for (const path of now) {
+        if (then.has(path) || !(await insideSite(path))) continue;
+        await rm(join(root, path));
+        count.removed++;
+      }
+      return count;
+    },
     /** A file as origin/main had it when this work started, or null when it was not there. */
     async liveText(path: string): Promise<string | null> {
       return run(["show", `${await base()}:${path}`]).catch(() => null);
@@ -121,9 +173,7 @@ export function studioGit(root: string, options: GitOptions) {
       }
     },
     /** The last 50 commits on origin/main that touched content, newest first. */
-    async history(): Promise<HistoryEntry[]> {
-      return parseHistory(await run(["log", `-${HISTORY_LIMIT}`, `--format=${HISTORY_FORMAT}`, MAIN_REF, "--", ...SCOPE_PATHSPEC]));
-    },
+    history,
   };
 }
 

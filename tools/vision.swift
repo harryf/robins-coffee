@@ -1,15 +1,31 @@
 // Looks at one picture with Apple's Vision framework and prints what it found as JSON:
 // where the eye goes (a focus point for cropping), what is in it (labels), any text it
-// can read, and how many faces. Nothing leaves the Mac. Built and run by src/vision.ts:
-//   swiftc -O tools/vision.swift -o .cache/vision && .cache/vision <picture>
+// can read, and how many faces. It also says when the picture was taken, read with
+// ImageIO from the picture's own EXIF data. The Studio looks at a cleaned copy (upright,
+// no metadata), which has no such date any more, so the file as it came can be named as
+// a second argument: only its date is read. Nothing leaves the Mac. Built and run by
+// src/vision.ts:
+//   swiftc -O tools/vision.swift -o .cache/vision && .cache/vision <picture> [<original>]
 import Foundation
+import ImageIO
 import Vision
 
-guard CommandLine.arguments.count == 2 else {
-  FileHandle.standardError.write("usage: vision <picture>\n".data(using: .utf8)!)
+guard CommandLine.arguments.count == 2 || CommandLine.arguments.count == 3 else {
+  FileHandle.standardError.write("usage: vision <picture> [<original>]\n".data(using: .utf8)!)
   exit(2)
 }
 let url = URL(fileURLWithPath: CommandLine.arguments[1])
+
+/// "2026:11:07 21:14:05" as the camera wrote it, or nil. The time it was taken wins over the time it was last saved.
+func takenAt(_ file: URL) -> String? {
+  guard let source = CGImageSourceCreateWithURL(file as CFURL, nil),
+        let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any] else { return nil }
+  let exif = props[kCGImagePropertyExifDictionary] as? [CFString: Any]
+  let tiff = props[kCGImagePropertyTIFFDictionary] as? [CFString: Any]
+  return (exif?[kCGImagePropertyExifDateTimeOriginal] as? String)
+    ?? (exif?[kCGImagePropertyExifDateTimeDigitized] as? String)
+    ?? (tiff?[kCGImagePropertyTIFFDateTime] as? String)
+}
 let handler = VNImageRequestHandler(url: url, options: [:])
 let saliency = VNGenerateAttentionBasedSaliencyImageRequest()
 let classify = VNClassifyImageRequest()
@@ -40,6 +56,9 @@ out["text"] = (text.results ?? []).compactMap { $0.topCandidates(1).first }.filt
 out["faces"] = (faces.results ?? []).map { f -> [String: Double] in
   let b = f.boundingBox
   return ["x": Double(b.minX), "y": Double(1 - b.maxY), "w": Double(b.width), "h": Double(b.height)]
+}
+if let taken = takenAt(CommandLine.arguments.count == 3 ? URL(fileURLWithPath: CommandLine.arguments[2]) : url) {
+  out["taken"] = taken
 }
 let data = try JSONSerialization.data(withJSONObject: out, options: [.sortedKeys])
 FileHandle.standardOutput.write(data)
