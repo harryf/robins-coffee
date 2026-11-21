@@ -13,7 +13,7 @@ Goals:
 - A site that looks alive: new photos and events land on the home page the day they are posted, and adding a whole new section is a small change.
 - One events calendar that blends ROBIN's own events with IN YOUR FACE Comedy shows at the bar.
 - A documented design system that the site and the editor share.
-- An editor that shows the real page before anything is published, on a phone, with no installation.
+- An editor that shows the real page before anything is published (since 21 Nov 2026 ROBIN's Studio on a Mac; the phone editor is retired).
 - `main` is the only deploy branch and is protected.
 - Later: the same data files feed the Google Business Profile (hours first, then photos and the menu).
 
@@ -25,7 +25,7 @@ Not in scope: a server-side CMS or database, ticket sales (they stay on Eventfro
 |---|---|---|
 | 1. Site | All current content, the new design, moments feed, events, gallery, German | Live on GitHub Pages and checked against the current site |
 | 2. Design system | Tokens, components and a living style guide | Every page is built only from documented components |
-| 3. Editor PWA | Login, edit, exact preview, pull request, review, self-update | Elias publishes a change from his phone without opening github.com |
+| 3. Editor | Login, edit, exact preview, pull request, review, self-update (the phone PWA was retired on 21 Nov 2026; the editor is ROBIN's Studio on a Mac) | Elias publishes a change without opening github.com |
 | 4. Handover | Approver list, editor guide, DNS cut-over | robins-coffee.ch serves the new site |
 | 5. Google | Hours, then photos and menu, written to the Business Profile from the repo | A change to `hours.yml` shows on Google without anyone opening Business Profile Manager |
 
@@ -191,7 +191,9 @@ Privacy rules (the repository and its history are public and permanent):
 - Every text and surface pair listed in `tokens.json` must reach WCAG AA contrast in both themes; a test checks it.
 - A new component arrives with its style guide entry in the same pull request.
 
-## 10. Editor PWA (stage 3)
+## 10. Editor PWA (stage 3, retired 21 Nov 2026)
+
+**Retired 21 Nov 2026** in favour of ROBIN's Studio, the Mac app (milestone 8d, `decisions/2026-11-20-studio.md`). Harry: the phone editor is a legacy artifact; the bar uses the Studio only. `src/editor/` is gone. `/edit/` is now a short note in English and German that points to `/studio/`, and `/edit/sw.js` unregisters itself and clears the old caches, so a phone that installed the editor stops running it. What the Studio still uses moved to `src/`: `scope.ts` (`inEditScope`), `github.ts`, `hours.ts`, `slug.ts`. The text below is kept as the record of what was built.
 
 An installable web app at `/edit/`. People sign in with GitHub, edit forms, see the real page and press "Send for publishing". Git stays hidden.
 
@@ -240,8 +242,8 @@ One branch and one pull request per milestone or smaller. Each milestone starts 
 | 4 | Gallery and photo review page (gallery and lightbox done 15 Nov 2026; review page and import built, first real batch still to run) | A batch of group photos is picked and published in one sitting |
 | 5 | German and polish (done 16 Nov 2026) | Both languages complete, Open Graph images, 404, sitemap, link check |
 | 6 | Design system complete (done 16 Nov 2026) | Every component is in the style guide; no style value outside tokens |
-| 7 | Editor MVP (built 16 Nov 2026; first real send by Harry and Elias still to come) | Elias posts a photo and changes the hours from his phone, with the exact preview, without github.com |
-| 8a | Editor: install, updates, inbox (built 16 Nov 2026) | The editor is installed from the site, shows its version and offers updates; a draft survives a reload; Elias sets up his phone from one screen; either of Harry and Elias says yes or no to the other's change inside the editor; German interface |
+| 7 | Editor MVP (built 16 Nov 2026; retired 21 Nov 2026 for the Studio) | Elias posts a photo and changes the hours from his phone, with the exact preview, without github.com |
+| 8a | Editor: install, updates, inbox (built 16 Nov 2026; retired 21 Nov 2026 for the Studio) | The editor is installed from the site, shows its version and offers updates; a draft survives a reload; Elias sets up his phone from one screen; either of Harry and Elias says yes or no to the other's change inside the editor; German interface |
 | 8b | Events from Eventfrog, with kinds | Music and chess events the bar publishes on Eventfrog appear on the site, marked by kind, next to the comedy feed (waits for the bar's organiser account; by-hand events until then) |
 | 8c | Drinks menu as a book | Seasonal drinks with a name, a picture and an optional description, paged through like the book in the bar, changed from the editor (waits for photos of the book) |
 | 8d | Mac editor ("Studio"), menu, events by hand | A Mac app that runs the site on a local web server as its preview, reloads it on every change and publishes with one button; history in plain words; keys pasted once and kept in the Keychain. On the site: a drinks menu from `menu.yml` (first the five signature cocktails), hand events with a picture, a short text and an optional ticket link, one file for a list of dates or a weekly evening. In the Studio: forms for hours, photos, albums, menu and events, an Eventfrog import by address or key, Apple Vision for the crop focus and an alt text draft (20 Nov 2026, in work) |
