@@ -10,4 +10,4 @@ albums:
   - slug: behind-the-bar
     title: { en: "Behind the bar", de: "Hinter der Bar" }
   - slug: comedy
-    title: { en: Comedy, de: Komodie }
+    title: { en: "Comedy", de: "Komödie" }
