@@ -9,8 +9,8 @@
 // - a failure never throws work away: before the commit the edits stay in the working
 //   copy, after it they stay committed on the local edit/ branch, and the next Publish
 //   carries on from there (same branch, same pull request).
-import { inEditScope } from "../editor/scope";
-import { GitHubError, type Pull } from "../editor/github";
+import { inEditScope } from "../scope";
+import { GitHubError, type Pull } from "../github";
 import { branchName, describeChanges, publishNotes, type FileChange } from "./describe";
 
 export interface PublishGit {
@@ -39,7 +39,7 @@ export interface PublishGit {
 export type CheckState = "waiting" | "passed" | "failed";
 export interface PublishGitHub {
   access(): Promise<{ login: string; canWrite: boolean; owner: boolean }>;
-  editorPulls(): Promise<Pull[]>;
+  editPulls(): Promise<Pull[]>;
   openPull(branch: string, base: string, title: string, body: string): Promise<Pull>;
   /** Where the required `build` check of a commit stands. */
   check(sha: string): Promise<CheckState>;
@@ -126,7 +126,7 @@ export async function publish(deps: PublishDeps): Promise<PublishResult> {
 
     report("pull");
     const body = `Published from the Studio by @${who.login}.\n\n${notes}\n`;
-    const found = (await github.editorPulls()).find((p) => p.head.ref === branch) ?? (await github.openPull(branch, MAIN, description, body));
+    const found = (await github.editPulls()).find((p) => p.head.ref === branch) ?? (await github.openPull(branch, MAIN, description, body));
     pull = { number: found.number, url: found.html_url };
     if (!who.owner) return { ok: true, state: "waiting", description, pull };
 

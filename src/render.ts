@@ -1,10 +1,9 @@
 // The renderer: content + data + templates in, HTML pages out.
 //
 // This module is PURE and BROWSER-SAFE on purpose: no file system, no Node APIs.
-// The build (src/build.ts) feeds it files read from disk; the editor PWA will feed
-// it the same files fetched from GitHub plus the editor's unsaved changes, so the
-// preview an editor sees is the real build, not an imitation. Keep it that way:
-// anything that needs disk, sharp or the network belongs in the caller.
+// The build (src/build.ts) feeds it files read from disk, and the Studio's preview is
+// that same build, not an imitation. Keep it that way: anything that needs disk,
+// sharp or the network belongs in the caller.
 import { Liquid } from "liquidjs";
 import { marked } from "marked";
 import { parse as parseYaml } from "yaml";
@@ -19,7 +18,7 @@ export type Photo = { width: number; height: number; jpg: Variant[]; webp: Varia
 export const squareOf = (p: Photo | undefined | null): Photo | null => (!p ? null : p.sq ? { width: p.sq.jpg.at(-1)!.w, height: p.sq.jpg.at(-1)!.w, jpg: p.sq.jpg, webp: p.sq.webp } : p);
 export const OG_SIZE = { width: 1200, height: 630 };
 export type RenderOptions = {
-  /** "/" on the domain, "/robins-coffee/" on GitHub Pages, or "relative" for file:// and the editor preview. */
+  /** "/" on the domain, "/robins-coffee/" on GitHub Pages, or "relative" for file://. */
   base: string;
   photos: Record<string, Photo>;
   /** Scheme and host the build is served from, for absolute URLs (hreflang, canonical). Defaults to site.url. */
@@ -98,6 +97,8 @@ export function wallClock(d: Date, timeZone: string): WallClock {
   return { year, month, day, weekday, time: `${parts.hour}:${parts.minute}` };
 }
 
+/** "novembre" as a heading: "Novembre". French and Italian write month names small inside a date. */
+const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const fillDate = (pattern: string, p: WallClock, t: any) =>
   pattern.replace("{weekday}", t.days_short[p.weekday]).replace("{day}", String(p.day)).replace("{month}", t.months_short[p.month - 1]).replace("{year}", String(p.year));
 
@@ -133,7 +134,7 @@ export function groupGallery<M extends { id: string; album?: string }>(moments: 
 
 /**
  * The output file a page's `permalink` names: plain lower case folders and a name
- * ending in .html, nothing else. A page text is content that anyone with the editor can
+ * ending in .html, nothing else. A page text is content that anyone with the Studio can
  * change, and it must never choose a file outside the built site ("../../x").
  */
 export function pageFile(permalink: unknown, source = "a page"): string {
@@ -179,7 +180,7 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
   // hreflang and canonical must be absolute; in a relative build there is no address, so the path is kept.
   const origin = (opts.origin ?? site.url).replace(/\/$/, "");
   engine.registerFilter("absolute", (p: string) => (opts.base === "relative" ? url(p) : origin + url(p)));
-  // A photo the editor has not sent yet has no file on the site: its path is a blob: address, used as it is.
+  // A photo path that is already an address (blob:, data:, http) is used as it is.
   const photoUrl = (path: string) => (/^(blob|data|https?):/.test(path) ? path : url("/" + path));
   engine.registerFilter("srcset", (vs: Variant[]) => (vs ?? []).map((v) => `${photoUrl(v.path)} ${v.w}w`).join(", "));
   engine.registerFilter("largest", (vs: Variant[]) => photoUrl(vs.at(-1)!.path));
@@ -211,7 +212,7 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
     const meta = [price, e.organiser && e.organiser !== e.name ? e.organiser : "", t.event_languages?.[e.language] ?? ""].filter(Boolean).join(" · ");
     return {
       meta_label: meta,
-      ...e, when_label: e.all_day ? fillDate(t.date_event, p, t) : `${fillDate(t.date_event, p, t)}, ${p.time}`, text: e.text?.[lang] ?? e.text?.[defaultLang] ?? "", month_label: `${t.months[p.month - 1]} ${p.year}`,
+      ...e, when_label: e.all_day ? fillDate(t.date_event, p, t) : `${fillDate(t.date_event, p, t)}, ${p.time}`, text: e.text?.[lang] ?? e.text?.[defaultLang] ?? "", month_label: `${capital(t.months[p.month - 1])} ${p.year}`,
       price_label: e.price_chf === null ? "" : e.price_chf === 0 ? t.free_entry : `CHF ${e.price_chf}`,
       language_label: t.event_languages?.[e.language] ?? "", img: e.image ? squareOf(opts.photos[e.image]) : null,
     };
@@ -245,7 +246,8 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
     current = { depth: page.depth };
     const t = data.i18n[page.lang];
     const alternates = pages.filter((p) => p.slug === page.slug).map((p) => ({ lang: p.lang, url: p.url }));
-    const other = alternates.find((a) => a.lang !== page.lang);
+    // The language menu: this page in every language it exists in, each named in its own words.
+    const langsMenu = langs.flatMap((l) => alternates.filter((a) => a.lang === l).map((a) => ({ lang: l, url: a.url, name: data.i18n[l].lang_name, current: l === page.lang })));
     // The link preview picture: the page's own `og_photo`, or the hero photo. Its alt text is the moment's.
     const ogKey: string | undefined = page.data.og_photo ?? data.home?.hero_photo;
     const ogMoment = moments.find((m) => m.photo === ogKey);
@@ -260,7 +262,7 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
       home: data.home, tokens: data.tokens, hours: data.hours,
       hours_rows: hoursRows(data.hours, t),
       home_url: page.lang === defaultLang ? "/" : `/${page.lang}/`,
-      alternates, other, og,
+      alternates, langs_menu: langsMenu, default_lang: defaultLang, og,
       x_default: alternates.find((a) => a.lang === defaultLang)?.url,
       og_locales_other: alternates.filter((a) => a.lang !== page.lang).map((a) => data.i18n[a.lang].og_locale),
       // Every language at once, for the one page that speaks them all (404).

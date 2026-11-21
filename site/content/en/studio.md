@@ -8,6 +8,7 @@ ROBIN's Studio is the app the bar uses to change this website: opening hours, ph
 ## What you need
 
 - **A Mac** with macOS 12 or newer. To check, click the Apple sign at the top left of the screen, then **About This Mac**.
+- **macOS 26 (Tahoe) or newer for the translations.** You write every text in English; the Mac turns it into German, French and Italian. On an older Mac the Studio still works, and the website shows English where a translation is missing.
 - **An internet connection**, for the install and each time you publish.
 - **An email address** you can open now. GitHub sends a code to it.
 - **A free GitHub account that Harry has invited, and a key from it.** GitHub is the service that keeps the website's files. The three steps under "Prerequisites" set this up. Without them you can install the Studio and look around, but you cannot publish.
@@ -70,6 +71,16 @@ It asks for no password. The first start takes a minute, because the Studio buil
 
 The app is called **ROBINs Studio** and sits in the Applications folder inside your home folder. Press Command and Space, type `Studio`, press Enter. Drag its icon to the Dock to keep it there.
 
+### Add the languages for the translations
+
+The Studio translates on this Mac with Apple's own translation, so nothing you write is sent anywhere. The Mac needs three languages downloaded for it, once:
+
+1. Open **System Settings**, then **General**, then **Language & Region**.
+2. Near the bottom, click **Translation Languages**.
+3. Click the download button next to **German**, **French** and **Italian**. Wait until each one is done.
+
+The Studio also tells you when a language is missing, with a button that opens this page. Until a language is there, the website shows the English text in it.
+
 ## Publish for the first time
 
 1. In the Studio, open **Settings**.
@@ -83,6 +94,7 @@ If the Studio says GitHub refused the key, check two things. First, that you acc
 ## Good to know
 
 - The Studio keeps itself up to date. Each time it starts it looks for a newer version.
+- Write in English. The translations are in a closed fold under each text; open it to read them or to change a word. Leave one empty and the Mac makes it again when you save.
 - Nothing goes live until you press Publish. Until then your changes are only on this Mac.
 - To install again, or to repair it, run the same line again. It keeps your unpublished changes.
 - To remove it: drag ROBINs Studio from Applications to the Trash, and delete the folder `Library/Application Support/ROBINs Studio` in your home folder.

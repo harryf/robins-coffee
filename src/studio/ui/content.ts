@@ -4,13 +4,17 @@
 // read. A background update redraws the list only, never an open form, so typing is kept.
 // They only draw and ask; every rule lives on the server (src/studio/content-api.ts), in
 // src/content.ts and in src/studio/calendar.ts. Every word comes from strings.ts.
+// A text for the site is typed in English; its other languages are made on this Mac and
+// shown in a closed fold under it, where they can be changed by hand.
 import { dayShort, dayWords, whenWords, WEEK, type CalendarDay, type CalendarMonth } from "../calendar";
 import type { StudioState } from "../server";
 import type { Strings } from "../strings";
 import { h, type Ctx, type Kid, type Section } from "./dom";
 
 type Res = { status: number; data: any };
-type Texts = { en: string; de: string };
+type Texts = { en: string; [lang: string]: string | undefined };
+/** What the server says about translating: languages whose pack is missing, and why nothing could be done. */
+type Told = { missing?: string[]; note?: string | null };
 const problem = (t: Strings, res: Res): HTMLElement => {
   const known = (code: unknown) => (t as unknown as Record<string, unknown>)["e_" + String(code)];
   const lines: string[] = (res.data.problems as string[] | undefined)?.map((p) => String(known(p) ?? p)) ?? [String(known(res.data.error) ?? t.failed(String(res.data.error ?? res.status)))];
@@ -20,15 +24,68 @@ const problem = (t: Strings, res: Res): HTMLElement => {
 const field = (label: string, ...kids: Kid[]) => h("label", { class: "field" }, h("span", { class: "field__label" }, label), ...kids);
 const text = (props: Record<string, unknown> = {}) => h("input", { type: "text", ...props });
 const area = () => h("textarea", { rows: 2 });
-/** One text in both languages, side by side. */
-function pair(t: Strings, label: string, make: () => HTMLInputElement | HTMLTextAreaElement = text, start?: Partial<Texts> | null) {
-  const en = make(), de = make();
+// The note about missing language packs is said once while the Studio is open.
+let toldMissing = false;
+/** Why nothing was translated, in words: an old macOS, one language refused, or the reason the Mac gave. */
+const noteWords = (t: Strings, note: string) => (note === "old_mac" ? t.translate_old_mac : note === "failed" ? t.translate_some_failed : t.translate_failed(note));
+/** What a translation run or a save has to say: missing packs (once, with the way to add them), or why nothing was translated. */
+function translateNote(ctx: Ctx, told: Told | null | undefined): HTMLElement | null {
+  const { t, api } = ctx;
+  if (!told) return null;
+  if (told.missing?.length && !toldMissing) {
+    toldMissing = true;
+    return h("div", { class: "problem" }, h("p", {}, t.translate_missing(t.lang_list(told.missing.map(t.lang_name)))),
+      h("button", { class: "button", type: "button", onclick: () => void api("POST", "translate/settings") }, t.translate_open));
+  }
+  if (!told.note) return null;
+  return h("p", { class: "problem" }, noteWords(t, told.note));
+}
+
+/**
+ * One text of the site: typed in English, with its translations in a closed fold under
+ * it. Leaving the English field asks this Mac for the translations of a new English text;
+ * they are marked as made by this Mac until someone changes one by hand. The server
+ * translates again on save whatever is still empty.
+ */
+function english(ctx: Ctx, others: string[], label: string, make: () => HTMLInputElement | HTMLTextAreaElement = text, start?: Partial<Texts> | null) {
+  const { t, api } = ctx;
+  const en = make();
   en.lang = "en";
-  de.lang = "de";
   en.value = start?.en ?? "";
-  de.value = start?.de ?? "";
-  const el = h("div", { class: "field" }, h("span", { class: "field__label" }, label), h("div", { class: "field__pair" }, field(t.in_english, en), field(t.in_german, de)));
-  return { el, en, de, value: (): Texts => ({ en: en.value.trim(), de: de.value.trim() }) };
+  const rows = others.map((code) => {
+    const input = make();
+    input.lang = code;
+    input.value = start?.[code] ?? "";
+    const mark = h("span", { class: "tag", hidden: true }, t.made_here);
+    let touched = false;
+    input.addEventListener("input", () => { touched = true; mark.hidden = true; });
+    return { code, input, mark, touched: () => touched, el: h("label", { class: "field" }, h("span", { class: "field__label" }, t.lang_name(code), " ", mark), input) };
+  });
+  const note = h("div", { role: "status" });
+  const fold = rows.length ? h("details", { class: "fold" }, h("summary", {}, t.fold_title(t.lang_list(others.map(t.lang_name)))), h("p", { class: "muted" }, t.fold_help), note, ...rows.map((r) => r.el)) : null;
+  let asked = en.value.trim();
+  /** Empties the translations nobody wrote by hand, so the server makes them again. */
+  const clear = () => { for (const r of rows) if (!r.touched()) { r.input.value = ""; r.mark.hidden = true; } };
+  en.addEventListener("change", async () => {
+    const now = en.value.trim();
+    if (!now || now === asked || !rows.length) return;
+    asked = now;
+    note.replaceChildren(h("p", { class: "muted" }, t.translating));
+    const res = await api("POST", "translate", { texts: [now] });
+    // Typed on meanwhile: the newer English asks again when the field is left.
+    if (en.value.trim() !== now) return note.replaceChildren();
+    note.replaceChildren(...[res.status === 200 ? translateNote(ctx, res.data) : null].filter((kid): kid is HTMLElement => !!kid));
+    if (res.status !== 200) return;
+    for (const r of rows) {
+      if (r.touched()) continue;
+      // A language this Mac cannot do is emptied: the old text said what the old English said.
+      const made = res.data.texts?.[r.code]?.[0];
+      r.input.value = typeof made === "string" ? made : "";
+      r.mark.hidden = !r.input.value;
+    }
+  });
+  const el = h("div", { class: "field" }, field(label, en), fold);
+  return { el, en, clear, value: (): Texts => ({ en: en.value.trim(), ...Object.fromEntries(rows.map((r) => [r.code, r.input.value.trim()])) }) };
 }
 const options = (list: [string, string][], chosen = "") => list.map(([value, label]) => h("option", { value, selected: value === chosen }, label));
 const base64 = (file: File) => new Promise<string>((resolve, reject) => {
@@ -171,7 +228,7 @@ function card(ctx: Ctx, ui: Ui, o: { title?: string; kids: Kid[]; submit: () => 
     if (!res) return;
     if (res.status !== 200) return wrong.replaceChildren(problem(t, res));
     ui.open(null);
-    ui.say(okay(o.done));
+    ui.say(okay(o.done), translateNote(ctx, res.data.translated));
     await ui.reload();
   } }, o.title ? h("h2", { class: "card__title" }, o.title) : null, ...o.kids, wrong,
     h("div", { class: "form__actions" }, save, h("button", { class: "button button--quiet", type: "button", onclick: () => ui.open(null) }, t.cancel), ...(o.more ?? [])));
@@ -179,12 +236,13 @@ function card(ctx: Ctx, ui: Ui, o: { title?: string; kids: Kid[]; submit: () => 
 
 const photos = screen("photos", (t) => t.sec_photos, (ctx, ui) => {
   const { t, api } = ctx;
-  const loc = (v: Partial<Texts> | null | undefined) => v?.[ctx.lang] || v?.en || "";
+  const loc = (v: Partial<Texts> | null | undefined) => v?.en || "";
+  const others = (): string[] => (ui.content?.languages ?? []).filter((l: string) => l !== "en");
   const NEW = "+";
   /** The album of a photo: one of those there, none, or a new one named right here. */
   const albumChoice = (chosen: string | null) => {
     const select = h("select", {}, ...options([["", t.photo_no_album], ...ui.content.albums.map((a: any): [string, string] => [a.slug, loc(a.title)]), [NEW, t.album_choose_new]], chosen ?? ""));
-    const title = pair(t, t.album_title);
+    const title = english(ctx, others(), t.album_title);
     title.el.hidden = true;
     select.onchange = () => { title.el.hidden = select.value !== NEW; };
     return { kids: [field(t.photo_album, select), title.el], value: () => (select.value === NEW ? { newAlbum: title.value() } : { album: select.value }) };
@@ -195,7 +253,7 @@ const photos = screen("photos", (t) => t.sec_photos, (ctx, ui) => {
   };
 
   const addForm = () => {
-    const caption = pair(t, t.photo_caption), alt = pair(t, t.photo_alt, area);
+    const caption = english(ctx, others(), t.photo_caption), alt = english(ctx, others(), t.photo_alt, area);
     const date = h("input", { type: "date" });
     const dateFrom = h("span", { class: "muted" });
     const album = albumChoice(null);
@@ -206,7 +264,6 @@ const photos = screen("photos", (t) => t.sec_photos, (ctx, ui) => {
       date.value = seen.date;
       dateFrom.textContent = t[`photo_date_from_${seen.date_from as "picture" | "file" | "today"}`];
       if (!alt.en.value) alt.en.value = seen.draft.en;
-      if (!alt.de.value) alt.de.value = seen.draft.de;
     }, onChange() {
       rest.hidden = save.disabled = !picture.value();
     } });
@@ -217,12 +274,12 @@ const photos = screen("photos", (t) => t.sec_photos, (ctx, ui) => {
   };
 
   const albumForm = () => {
-    const title = pair(t, t.album_title);
+    const title = english(ctx, others(), t.album_title);
     return card(ctx, ui, { title: t.album_new, kids: [title.el], done: t.album_added, submit: () => api("POST", "album", { title: title.value() }) });
   };
 
   const editForm = (m: any) => {
-    const caption = pair(t, t.photo_caption, text, m.caption), alt = pair(t, t.photo_alt, area, m.alt);
+    const caption = english(ctx, others(), t.photo_caption, text, m.caption), alt = english(ctx, others(), t.photo_alt, area, m.alt);
     const album = albumChoice(m.album);
     const feed = feedSwitch(m.feed);
     const remove = askFirst(t, t.remove, t.photo_remove_sure, t.remove_yes, async () => {
@@ -246,9 +303,7 @@ const photos = screen("photos", (t) => t.sec_photos, (ctx, ui) => {
     m.feed ? null : h("span", { class: "tag" }, t.photo_not_on_home),
   );
   const renameForm = (album: any) => {
-    const title = pair(t, t.album_title);
-    title.en.value = album.title?.en ?? "";
-    title.de.value = album.title?.de ?? "";
+    const title = english(ctx, others(), t.album_title, text, album.title);
     return card(ctx, ui, { title: t.album_rename_title, kids: [title.el], done: t.album_renamed, submit: () => api("PUT", "album", { slug: album.slug, title: title.value() }) });
   };
   const group = (title: string, list: any[], album?: any) => h("section", { class: "group" },
@@ -265,7 +320,7 @@ const photos = screen("photos", (t) => t.sec_photos, (ctx, ui) => {
       const known = new Set<string>(content.albums.map((a: any) => a.slug));
       const loose = content.moments.filter((m: any) => !m.album || !known.has(m.album));
       return [
-        h("p", { class: "muted" }, t.photos_help),
+        h("p", { class: "muted" }, `${t.photos_help} ${t.texts_hint}`),
         ...content.albums.map((a: any) => group(loc(a.title), content.moments.filter((m: any) => m.album === a.slug), a)),
         loose.length || !content.albums.length ? group(t.photos_no_album, loose) : null,
       ];
@@ -275,21 +330,22 @@ const photos = screen("photos", (t) => t.sec_photos, (ctx, ui) => {
 
 const menu = screen("menu", (t) => t.sec_menu, (ctx, ui) => {
   const { t, api } = ctx;
-  const loc = (v: Partial<Texts> | null | undefined) => v?.[ctx.lang] || v?.en || "";
+  const loc = (v: Partial<Texts> | null | undefined) => v?.en || "";
+  const others = (): string[] => (ui.content?.languages ?? []).filter((l: string) => l !== "en");
   const NEW = "+";
 
   const drinkForm = (was: { part: string; drink: any } | null) => {
     const d = was?.drink;
     const part = h("select", {}, ...options([...ui.content.menu.map((s: any): [string, string] => [s.slug, loc(s.title)]), [NEW, t.menu_part_new]], was?.part ?? ""));
-    const partTitle = pair(t, t.menu_part_title);
+    const partTitle = english(ctx, others(), t.menu_part_title);
     const name = text({ value: d?.name ?? "" });
-    const what = pair(t, t.drink_text, text, d?.text);
+    const what = english(ctx, others(), t.drink_text, text, d?.text);
     const price = h("input", { type: "number", min: "0", step: "0.5", value: d ? String(d.price_chf) : "" });
-    const alt = pair(t, t.photo_alt, area, d?.alt);
+    const alt = english(ctx, others(), t.photo_alt, area, d?.alt);
     const picture = picker(ctx, { label: t.drink_photo, current: d?.photo, removable: true, onLooked(seen) {
       // A draft for a new picture; the words of the old picture would describe the wrong one.
       alt.en.value = seen.draft.en;
-      alt.de.value = seen.draft.de;
+      alt.clear();
     }, onChange: () => sync() });
     const sync = () => { partTitle.el.hidden = part.value !== NEW; alt.el.hidden = !picture.has(); };
     part.onchange = sync;
@@ -308,7 +364,7 @@ const menu = screen("menu", (t) => t.sec_menu, (ctx, ui) => {
   return {
     top: [h("button", { class: "button button--primary", type: "button", onclick: () => ui.open(drinkForm(null)) }, t.drink_add)],
     list: (content) => [
-      h("p", { class: "muted" }, t.menu_help),
+      h("p", { class: "muted" }, `${t.menu_help} ${t.texts_hint}`),
       ...content.menu.map((s: any) => h("section", { class: "group" },
         h("h3", { class: "group__title" }, loc(s.title)),
         s.drinks.length ? h("ul", { class: "rows" }, ...s.drinks.map((d: any) => h("li", { class: "row item" },
@@ -347,7 +403,7 @@ const events = screen("events", (t) => t.sec_events, (ctx, ui) => {
     const until = h("input", { type: "date", value: f.until ?? "" });
     const from = text({ class: "time", maxLength: 5, placeholder: "--:--", value: f.from ?? "" });
     const to = text({ class: "time", maxLength: 5, placeholder: "--:--", value: f.to ?? "" });
-    const words = pair(t, maybe(t.event_text), area, f.text);
+    const words = english(ctx, (ui.content?.languages ?? []).filter((l: string) => l !== "en"), maybe(t.event_text), area, f.text);
     const link = h("input", { type: "url", placeholder: "https://", value: f.ticket_url ?? "" });
     const price = h("input", { type: "number", min: "0", step: "0.5", value: f.price_chf == null ? "" : String(f.price_chf) });
     const kind = h("select", {}, ...options(kinds(), f.category ?? "other"));
@@ -374,7 +430,7 @@ const events = screen("events", (t) => t.sec_events, (ctx, ui) => {
         field(maybe(t.event_name), short, h("span", { class: "muted" }, t.event_name_help))],
       submit: () => {
         const said = words.value(), shot = picture.value(), kept = picture.current();
-        const event = { title: title.value, ...(short.value.trim() ? { name: short.value.trim() } : {}), ...whenValue(), ...(said.en || said.de ? { text: said } : {}), ticket_url: link.value.trim(), price_chf: price.value === "" ? null : Number(price.value), ...(kept ? { image: kept } : {}), category: kind.value };
+        const event = { title: title.value, ...(short.value.trim() ? { name: short.value.trim() } : {}), ...whenValue(), ...(said.en ? { text: said } : {}), ticket_url: link.value.trim(), price_chf: price.value === "" ? null : Number(price.value), ...(kept ? { image: kept } : {}), category: kind.value };
         return api(was ? "PUT" : "POST", "event", { ...(was ? { path: was.path } : {}), event, ...(shot ? { picture: shot } : {}) });
       },
     });
@@ -398,7 +454,7 @@ const events = screen("events", (t) => t.sec_events, (ctx, ui) => {
           const res2 = await api("POST", "eventfrog/add", { events: list.filter((_, i) => boxes[i]!.checked), category: kind.value });
           if (res2.status !== 200) return found.replaceChildren(problem(t, res2));
           ui.open(null);
-          ui.say(okay(t.ef_added(res2.data.added, res2.data.skipped)));
+          ui.say(okay(t.ef_added(res2.data.added, res2.data.skipped)), translateNote(ctx, res2.data.translated));
           await ui.reload();
         } }, t.ef_add), h("button", { class: "button button--quiet", type: "button", onclick: () => ui.open(null) }, t.cancel)),
       );
@@ -464,7 +520,7 @@ const events = screen("events", (t) => t.sec_events, (ctx, ui) => {
   return {
     top: [h("button", { class: "button button--primary", type: "button", onclick: () => ui.open(addForm()) }, t.event_add)],
     list: (content) => [
-      h("p", { class: "muted" }, t.events_help),
+      h("p", { class: "muted" }, `${t.events_help} ${t.texts_hint}`),
       h("section", { class: "group" },
         h("h3", { class: "group__title" }, t.events_yours),
         content.events.length ? h("ul", { class: "rows" }, ...content.events.map((e: any) => {
@@ -508,7 +564,25 @@ export function toolsBlock(ctx: Ctx): HTMLElement {
       tool.found ? null : h("code", { class: "install" }, tool.install),
     )));
   });
-  return h("section", { class: "form" }, h("h2", {}, t.sec_tools), h("p", { class: "muted" }, t.tools_help), holder);
+  return h("section", { class: "form" }, h("h2", {}, t.sec_tools), h("p", { class: "muted" }, t.tools_help), holder, translationCard(ctx));
+}
+
+/** Which languages this Mac can translate into, with the way to add a missing one. */
+function translationCard(ctx: Ctx): HTMLElement {
+  const { t, api } = ctx;
+  const body = h("div", {}, h("p", { class: "muted" }, t.tools_translate_checking));
+  void api("GET", "translate/status").then((res) => {
+    if (res.status !== 200) return body.replaceChildren(problem(t, res));
+    const names = (list: string[]) => t.lang_list(list.map(t.lang_name));
+    const ready: string[] = res.data.ready ?? [], missing: string[] = res.data.missing ?? [];
+    body.replaceChildren(...[
+      ready.length ? h("p", { class: "ok" }, t.tools_translate_ready(names(ready))) : null,
+      missing.length ? h("p", { class: "problem" }, t.translate_missing(names(missing))) : null,
+      missing.length ? h("button", { class: "button", type: "button", onclick: () => void api("POST", "translate/settings") }, t.translate_open) : null,
+      res.data.note ? h("p", { class: "problem" }, noteWords(t, String(res.data.note))) : null,
+    ].filter((kid): kid is HTMLParagraphElement | HTMLButtonElement => !!kid));
+  });
+  return h("div", { class: "card" }, h("h3", { class: "card__title" }, t.tools_translate), h("p", { class: "muted" }, t.tools_translate_help), body);
 }
 
 export const CONTENT_SECTIONS: Section[] = [photos, menu, events];

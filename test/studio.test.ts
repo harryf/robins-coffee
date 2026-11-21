@@ -2,8 +2,8 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync, cpSync, statSync } from "node:fs";
 import { networkInterfaces, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { GitHubError, type Pull } from "../src/editor/github";
-import { inEditScope } from "../src/editor/scope";
+import { GitHubError, type Pull } from "../src/github";
+import { inEditScope } from "../src/scope";
 import { checkState, studioGitHub } from "../src/studio/checks";
 import { branchName, describeChanges, type FileChange } from "../src/studio/describe";
 import { authEnv, parseNameStatus, studioGit } from "../src/studio/git";
@@ -13,11 +13,11 @@ import { keychain, validKey, type Keychain, type KeyName } from "../src/studio/k
 import { publish, type CheckState, type PublishGit, type PublishGitHub, type Step } from "../src/studio/publish";
 import { RELOAD_SCRIPT, startStudio, type StudioState } from "../src/studio/server";
 import { STRINGS } from "../src/studio/strings";
+import { fakeTranslator } from "./fake-translate";
 
 const ROOT = join(import.meta.dir, "..");
 import { freezeSite } from "./frozen";
-const en = STRINGS.en;
-const de = STRINGS.de;
+const en = STRINGS;
 // Put together at run time, so a search of the folder for it finds only a real leak, never this file.
 const DUMMY_TOKEN = ["dummy", "token", "for", "tests", "0123456789"].join("_");
 
@@ -79,8 +79,8 @@ function fakeGitHub(bare: string | null, over: Partial<PublishGitHub> & { owner?
       calls.push("access");
       return { login: "harryf", canWrite: over.canWrite ?? true, owner: over.owner ?? true };
     },
-    async editorPulls() {
-      calls.push("editorPulls");
+    async editPulls() {
+      calls.push("editPulls");
       return pulls;
     },
     async openPull(branch, base, title) {
@@ -138,16 +138,29 @@ const quick = { now: NOW, sleep: async () => {}, pollMs: 1, patienceMs: 5 };
 
 // ---------- strings ----------
 
-describe("studio: both languages", () => {
-  test("English and German have the same keys, and a function stays a function", () => {
-    expect(Object.keys(de).sort()).toEqual(Object.keys(en).sort());
-    for (const key of Object.keys(en) as (keyof typeof en)[]) expect(typeof de[key]).toBe(typeof en[key]);
+describe("studio: its words", () => {
+  // Every line said once, a function called with sample values: what the screen can show.
+  const said = (t: typeof en) => Object.entries(t).map(([k, v]) => [k, typeof v !== "function" ? v : k === "d_join" ? t.d_join(["x", "y"]) : k === "lang_list" ? t.lang_list(["German", "French"]) : k === "day_short" ? t.day_short("mo") : k === "lang_name" ? t.lang_name("de") : (v as (...a: any[]) => string)(2, "x")] as const);
+  test("the Studio speaks English only: one set of words, no German left, no language switch", () => {
+    expect(Object.keys(STRINGS).length).toBeGreaterThan(200);
+    expect("de" in STRINGS || "en" in STRINGS).toBe(false);
+    for (const key of ["language", "in_german", "in_english", "e_both_languages"]) expect(key in STRINGS).toBe(false);
+    const all = said(en).map(([, v]) => v).join("\n");
+    for (const german of ["Speichern", "Veröffentlichen", "Abbrechen", "Bearbeiten", "Einstellungen"]) expect(all).not.toContain(german);
   });
 
-  test("Swiss spelling and house rules: no sharp s, no long dash, in either language", () => {
-    const said = (t: typeof en) => Object.entries(t).map(([k, v]) => (typeof v !== "function" ? v : k === "d_join" ? t.d_join(["x", "y"]) : (v as (...a: any[]) => string)(2, "x"))).join("\n");
-    expect(said(de)).not.toContain("ß");
-    for (const text of [said(en), said(de)]) expect(text).not.toContain(String.fromCharCode(0x2014));
+  test("no line is empty, and none has a long dash or a sharp s", () => {
+    for (const [key, text] of said(en)) {
+      expect([key, typeof text === "string" && text.trim().length > 0]).toEqual([key, true]);
+      expect([key, text.includes(String.fromCharCode(0x2014)) || text.includes("ß")]).toEqual([key, false]);
+    }
+  });
+
+  test("the languages of the site have names, and a list of them reads as English", () => {
+    expect(["de", "fr", "it"].map(en.lang_name)).toEqual(["German", "French", "Italian"]);
+    expect(en.lang_list(["German", "French", "Italian"])).toBe("German, French and Italian");
+    expect(en.lang_list(["French"])).toBe("French");
+    expect(en.translate_missing("French")).toContain("System Settings, then General, then Language & Region, then Translation Languages");
   });
 
   test("every source file of the Studio is free of the long dash, and no word is typed into the screen's code", async () => {
@@ -186,7 +199,6 @@ describe("studio: what a publish is called", () => {
       c("site/data/hours.yml"),
     ];
     expect(describeChanges(changes)).toBe("Opening hours updated, 2 events added, 1 photo added");
-    expect(describeChanges(changes, de)).toBe("Öffnungszeiten geändert, 2 Events hinzugefügt, 1 Foto hinzugefügt");
   });
 
   test("a photo is its picture and its text, counted once; a changed caption is an update", () => {
@@ -205,7 +217,6 @@ describe("studio: what a publish is called", () => {
     expect(describeChanges([c("site/data/albums.yml", "modified", { added: 0, removed: 1 })])).toBe("Album removed");
     expect(describeChanges([c("site/data/albums.yml", "modified", { added: 0, removed: 0 })])).toBe("Albums updated");
     expect(describeChanges([c("site/data/albums.yml")])).toBe("Albums updated");
-    expect(describeChanges([c("site/data/albums.yml", "modified", { added: 1, removed: 0 })], de)).toBe("Album hinzugefügt");
   });
 
   test("anything else still gets a line", () => {
@@ -326,7 +337,7 @@ describe("studio: publish steps", () => {
       `push ${branch}`,
       "fetchMain", "switchTo main", "fastForwardMain", `deleteBranch ${branch}`,
     ]);
-    expect(gh.calls).toEqual(["access", "editorPulls", `openPull ${branch} -> main: Opening hours updated, 1 event added`, "check abcd", "check abcd", "check abcd", `merge #21 ${branch}`]);
+    expect(gh.calls).toEqual(["access", "editPulls", `openPull ${branch} -> main: Opening hours updated, 1 event added`, "check abcd", "check abcd", "check abcd", `merge #21 ${branch}`]);
     expect(steps).toEqual(["access", "branch", "commit", "push", "pull", "checks", "merge", "sync"]);
     expect(where()).toBe("main");
   });
@@ -350,7 +361,7 @@ describe("studio: publish steps", () => {
     const { git } = fakeGit();
     const refused = fakeGitHub(null, { openPull: async () => { throw new GitHubError(403, "GitHub said no (403): Resource not accessible by personal access token"); } });
     expect(await publish({ git, github: refused.github, report: () => {}, ...quick })).toEqual({ ok: false, reason: "key_rights", detail: "GitHub said no (403): Resource not accessible by personal access token" });
-    for (const lang of ["en", "de"] as const) expect(STRINGS[lang].fail_key_rights("x")).toMatch(/Contents.*Pull requests.*Read and write/);
+    expect(STRINGS.fail_key_rights("x")).toMatch(/Contents.*Pull requests.*Read and write/);
   });
 
   test("someone who is not the owner: it stops at the pull request and says where it is", async () => {
@@ -713,7 +724,7 @@ describe("studio: the server", () => {
       symlinkSync(join(ROOT, ".cache", "photos"), join(to, ".cache", "photos"));
     }));
     gh = fakeGitHub(bare);
-    studio = await startStudio({ root, port: 0, events: FEED, remote: bare, keys, github: () => gh.github, open: (url) => void opened.push(url) });
+    studio = await startStudio({ root, port: 0, events: FEED, remote: bare, keys, github: () => gh.github, open: (url) => void opened.push(url), translate: fakeTranslator() });
     at = `http://127.0.0.1:${studio.port}`;
     await studio.firstBuild;
     await studio.settled();
@@ -810,7 +821,7 @@ describe("studio: the server", () => {
     expect(existsSync(join(dirname(root), "outside.txt"))).toBe(false);
   });
 
-  test("a saved change to the hours rewrites hours.yml by the editor's rules, rebuilds the preview and tells open tabs to reload", async () => {
+  test("a saved change to the hours rewrites hours.yml by the form's rules, rebuilds the preview and tells open tabs to reload", async () => {
     const hours = await (await call("GET", "hours")).json();
     expect(hours.editable).toBe(true);
     expect(await (await pv(`/`)).text()).not.toContain("11:35");
@@ -828,13 +839,13 @@ describe("studio: the server", () => {
     expect(now.changes).toEqual([{ path: "site/data/hours.yml", status: "modified", publishable: true }]);
   }, 60_000);
 
-  test("hours the editor's rules refuse are not written, and the reason comes in the screen's language", async () => {
+  test("hours the form's rules refuse are not written, and the reason is said in English", async () => {
     const before = hoursFile();
     const hours = await (await call("GET", "hours")).json();
     const bad = { ...hours.week, tu: { closed: false, open: "16:00", close: "16:00" } };
     const res = await call("PUT", "hours", { week: bad, lang: "de" });
     expect(res.status).toBe(422);
-    expect((await res.json()).problems).toEqual(["tu: Öffnungs- und Schliesszeit sind gleich"]);
+    expect((await res.json()).problems).toEqual(["tu: opening and closing time are the same"]);
     expect((await (await call("PUT", "hours", { week: bad })).json()).problems).toEqual(["tu: opening and closing time are the same"]);
     expect((await call("PUT", "hours", { week: { mo: {} } })).status).toBe(400);
     expect(hoursFile()).toBe(before);
@@ -1045,7 +1056,7 @@ describe("studio: the lines under a publish", () => {
 describe("studio: a preview page says that it is the local copy", () => {
   const { previewMark, RELOAD_SCRIPT } = require("../src/studio/server") as typeof import("../src/studio/server");
   test("the words lead the tab's title and sit in a pill that lets clicks through, before the reload script", () => {
-    const html = previewMark('<html lang="en"><head><title>ROBIN\'s Bar</title></head><body><h1>Hi</h1></body></html>', STRINGS.en.preview_mark);
+    const html = previewMark('<html lang="en"><head><title>ROBIN\'s Bar</title></head><body><h1>Hi</h1></body></html>', STRINGS.preview_mark);
     expect(html).toContain("<title>Local preview · ROBIN's Bar</title>");
     expect(html).toContain('<div class="studio-preview-pill" role="note">Local preview</div>');
     expect(html).toContain("pointer-events:none");
@@ -1053,7 +1064,6 @@ describe("studio: a preview page says that it is the local copy", () => {
     expect(html.endsWith(RELOAD_SCRIPT + "</body></html>")).toBe(true);
     // No raw colour: the pill uses the site's own tokens.
     expect(html).not.toMatch(/#[0-9a-f]{3,8}\b|rgb\(/i);
-    expect(STRINGS.de.preview_mark).toBe("Lokale Vorschau");
   });
   test("ANTI: the words cannot bring markup along, and a page without a body or a title still gets its mark", () => {
     expect(previewMark("<p>x</p>", '<script>alert(1)</script>"')).not.toContain("<script>alert");

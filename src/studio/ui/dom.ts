@@ -1,6 +1,6 @@
 // What the shell and every section share: the element builder and the section contract.
 import type { StudioState } from "../server";
-import type { Lang, Strings } from "../strings";
+import type { Strings } from "../strings";
 
 export type Kid = Node | string | null | false | undefined;
 
@@ -23,12 +23,10 @@ export type Api = (method: string, path: string, body?: unknown) => Promise<{ st
 /** What a section gets to work with. */
 export type Ctx = {
   t: Strings;
-  lang: Lang;
   api: Api;
   state: () => StudioState | null;
   /** Called with every new state while this section is open. */
   onState: (listener: (state: StudioState) => void) => void;
-  setLang: (lang: Lang) => void;
 };
 
 /**

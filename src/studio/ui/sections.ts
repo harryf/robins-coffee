@@ -1,9 +1,8 @@
 // The registry of sections. To add a screen (photos, menu, events): write a
 // Section and put it in SECTIONS. The shell reads this list and nothing else.
-import { DAYS, type Week } from "../../editor/changes";
+import { DAYS, type Week } from "../../hours";
 import type { HistoryEntry } from "../history";
 import { KEY_NAMES } from "../keychain";
-import { STRINGS, type Lang } from "../strings";
 import { h, type Ctx, type Section } from "./dom";
 import { CONTENT_SECTIONS, toolsBlock } from "./content";
 import { systemCards } from "./system";
@@ -44,7 +43,7 @@ const hours: Section = {
         event.preventDefault();
         const next = Object.fromEntries(rows.map((r) => [r.d, { closed: r.closed.checked, open: r.closed.checked ? week[r.d].open : r.open.value.trim(), close: r.close.value.trim() || null }])) as Week;
         save.disabled = true;
-        const res = await api("PUT", "hours", { week: next, lang: ctx.lang });
+        const res = await api("PUT", "hours", { week: next });
         save.disabled = false;
         if (res.status === 200) {
           dirty = false;
@@ -71,13 +70,13 @@ const history: Section = {
   id: "history",
   title: (t) => t.sec_history,
   render(ctx) {
-    const { t, api, lang } = ctx;
+    const { t, api } = ctx;
     const said = h("div", { role: "status" });
     const closed = h("p", { class: "problem", hidden: true }, t.restore_closed);
     const holder = h("div", {}, h("p", { class: "muted" }, t.loading));
     let entries: HistoryEntry[] | null = null;
     let asking: string | null = null;
-    const when = (iso: string) => new Date(iso).toLocaleString(lang === "de" ? "de-CH" : "en-GB", { dateStyle: "medium", timeStyle: "short" });
+    const when = (iso: string) => new Date(iso).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
     const dirty = () => (ctx.state()?.changes.length ?? 0) > 0;
 
     async function restore(entry: HistoryEntry) {
@@ -131,7 +130,6 @@ const settings: Section = {
   title: (t) => t.sec_settings,
   render(ctx) {
     const { t, api } = ctx;
-    const language = h("select", { id: "studio-lang", onchange: () => ctx.setLang(language.value as Lang) }, ...(Object.keys(STRINGS) as Lang[]).map((l) => h("option", { value: l, selected: l === ctx.lang }, STRINGS[l].lang_name)));
     const cards = KEY_NAMES.map((name) => {
       const label = t[`key_${name}`];
       const status = h("span", { class: "pill" });
@@ -157,7 +155,6 @@ const settings: Section = {
       } }, h("h3", { class: "card__title" }, label, " ", status), h("p", { class: "muted" }, t[`key_${name}_help`]), h("div", { class: "card__row" }, input, h("button", { class: "button", type: "submit" }, t.save), remove), said);
     });
     return h("div", { class: "form" },
-      h("div", { class: "card" }, h("label", { class: "card__title", for: "studio-lang" }, t.language), language),
       h("h2", {}, t.keys_title), h("p", { class: "muted" }, t.keys_help), ...cards,
       ...systemCards(ctx),
       // The tools of this Mac used to be a sidebar entry of their own; they belong here.

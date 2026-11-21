@@ -2,11 +2,11 @@
 // The parser is pure; src/studio/git.ts runs the command.
 //
 // A row is a change to the content and nothing else: a commit is shown only when every
-// file it touched is inside the editors' reach (`inEditScope`), the same rule that
-// decides what Publish may send. So everything the Studio or the phone editor published
+// file it touched is inside the Studio's reach (`inEditScope`), the same rule that
+// decides what Publish may send. So everything the Studio published
 // is here, a caption mended by hand is here, and work on the code is not, even when it
 // carried a text or a photo along.
-import { inEditScope } from "../editor/scope";
+import { inEditScope } from "../scope";
 
 export type HistoryEntry = {
   sha: string;

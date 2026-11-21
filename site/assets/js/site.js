@@ -21,6 +21,22 @@
   });
 })();
 
+// Language menu: the language picked is kept for later visits (the head script of an
+// English page reads it); a click outside or Escape closes the menu.
+(function () {
+  document.querySelectorAll("[data-langs]").forEach(function (menu) {
+    menu.querySelectorAll("[data-lang]").forEach(function (link) {
+      link.addEventListener("click", function () {
+        try { localStorage.setItem("lang", link.getAttribute("data-lang")); } catch (e) {}
+      });
+    });
+    document.addEventListener("click", function (e) { if (menu.open && !menu.contains(e.target)) menu.open = false; });
+    menu.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && menu.open) { menu.open = false; menu.querySelector("summary").focus(); }
+    });
+  });
+})();
+
 (function () {
   var hoursEl = document.getElementById("hours-data");
   var i18nEl = document.getElementById("i18n-data");

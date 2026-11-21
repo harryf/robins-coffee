@@ -1,7 +1,7 @@
 // What a set of changed files means in plain words: "Opening hours updated, 2 events
 // added". Pure: no disk, no git. The same function writes the line on the screen (in
 // the screen's language) and the commit subject and pull request title (English).
-import { slugify } from "../editor/changes";
+import { slugify } from "../slug";
 import { STRINGS, type Strings } from "./strings";
 
 export type Status = "added" | "modified" | "removed";
@@ -20,7 +20,7 @@ export function publishNotes(changes: FileChange[], details: string[] = []): str
 const count = (changes: FileChange[], status: Status) => changes.filter((c) => c.status === status).length;
 
 /** One line for everything that changed, fixed order: hours, events, photos, albums, menu, venue, pages, labels, the rest. */
-export function describeChanges(changes: FileChange[], t: Strings = STRINGS.en): string {
+export function describeChanges(changes: FileChange[], t: Strings = STRINGS): string {
   const parts: string[] = [];
   const rest = new Set(changes);
   const take = (test: (path: string) => boolean) => {

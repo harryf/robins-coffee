@@ -1,0 +1,26 @@
+{% layout 'layouts/base' %}
+{% comment %} moved: the note at /edit/, where the retired phone editor lived. It says in English and German that the editor is now ROBIN's Studio, links to the install page, and removes the key, the draft and the worker the old editor left on the phone. noindex. {% endcomment %}
+{% block content %}
+<section class="section">
+  <div class="wrap prose">
+    <h1 class="h-xl">{{ page.heading }}</h1>
+    <p lang="en">{{ page.text_en }}</p>
+    <p lang="de">{{ page.text_de }}</p>
+    <p><a class="btn btn--neon" href="{{ '/studio/' | url }}">{{ page.link }}</a></p>
+  </div>
+</section>
+<script>
+// What the old editor kept on this phone: its GitHub key and language (localStorage),
+// its unsent draft (IndexedDB) and its service worker. Nothing reads them any more.
+(function () {
+  try { localStorage.removeItem("robins-editor-token"); localStorage.removeItem("robins-editor-lang"); } catch (e) {}
+  try { indexedDB.deleteDatabase("robins-editor"); } catch (e) {}
+  try {
+    var scope = new URL("{{ '/edit/' | url }}", location.href).href;
+    navigator.serviceWorker.getRegistrations().then(function (all) {
+      all.forEach(function (r) { if (r.scope === scope) r.unregister(); });
+    }, function () {});
+  } catch (e) {}
+})();
+</script>
+{% endblock %}

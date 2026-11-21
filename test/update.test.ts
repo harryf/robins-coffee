@@ -129,9 +129,9 @@ describe("studio: it updates itself at start", () => {
     expect(await readReport(w.mine)).toBeNull();
     expect(await studioVersion(w.mine)).toEqual({ number: "0.9.0", commit: w.head().slice(0, 7) });
   });
-  test("every reason has words in both languages", () => {
-    for (const lang of ["en", "de"] as const) {
-      const t = STRINGS[lang];
+  test("every reason has words", () => {
+    {
+      const t = STRINGS;
       for (const reason of ["branch", "fetch", "diverged", "overlap", "merge", "install", "app"]) expect((t as any)[`update_why_${reason}`]).toBeTruthy();
       expect(updateLine(t, { update: { result: "skipped", reason: "overlap" } })!.tone).toBe("problem");
       expect(updateLine(t, { update: { result: "skipped", reason: "offline" } })).toBeNull();

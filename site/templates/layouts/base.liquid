@@ -38,8 +38,25 @@
 <link rel="icon" href="{{ '/favicon.ico' | url }}" sizes="32x32">
 <link rel="icon" type="image/png" sizes="192x192" href="{{ '/assets/icons/icon-192.png' | asset }}">
 <link rel="apple-touch-icon" href="{{ '/assets/icons/apple-touch-icon.png' | asset }}">
-{%- if page.layout == 'editor' %}
-<link rel="manifest" href="{{ '/edit/manifest.webmanifest' | url }}">
+{%- if page.lang == default_lang and langs_menu.size > 1 %}
+<script>
+// The first visit to an English page goes to the same page in the language the browser
+// asks for first, when the site has it. A choice made in the language menu is kept
+// (site.js stores it) and wins over the browser. A page in another language never moves.
+(function () {
+  try {
+    var urls = { {% for l in langs_menu %}"{{ l.lang }}": "{{ l.url | url }}"{% unless forloop.last %}, {% endunless %}{% endfor %} };
+    var chosen = null;
+    try { chosen = localStorage.getItem("lang"); } catch (e) {}
+    var want = chosen;
+    if (!want) {
+      var asked = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ""];
+      for (var i = 0; i < asked.length && !want; i++) { var code = String(asked[i]).toLowerCase().split("-")[0]; if (urls[code]) want = code; }
+    }
+    if (want && want !== "{{ page.lang }}" && urls[want]) location.replace(urls[want] + location.search + location.hash);
+  } catch (e) {}
+})();
+</script>
 {%- endif %}
 <link rel="preload" href="{{ '/assets/fonts/alfa-slab-one.woff2' | url }}" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{{ '/assets/site.css' | asset }}">
@@ -66,7 +83,7 @@
 <body>
 <a class="skip" href="#main">{{ t.skip }}</a>
 {% assign on_photo = false %}{% if page.layout == 'home' %}{% assign on_photo = true %}{% endif %}
-{% render 'components/header', site: site, t: t, home_url: home_url, other: other, events_url: events_url, gallery_url: gallery_url, on_photo: on_photo %}
+{% render 'components/header', site: site, t: t, home_url: home_url, langs_menu: langs_menu, lang: page.lang, events_url: events_url, gallery_url: gallery_url, on_photo: on_photo %}
 <main id="main">
 {% block content %}{% endblock %}
 </main>

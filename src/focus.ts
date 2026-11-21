@@ -26,27 +26,20 @@ export function readFocus(data: unknown): Record<string, Focus> {
 }
 
 const GENERIC = new Set(["liquid", "structure", "tableware", "utensil", "adult", "material", "wood_processed", "indoor", "outdoor", "machine", "consumer_electronics", "art", "textile", "housewares", "container", "conveyance"]);
-const GERMAN: Record<string, string> = {
-  coffee: "Kaffee", drink: "Getränk", cup: "Tasse", plate: "Teller", people: "Menschen", food: "Essen", cocktail: "Cocktail", glass: "Glas", bottle: "Flasche", wine: "Wein", beer: "Bier",
-  table: "Tisch", bar: "Bar", sign: "Schild", illustrations: "Illustration", candle: "Kerze", flower: "Blume", fruit: "Frucht", dessert: "Dessert", cake: "Kuchen", musical_instrument: "Musikinstrument",
-  guitar: "Gitarre", piano: "Klavier", microphone: "Mikrofon", crowd: "Publikum", stage: "Bühne", chess: "Schach", game: "Spiel", night_sky: "Nachthimmel", christmas_decoration: "Weihnachtsdekoration",
-  christmas_tree: "Weihnachtsbaum", pumpkin: "Kürbis", espresso: "Espresso", latte: "Latte", tea: "Tee", juice: "Saft", ice: "Eis", book: "Buch", poster: "Plakat", chair: "Stuhl", window: "Fenster", door: "Tür", street: "Strasse", building: "Gebäude",
-};
-
 /**
- * A first alt text from what Vision saw. It is a draft on purpose: a list of things and
- * read words, for a person to turn into a sentence. A label without a German word is
- * left out of the German draft rather than guessed.
+ * A first alt text from what Vision saw, in English. It is a draft on purpose: a list of
+ * things and read words, for a person to turn into a sentence. The other languages are
+ * translated from the finished English when it is saved.
  */
-export function draftAlt(seen: { labels?: { name: string; confidence: number }[]; text?: string[]; faces?: unknown[] }): { en: string; de: string } {
+export function draftAlt(seen: { labels?: { name: string; confidence: number }[]; text?: string[]; faces?: unknown[] }): { en: string } {
   const words = (seen.text ?? []).map((t) => t.trim()).filter((t) => t.length > 1).slice(0, 5);
   const labels = (seen.labels ?? []).map((l) => l.name).filter((n) => !GENERIC.has(n)).slice(0, 4);
   const people = (seen.faces ?? []).length;
-  const en: string[] = [], de: string[] = [];
-  if (people) { en.push(people === 1 ? "One person" : `${people} people`); de.push(people === 1 ? "Eine Person" : `${people} Personen`); }
+  const en: string[] = [];
+  if (people) en.push(people === 1 ? "One person" : `${people} people`);
   const named = labels.filter((n) => n !== "people");
-  if (named.length) { en.push(named.map((n) => n.replace(/_/g, " ")).join(", ")); const g = named.map((n) => GERMAN[n]).filter(Boolean); if (g.length) de.push(g.join(", ")); }
-  if (words.length) { en.push(`text: "${words.join(" / ")}"`); de.push(`Text: "${words.join(" / ")}"`); }
+  if (named.length) en.push(named.map((n) => n.replace(/_/g, " ")).join(", "));
+  if (words.length) en.push(`text: "${words.join(" / ")}"`);
   const cap = (s: string) => (s ? s[0]!.toUpperCase() + s.slice(1) + "." : "");
-  return { en: cap(en.join("; ")), de: cap(de.join("; ")) };
+  return { en: cap(en.join("; ")) };
 }

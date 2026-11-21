@@ -9,7 +9,7 @@ import { dirname, join } from "node:path";
 import sharp from "sharp";
 import { parse as parseYaml } from "yaml";
 import { changeDrink, dropCover, editMoment, eventFields, eventFile, exifDay, hasDrink, keepComments, photoDay } from "../src/content";
-import { inEditScope } from "../src/editor/scope";
+import { inEditScope } from "../src/scope";
 import { fromManual } from "../src/events";
 import { parseFrontMatter } from "../src/render";
 import { calendarMonths, dayShort, dayWords, fileOfEvent, whenWords } from "../src/studio/calendar";
@@ -20,13 +20,14 @@ import { TOKEN_HEADER } from "../src/studio/guard";
 import type { Keychain } from "../src/studio/keychain";
 import { startStudio, type StudioState } from "../src/studio/server";
 import { STRINGS } from "../src/studio/strings";
+import { fakeTranslator } from "./fake-translate";
 import { SECTIONS } from "../src/studio/ui/sections";
 import { look } from "../src/vision";
 
 const ROOT = join(import.meta.dir, "..");
 import { FROZEN_SITE, freezeSite } from "./frozen";
 const SITE = FROZEN_SITE;
-const en = STRINGS.en, de = STRINGS.de;
+const en = STRINGS;
 
 const temps: string[] = [];
 const temp = () => {
@@ -72,7 +73,7 @@ const jpeg = (colour: string, exif?: Record<string, Record<string, string>>) => 
 test("C99: the sidebar is hours, photos, menu, events, history, settings; no albums and no This Mac entry", () => {
   expect(SECTIONS.map((s) => s.id)).toEqual(["hours", "photos", "menu", "events", "history", "settings"]);
   expect(SECTIONS.map((s) => s.title(en))).toEqual(["Opening hours", "Photos", "Menu", "Events", "History", "Settings"]);
-  for (const t of [en, de]) expect(SECTIONS.map((s) => s.title(t))).not.toContain(t.sec_tools);
+  expect(SECTIONS.map((s) => s.title(en))).not.toContain(en.sec_tools);
 });
 
 // ---------- rules without a screen ----------
@@ -112,7 +113,10 @@ describe("studio screens: the rules of the files", () => {
     const back = parseFrontMatter(editMoment(out, { caption: { en: "x", de: "y" }, alt: { en: "x", de: "y" }, album: "drinks", feed: true })).data;
     expect(back.album).toBe("drinks");
     expect(back.feed).toBeUndefined();
-    expect(() => editMoment(MOMENT, { caption: { en: "x", de: "" }, alt: { en: "x", de: "y" } })).toThrow("both_languages");
+    expect(() => editMoment(MOMENT, { caption: { en: "", de: "y" }, alt: { en: "x", de: "y" } })).toThrow("english_needed");
+    // English alone is enough: a language without a text is left out of the file.
+    expect(parseFrontMatter(editMoment(MOMENT, { caption: { en: "x", de: "" }, alt: { en: "y" } })).data).toMatchObject({ caption: { en: "x" }, alt: { en: "y" } });
+    expect(parseFrontMatter(editMoment(MOMENT, { caption: { en: "x", de: "" }, alt: { en: "y" } })).data.caption.de).toBeUndefined();
     expect(() => editMoment(MOMENT, { caption: { en: "x", de: "y" }, alt: { en: "x", de: "y" }, album: "../x" })).toThrow("album_unknown");
     expect(() => editMoment("no head", { caption: { en: "x", de: "y" }, alt: { en: "x", de: "y" } })).toThrow("photo_not_found");
   });
@@ -179,19 +183,16 @@ describe("studio screens: the rules of the files", () => {
 // ---------- dates in words and the calendar ----------
 
 describe("studio screens: dates a person can read", () => {
-  test("a day in words, in both languages, without a word from Intl", () => {
+  test("a day in words, without a word from Intl", () => {
     expect(dayWords("2026-11-29", en)).toBe("Sunday 29 November 2026");
-    expect(dayWords("2026-11-29", de)).toBe("Sonntag, 29. November 2026");
     expect(dayShort("2027-03-12", en)).toBe("Fri 12 Mar 2027");
-    expect(dayShort("2027-03-12", de)).toBe("Fr, 12. März 2027");
     expect(dayWords("soon", en)).toBe("soon");
   });
   test("C106: one day; every Wednesday until a day; the list of days; exact times in Zürich time", () => {
     expect(whenWords({ date: "2026-12-03", from: "19:00", to: "23:00" }, en)).toEqual({ line: "Thursday 3 December 2026, 19:00 to 23:00", days: [] });
-    expect(whenWords({ date: "2026-12-03", from: "19:00" }, de)).toEqual({ line: "Donnerstag, 3. Dezember 2026, ab 19:00", days: [] });
+    expect(whenWords({ date: "2026-12-03", from: "19:00" }, en)).toEqual({ line: "Thursday 3 December 2026, from 19:00", days: [] });
     expect(whenWords({ every: "we" }, en).line).toBe("Every Wednesday");
     expect(whenWords({ every: "we", until: "2027-03-31" }, en).line).toBe("Every Wednesday until Wednesday 31 March 2027");
-    expect(whenWords({ every: "we", until: "2027-03-31", from: "20:00" }, de).line).toBe("Jeden Mittwoch bis Mittwoch, 31. März 2027, ab 20:00");
     expect(whenWords({ dates: ["2026-12-11", "2026-11-29"] }, en)).toEqual({ line: "2 days", days: ["Sun 29 Nov 2026", "Fri 11 Dec 2026"] });
     expect(whenWords({ dates: ["2026-12-11"] }, en).line).toBe("Friday 11 December 2026");
     expect(whenWords({ start: "2026-12-31T20:00:00Z", end: "2027-01-01T02:00:00+01:00" }, en).line).toBe("Thursday 31 December 2026, 21:00 to 02:00");
@@ -248,6 +249,8 @@ describe("studio screens: the routes", () => {
   for (const f of ["event-beer-pong.jpg", "event-queens-gambit.jpg", "menu-lazy-monkey.jpg"]) put(root, `site/photos/${f}`, readFileSync(join(SITE, "photos", f)));
   put(root, "site/events/queens-gambit.md", readFileSync(join(SITE, "events", "queens-gambit.md")));
   mkdirSync(join(root, "preview"));
+  // Two languages here, both typed: these tests are about files and names, not about translating.
+  put(root, "site/data/site.yml", "languages: [en, de]\n");
   const written: string[] = [];
   let changed = 0;
   let taken: string | undefined = "2024:05:06 07:08:09";
@@ -263,6 +266,7 @@ describe("studio screens: the routes", () => {
       handed.original = original ? readFileSync(original) : null;
       return { focus: { x: 0.25, y: 0.75 }, labels: [{ name: "coffee", confidence: 0.9 }], text: [], faces: [], ...(taken ? { taken } : {}) };
     },
+    translate: fakeTranslator(),
   });
   const call = async (route: string, body: any = {}) => { const res = await api(route, async () => body); return res ? { status: res.status, data: await res.json() } : null; };
   const read = (path: string) => readFileSync(join(root, path), "utf8");
@@ -286,7 +290,7 @@ describe("studio screens: the routes", () => {
   test("a Mac that cannot look still gives a day and leaves no copy behind", async () => {
     const blind = contentApi({ root, write: async () => {}, changed: () => {}, readKey: async () => null, now: () => new Date("2026-11-20T21:00:00Z"), look: async () => { throw new Error("Apple Vision needs a Mac."); } });
     const res = await blind("POST look", async () => ({ base64: (await jpeg("#000")).toString("base64"), modified: Date.parse("2025-03-04T12:00:00Z") }));
-    expect(await res!.json()).toMatchObject({ focus: null, faces: 0, draft: { en: "", de: "" }, date: "2025-03-04", date_from: "file", note: "Apple Vision needs a Mac." });
+    expect(await res!.json()).toMatchObject({ focus: null, faces: 0, draft: { en: "" }, date: "2025-03-04", date_from: "file", note: "Apple Vision needs a Mac." });
     expect([...new Bun.Glob("look-*").scanSync({ cwd: join(root, ".cache", "studio") })]).toEqual([]);
   });
 
@@ -304,7 +308,7 @@ describe("studio screens: the routes", () => {
     expect(third.data.path).toBe("moments/2026-11-21-mulled-wine-by-the-window.jpg");
     for (const bad of [{ date: "2026-13-45" }, { date: "tomorrow" }, { date: undefined }]) expect((await call("POST photo", { ...(await shot()), ...texts, ...bad }))!.data.error).toBe("event_date_wrong");
     expect((await call("POST photo", { ...(await shot()), date: "2026-11-20", ...texts, newAlbum: { en: "Winter 2026", de: "Winter 2026" } }))!.data.error).toBe("album_exists");
-    expect((await call("POST photo", { ...(await shot()), date: "2026-11-20", ...texts, newAlbum: { en: "Only", de: "" } }))!.data.error).toBe("both_languages");
+    expect((await call("POST photo", { ...(await shot()), date: "2026-11-20", ...texts, newAlbum: { en: "", de: "Nur" } }))!.data.error).toBe("english_needed");
     expect((await call("POST photo", { base64: Buffer.from("not a picture").toString("base64"), date: "2026-11-20", ...texts }))!.data.error).toBe("photo_unreadable");
   });
   test("C103: the overview lists every photo with its album; a photo is edited, moved, taken off the home page and removed", async () => {
@@ -321,7 +325,7 @@ describe("studio screens: the routes", () => {
     expect((await call("PUT photo", { id, caption: { en: "New.", de: "Neu." }, alt: texts.alt, album: "" }))!.data.album).toBe(null);
     expect(parseFrontMatter(read(`site/moments/${id}.md`)).data.album).toBeUndefined();
     expect((await call("PUT photo", { id, caption: texts.caption, alt: texts.alt, album: "nope" }))!.data.error).toBe("album_unknown");
-    expect((await call("PUT photo", { id, caption: { en: "x", de: "" }, alt: texts.alt }))!.data.error).toBe("both_languages");
+    expect((await call("PUT photo", { id, caption: { en: "", de: "x" }, alt: texts.alt }))!.data.error).toBe("english_needed");
     for (const bad of ["../data/menu", "nope", "", null, "2026-11-20-MULLED", "a/b"]) expect((await call("PUT photo", { id: bad, ...texts }))!.status).toBe(404);
     // Removing: both files, its focus, and an album cover that named it.
     put(root, "site/data/albums.yml", read("site/data/albums.yml").replace("- slug: drinks", `- slug: drinks\n    cover: ${id}`));
@@ -456,6 +460,138 @@ test.skipIf(process.platform !== "darwin" || !Bun.which("swiftc"))("C104 on a Ma
   expect((await look(ROOT, cleaned)).taken).toBeUndefined();
   expect((await look(ROOT, original)).taken).toBe("2024:05:06 07:08:09");
 }, 240_000);
+
+// ---------- texts typed in English, translated on this Mac ----------
+
+describe("studio screens: a text is typed in English and translated into the site's languages", () => {
+  const make = (missing: string[] = [], translate?: Parameters<typeof contentApi>[0]["translate"]) => {
+    const root = temp();
+    for (const f of ["albums.yml", "menu.yml", "focus.yml"]) put(root, `site/data/${f}`, readFileSync(join(SITE, "data", f)));
+    put(root, "site/data/site.yml", "languages: [en, de, fr, it]\n");
+    const asked: { texts: string[]; targets: string[]; source: string }[] = [];
+    const opened: string[] = [];
+    const api = contentApi({ root, write: async (path, data) => { if (!inEditScope(path)) throw new Error("outside"); put(root, path, data); }, changed: () => {}, readKey: async () => null, look: async () => ({ labels: [], text: [], faces: [] }), translate: translate ?? fakeTranslator(missing, asked), open: (url) => void opened.push(url) });
+    const call = async (route: string, body: any = {}) => { const res = await api(route, async () => body); return { status: res!.status, data: await res!.json() } as { status: number; data: any }; };
+    const front = (path: string) => parseFrontMatter(readFileSync(join(root, path), "utf8")).data;
+    return { root, call, asked, opened, front, yaml: (path: string) => parseYaml(readFileSync(join(root, path), "utf8")) };
+  };
+  const shot = async () => ({ base64: (await jpeg("#334455")).toString("base64"), focus: [0.5, 0.5] });
+
+  test("English only in, four languages out: a photo, its new album, a drink, a new part of the menu and an event", async () => {
+    const s = make();
+    const photo = await s.call("POST photo", { ...(await shot()), date: "2026-11-21", caption: { en: "Open mic night" }, alt: { en: "A comedian on the stage." }, newAlbum: { en: "Comedy" } });
+    expect(photo.data).toEqual({ ok: true, id: "2026-11-21-open-mic-night", path: "moments/2026-11-21-open-mic-night.jpg", album: "comedy" });
+    expect(s.front("site/moments/2026-11-21-open-mic-night.md")).toMatchObject({ caption: { en: "Open mic night", de: "[de] Open mic night", fr: "[fr] Open mic night", it: "[it] Open mic night" }, alt: { it: "[it] A comedian on the stage." } });
+    expect(s.yaml("site/data/albums.yml").albums.at(-1)).toEqual({ slug: "comedy", title: { en: "Comedy", de: "[de] Comedy", fr: "[fr] Comedy", it: "[it] Comedy" } });
+    // One run of the translator for the whole save.
+    expect(s.asked).toEqual([{ texts: ["Open mic night", "A comedian on the stage.", "Comedy"], targets: ["de", "fr", "it"], source: "en" }]);
+    expect((await s.call("POST drink", { partTitle: { en: "Winter" }, drink: { name: "Glühwein", text: { en: "Hot red wine" }, price_chf: 9 } })).data).toEqual({ ok: true, photo: null });
+    const winter = s.yaml("site/data/menu.yml").sections.find((p: any) => p.slug === "winter");
+    expect(winter).toMatchObject({ title: { en: "Winter", fr: "[fr] Winter" }, drinks: [{ name: "Glühwein", text: { en: "Hot red wine", de: "[de] Hot red wine", fr: "[fr] Hot red wine", it: "[it] Hot red wine" } }] });
+    const event = await s.call("POST event", { event: { title: "Quiz", date: "2026-12-03", text: { en: "Bring a team." } } });
+    expect(s.front(event.data.path).text).toEqual({ en: "Bring a team.", de: "[de] Bring a team.", fr: "[fr] Bring a team.", it: "[it] Bring a team." });
+    // An event without a text asks for no translation.
+    const before = s.asked.length;
+    await s.call("POST event", { event: { title: "Chess", date: "2026-12-04" } });
+    expect(s.asked.length).toBe(before);
+  });
+
+  test("a missing language pack: English plus what worked is written, and the answer names what is missing", async () => {
+    const s = make(["fr", "it"]);
+    const res = await s.call("POST photo", { ...(await shot()), date: "2026-11-21", caption: { en: "Latte art" }, alt: { en: "A cup." } });
+    expect(res.data).toEqual({ ok: true, id: "2026-11-21-latte-art", path: "moments/2026-11-21-latte-art.jpg", album: null, translated: { missing: ["fr", "it"], note: null } });
+    const md = readFileSync(join(s.root, "site/moments/2026-11-21-latte-art.md"), "utf8");
+    expect(s.front("site/moments/2026-11-21-latte-art.md").caption).toEqual({ en: "Latte art", de: "[de] Latte art" });
+    expect(md).not.toContain("fr:");
+    // Nothing installed at all: English only, and still saved.
+    const none = make(["de", "fr", "it"]);
+    expect((await none.call("POST album", { title: { en: "Board games" } })).data).toEqual({ ok: true, slug: "board-games", translated: { missing: ["de", "fr", "it"], note: null } });
+    expect(none.yaml("site/data/albums.yml").albums.at(-1).title).toEqual({ en: "Board games" });
+    // A Mac that cannot run the helper at all: English is written, the reason goes back.
+    const broken = make([], async () => { throw new Error("The Swift tools are missing."); });
+    expect((await broken.call("POST album", { title: { en: "Chess" } })).data).toEqual({ ok: true, slug: "chess", translated: { missing: [], note: "The Swift tools are missing." } });
+  });
+
+  test("an unchanged English is not translated again, so a German text written by hand stays; a changed English is", async () => {
+    const s = make();
+    put(s.root, "site/moments/2026-10-01-quiz.md", '---\ndate: 2026-10-01\ncaption:\n  en: "Quiz night"\n  de: "Quizabend, von Hand"\nalt:\n  en: "Teams at tables."\n  de: "Teams an Tischen."\n  fr: "Des équipes."\n---\n');
+    await s.call("PUT photo", { id: "2026-10-01-quiz", caption: { en: "Quiz night" }, alt: { en: "Teams at tables." } });
+    let data = s.front("site/moments/2026-10-01-quiz.md");
+    expect(data.caption).toEqual({ en: "Quiz night", de: "Quizabend, von Hand", fr: "[fr] Quiz night", it: "[it] Quiz night" });
+    expect(data.alt).toEqual({ en: "Teams at tables.", de: "Teams an Tischen.", fr: "Des équipes.", it: "[it] Teams at tables." });
+    expect(s.asked.at(-1)).toEqual({ texts: ["Quiz night", "Teams at tables."], targets: ["fr", "it"], source: "en" });
+    // Saved again as the form sends it (its fold filled): nothing is asked.
+    const n = s.asked.length;
+    await s.call("PUT photo", { id: "2026-10-01-quiz", caption: data.caption, alt: data.alt });
+    expect(s.asked.length).toBe(n);
+    expect(s.front("site/moments/2026-10-01-quiz.md")).toEqual(data);
+    // The English changes and the old German comes back unchanged with it: it is made again.
+    await s.call("PUT photo", { id: "2026-10-01-quiz", caption: { ...data.caption, en: "Pub quiz" }, alt: data.alt });
+    data = s.front("site/moments/2026-10-01-quiz.md");
+    expect(data.caption).toEqual({ en: "Pub quiz", de: "[de] Pub quiz", fr: "[fr] Pub quiz", it: "[it] Pub quiz" });
+    // A translation changed by hand in the fold is kept as typed.
+    await s.call("PUT photo", { id: "2026-10-01-quiz", caption: { ...data.caption, de: "Quiz in der Bar" }, alt: data.alt });
+    expect(s.front("site/moments/2026-10-01-quiz.md").caption.de).toBe("Quiz in der Bar");
+    // The same for a drink, an album and an event: the old German stays while the English does.
+    const menu = s.yaml("site/data/menu.yml");
+    const first = menu.sections[0], drink = first.drinks[0];
+    await s.call("POST drink", { part: first.slug, was: { part: first.slug, name: drink.name }, drink: { name: drink.name, text: { en: drink.text.en }, price_chf: drink.price_chf + 1, ...(drink.photo ? { photo: drink.photo, alt: { en: drink.alt.en } } : {}) } });
+    expect(s.yaml("site/data/menu.yml").sections[0].drinks[0].text.de).toBe(drink.text.de);
+    const album = s.yaml("site/data/albums.yml").albums[0];
+    await s.call("PUT album", { slug: album.slug, title: { en: album.title.en } });
+    expect(s.yaml("site/data/albums.yml").albums[0].title.de).toBe(album.title.de);
+    put(s.root, "site/events/quiz.md", '---\ntitle: "Quiz"\nevery: we\ncategory: other\ntext:\n  en: "Bring a team."\n  de: "Bringt ein Team mit, von Hand."\nticket_url: ""\n---\n');
+    await s.call("PUT event", { path: "site/events/quiz.md", event: { title: "Quiz", every: "we", text: { en: "Bring a team." }, ticket_url: "" } });
+    expect(s.front("site/events/quiz.md").text).toEqual({ en: "Bring a team.", de: "Bringt ein Team mit, von Hand.", fr: "[fr] Bring a team.", it: "[it] Bring a team." });
+  });
+
+  test("German comes out with ss, never the sharp s, also when the translator writes one", async () => {
+    const s = make([], async (texts, targets) => ({ texts: Object.fromEntries(targets.map((l) => [l, texts.map(() => (l === "de" ? "Große Straße" : "Rue"))])), missing: [], failed: [] }));
+    await s.call("POST photo", { ...(await shot()), date: "2026-11-21", caption: { en: "Big street" }, alt: { en: "A street." } });
+    const md = readFileSync(join(s.root, "site/moments/2026-11-21-big-street.md"), "utf8");
+    expect(md).toContain('de: "Grosse Strasse"');
+    expect(md).not.toContain("ß");
+    await s.call("POST drink", { part: "signatures", drink: { name: "Gross", text: { en: "Big", de: "Süß und groß" }, price_chf: 5 } });
+    expect(readFileSync(join(s.root, "site/data/menu.yml"), "utf8")).toContain("Süss und gross");
+  });
+
+  test("Eventfrog: its own text of a language is used, only the rest is translated; a text in German only is translated from German", async () => {
+    const s = make();
+    const base = { start: "2026-12-05T20:00:00+01:00", end: "2026-12-05T22:00:00+01:00", url: "https://eventfrog.ch/de/p/x-1.html", image: null, organiser: null, price_chf: null };
+    const res = await s.call("POST eventfrog/add", { events: [
+      { ...base, title: "Jazz Trio", text: "Drei Leute.", texts: { de: "Drei Leute.", en: "Three people." } },
+      { ...base, title: "Tango", start: "2026-12-06T20:00:00+01:00", end: "2026-12-06T22:00:00+01:00", url: "https://eventfrog.ch/de/p/x-2.html", text: "Ein Abend Tango.", texts: { de: "Ein Abend Tango." } },
+      { ...base, title: "Open Stage", start: "2026-12-07T20:00:00+01:00", end: "2026-12-07T22:00:00+01:00", url: "https://eventfrog.ch/de/p/x-3.html", text: "Anyone can play.", texts: {} },
+      { ...base, title: "Quiet", start: "2026-12-08T20:00:00+01:00", end: "2026-12-08T22:00:00+01:00", url: "https://eventfrog.ch/de/p/x-4.html", text: "", texts: {} },
+    ] });
+    expect(res.data).toEqual({ ok: true, added: 4, skipped: 0 });
+    expect(s.front("site/events/2026-12-05-jazz-trio.md").text).toEqual({ en: "Three people.", de: "Drei Leute.", fr: "[fr] Three people.", it: "[it] Three people." });
+    expect(s.front("site/events/2026-12-06-tango.md").text).toEqual({ en: "[en] Ein Abend Tango.", de: "Ein Abend Tango.", fr: "[fr] Ein Abend Tango.", it: "[it] Ein Abend Tango." });
+    expect(s.front("site/events/2026-12-07-open-stage.md").text).toEqual({ en: "Anyone can play.", de: "[de] Anyone can play.", fr: "[fr] Anyone can play.", it: "[it] Anyone can play." });
+    expect(s.front("site/events/2026-12-08-quiet.md").text).toBeUndefined();
+    expect(s.asked).toEqual([
+      { texts: ["Three people."], targets: ["fr", "it"], source: "en" },
+      { texts: ["Ein Abend Tango."], targets: ["en", "fr", "it"], source: "de" },
+      { texts: ["Anyone can play."], targets: ["en", "de", "fr", "it"], source: "auto" },
+    ]);
+    // Without English in the end there is no text: the site would have nothing to fall back on.
+    const none = make(["en", "fr", "it"]);
+    expect((await none.call("POST eventfrog/add", { events: [{ ...base, title: "Tango", text: "Tango.", texts: { de: "Tango." } }] })).data).toEqual({ ok: true, added: 1, skipped: 0, translated: { missing: ["en", "fr", "it"], note: null } });
+    expect(none.front("site/events/2026-12-05-tango.md").text).toBeUndefined();
+  });
+
+  test("the screen's own routes: translations to show under a field, which packs are there, and the settings pane, nothing else opened", async () => {
+    const s = make(["it"]);
+    expect((await s.call("POST translate", { texts: ["Coffee"] })).data).toEqual({ languages: ["de", "fr", "it"], texts: { de: ["[de] Coffee"], fr: ["[fr] Coffee"] }, missing: ["it"], note: null });
+    for (const bad of [[], [""], [1], Array(21).fill("x"), ["x".repeat(2001)]]) expect((await s.call("POST translate", { texts: bad })).data.error).toBe("english_needed");
+    expect((await s.call("GET translate/status")).data).toEqual({ languages: ["de", "fr", "it"], ready: ["de", "fr"], missing: ["it"], note: null });
+    expect(s.asked.at(-1)).toEqual({ texts: [], targets: ["de", "fr", "it"], source: "en" });
+    expect((await s.call("POST translate/settings", { url: "https://evil.example/" })).data).toEqual({ ok: true });
+    expect(s.opened).toEqual(["x-apple.systempreferences:com.apple.Localization-Settings.extension"]);
+    // The overview says which languages the site has, so the forms know what to show.
+    expect((await s.call("GET content")).data.languages).toEqual(["en", "de", "fr", "it"]);
+  });
+});
 
 // ---------- restore, over real git ----------
 
@@ -619,7 +755,7 @@ describe("studio screens: the server", () => {
     sh(root, "commit", "--quiet", "-am", "Earlier doors");
     sh(root, "push", "--quiet", "origin", "main");
     sh(root, "fetch", "--quiet", "origin");
-    studio = await startStudio({ root, port: 0, events: FEED, remote: bare, keys, github: () => { throw new Error("no GitHub in this test"); }, open: () => {}, look: async () => ({ labels: [], text: [], faces: [] }) });
+    studio = await startStudio({ root, port: 0, events: FEED, remote: bare, keys, github: () => { throw new Error("no GitHub in this test"); }, open: () => {}, look: async () => ({ labels: [], text: [], faces: [] }), translate: fakeTranslator() });
     at = `http://127.0.0.1:${studio.port}`;
     await studio.firstBuild;
     await studio.settled();
