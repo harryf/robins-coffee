@@ -1,8 +1,11 @@
-{% comment %} Home: the next few events. The whole section is left out when nothing is announced. {% endcomment %}
+{% comment %} events: t, events_next, events_url, price_note. Home: the next few events under "What's on", with what the shows cost when the events say it. The whole section is left out when nothing is announced. {% endcomment %}
 {%- if events_next.size > 0 %}
 <section class="section" id="events">
   <div class="wrap">
     <h2 class="h-xl">{{ t.events_title }}</h2>
+    {%- if price_note != '' %}
+    <p class="lead">{{ price_note }}</p>
+    {%- endif %}
     <div class="events">
       {%- for e in events_next %}
       {% render 'components/event-card', e: e, t: t %}

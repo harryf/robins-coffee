@@ -1,6 +1,11 @@
 # The home page is a stack of sections, top to bottom. A new section is a new
-# component in site/templates/sections/ plus one line here.
-sections: [hero, ticker, events, menu, moments, about, visit, contact]
+# component in site/templates/sections/ plus its name in both lists.
+# By night (cocktails, and without JavaScript): what's on and the drinks first.
+sections: [hero, ticker, events, menu, guests, moments, about, visit, contact]
+# By day (coffee, 06:00 to 17:00 Zürich time): the calm side first, the evening after.
+sections_day: [hero, ticker, guests, about, visit, events, menu, moments, contact]
+# The guest cards (written in content/<lang>/index.md, in the night order) by day.
+guests_day: [daytime, visitors, students, comedy, regulars]
 events_count: 4
 hero_photo: "moments/2026-11-07-elias-at-the-taps.jpg"
 # The hero of the day theme (coffee). Leave it out to show hero_photo in both themes.
