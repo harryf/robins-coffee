@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { parse as parseYaml } from "yaml";
-import { eventFile, eventProblems, addAlbum, setDrink, removeDrink, drinkProblems, slugify } from "../src/content";
+import { eventFile, eventProblems, addAlbum, setDrink, removeDrink, drinkProblems, slugify, planTexts, cleanTexts } from "../src/content";
 import { parseEventfrogPage, importFromPage, eventfrogUrl, eventfrogImage, plainText, shortText, fromApiEvent, listOrganiserEvents } from "../src/eventfrog";
 import { fromManual, fromIyfFeed, mergeEvents } from "../src/events";
 import { inEditScope } from "../src/editor/scope";
@@ -37,9 +37,11 @@ describe("event files", () => {
     expect(e).toMatchObject({ start: "2026-12-05T20:00:00+01:00", end: "2026-12-05T22:30:00+01:00", price_chf: 15, category: "music", organiser: 'The "Trio"', ticket_url: "https://eventfrog.ch/de/p/x-1.html" });
     expect(f.path).toBe("events/2026-12-05-jazz-trio.md");
   });
-  test("what is wrong is named: no title, no day, one language only, a link that is not https, a bad time", () => {
+  test("what is wrong is named: no title, no day, a text without English, a link that is not https, a bad time", () => {
     expect(eventProblems({ title: "" })).toEqual(expect.arrayContaining(["event_title_missing", "event_date_missing"]));
-    expect(eventProblems({ title: "A", date: "2026-12-03", text: { en: "Hi" } })).toEqual(["both_languages"]);
+    expect(eventProblems({ title: "A", date: "2026-12-03", text: { en: "Hi" } })).toEqual([]);
+    expect(eventProblems({ title: "A", date: "2026-12-03", text: { en: "", de: "Hallo" } })).toEqual(["english_needed"]);
+    expect(eventProblems({ title: "A", date: "2026-12-03", text: { en: "Hi", "../x": "y" } as any })).toEqual(["event_shape_wrong"]);
     expect(eventProblems({ title: "A", date: "3.12.2026" })).toEqual(["event_date_wrong"]);
     expect(eventProblems({ title: "A", date: "2026-12-03", ticket_url: "javascript:alert(1)" })).toEqual(["event_link_wrong"]);
     expect(eventProblems({ title: "A", date: "2026-12-03", from: "7pm" })).toEqual(["event_time_wrong"]);
@@ -68,6 +70,29 @@ describe("event files", () => {
   });
 });
 
+describe("texts in the site's languages", () => {
+  const langs = ["en", "de", "fr", "it"];
+  test("a new English text: every other language is to be translated", () => {
+    expect(planTexts({ en: " Coffee " }, null, langs)).toEqual({ keep: { en: "Coffee" }, need: ["de", "fr", "it"] });
+  });
+  test("an unchanged English keeps the file's other languages, so a German text written by hand stays", () => {
+    const old = { en: "Coffee", de: "Kaffee von Hand", fr: "Café" };
+    expect(planTexts({ en: "Coffee" }, old, langs)).toEqual({ keep: { en: "Coffee", de: "Kaffee von Hand", fr: "Café" }, need: ["it"] });
+    expect(planTexts({ en: "Coffee", de: "Kaffee von Hand", fr: "Café", it: "" }, old, langs)).toEqual({ keep: { en: "Coffee", de: "Kaffee von Hand", fr: "Café" }, need: ["it"] });
+  });
+  test("a changed English makes the old translations again; one changed by hand in the same save is kept; an emptied one is made again", () => {
+    const old = { en: "Coffee", de: "Kaffee", fr: "Café", it: "Caffè" };
+    expect(planTexts({ en: "Tea", de: "Kaffee", fr: "Thé", it: "" }, old, langs)).toEqual({ keep: { en: "Tea", fr: "Thé" }, need: ["de", "it"] });
+    expect(planTexts({ en: "Tea" }, old, langs)).toEqual({ keep: { en: "Tea" }, need: ["de", "fr", "it"] });
+  });
+  test("a language the site does not have is not kept", () => {
+    expect(planTexts({ en: "Coffee", es: "Café" }, null, ["en", "de"])).toEqual({ keep: { en: "Coffee" }, need: ["de"] });
+  });
+  test("a text as written: English first, empty languages out, German with ss", () => {
+    expect(Object.entries(cleanTexts({ it: "Caffè", de: "Grüsse, Straße", en: " Coffee ", fr: "" }))).toEqual([["en", "Coffee"], ["de", "Grüsse, Strasse"], ["it", "Caffè"]]);
+  });
+});
+
 describe("albums and menu", () => {
   test("an album is added to the real file, comments kept, and a second one of the same name is refused", async () => {
     const before = await Bun.file(join(SITE, "data/albums.yml")).text();
@@ -78,7 +103,8 @@ describe("albums and menu", () => {
     expect(albums.at(-1)).toEqual({ slug: "live-music", title: { en: "Live Music", de: "Live-Musik" } });
     expect(albums.length).toBe(parseYaml(before).albums.length + 1);
     expect(() => addAlbum(text, { title: { en: "Live Music", de: "x" } })).toThrow("album_exists");
-    expect(() => addAlbum(before, { title: { en: "Only English", de: "" } })).toThrow("both_languages");
+    expect(parseYaml(addAlbum(before, { title: { en: "Only English", de: "" } }).text).albums.at(-1)).toEqual({ slug: "only-english", title: { en: "Only English" } });
+    expect(() => addAlbum(before, { title: { en: "", de: "Nur Deutsch" } })).toThrow("english_needed");
   });
   test("a drink is added to a part of the real menu, replaced by name, and removed again", async () => {
     const before = await Bun.file(join(SITE, "data/menu.yml")).text();
@@ -93,9 +119,13 @@ describe("albums and menu", () => {
     expect(parseYaml(removeDrink(changed, "signatures", "Hot Toddy"))).toEqual(parseYaml(before));
     expect(() => removeDrink(before, "signatures", "Nope")).toThrow("drink_not_found");
   });
-  test("a new part of the menu needs a title in both languages; a picture needs alt text", () => {
+  test("a new part of the menu needs a title in English; a picture needs alt text in English; other languages are optional", () => {
     const drink = { name: "Flat White", text: { en: "Double shot, steamed milk", de: "Doppelter Shot, geschäumte Milch" }, price_chf: 6 };
-    expect(() => setDrink("sections: []\n", "coffee", drink)).toThrow("both_languages");
+    expect(() => setDrink("sections: []\n", "coffee", drink)).toThrow("english_needed");
+    expect(() => setDrink("sections: []\n", "coffee", drink, { en: "", de: "Kaffee" })).toThrow("english_needed");
+    expect(parseYaml(setDrink("sections: []\n", "coffee", { ...drink, text: { en: "Only English" } }, { en: "Coffee" })).sections[0]).toMatchObject({ title: { en: "Coffee" }, drinks: [{ text: { en: "Only English" } }] });
+    expect(drinkProblems({ ...drink, text: { en: "", de: "Nur Deutsch" } })).toEqual(["english_needed"]);
+    expect(drinkProblems({ ...drink, photo: "photos/menu-flat-white.jpg", alt: { en: "A cup." } })).toEqual([]);
     const made = parseYaml(setDrink("sections: []\n", "coffee", drink, { en: "Coffee", de: "Kaffee" }));
     expect(made.sections[0]).toMatchObject({ slug: "coffee", title: { en: "Coffee", de: "Kaffee" }, drinks: [drink] });
     expect(drinkProblems({ ...drink, photo: "photos/menu-flat-white.jpg" })).toEqual(["alt_missing"]);
@@ -112,6 +142,8 @@ describe("eventfrog", () => {
     expect(events[0]!.url).toMatch(/^https:\/\/eventfrog\.ch\/.+-7492505145781047015\.html$/);
     expect(events[0]!.image).toMatch(/^https:\/\/res\.eventfrog\.net\//);
     expect(events[0]!.text).toBe("A laid-back new material night. Local comedians try out their newest jokes. Free entry & pay what you want.");
+    // The page's data does not name the language of its text, so no language is claimed for it.
+    expect(events[0]!.texts).toEqual({});
   });
   test("a series page gives every date it lists, each with its own ticket page", async () => {
     const { kind, events } = parseEventfrogPage(await fixture("eventfrog-series.html"));
@@ -162,6 +194,9 @@ describe("eventfrog", () => {
     const got = await listOrganiserEvents("SECRET-KEY", async (url, init) => { seen = { url, init }; return { ok: true, status: 200, text: async () => JSON.stringify({ totalNumberOfResources: 4, data: rows }) }; }, new Date("2026-11-20T12:00:00+01:00"));
     expect(got.map((e) => e.title)).toEqual(["Jazz Trio"]);
     expect(got[0]!.text).toBe("Drei Leute, ein Abend.");
+    expect(got[0]!.texts).toEqual({ de: "Drei Leute, ein Abend." });
+    const both = fromApiEvent({ beginDate: "2026-12-05T20:00:00+01:00", localizedInfo: [{ locale: "de-CH", title: "Jazz", shortDescription: "<p>Drei Leute.</p>" }, { locale: "en", title: "Jazz", description: "Three people." }, { locale: "../x", title: "Jazz", description: "No." }] })!;
+    expect(both.texts).toEqual({ de: "Drei Leute.", en: "Three people." });
     expect(seen.url).not.toContain("SECRET-KEY");
     expect(seen.init.headers.Authorization).toBe("Bearer SECRET-KEY");
     expect(seen.init.method).toBe("GET");
@@ -192,16 +227,13 @@ describe("focus and pictures", () => {
     expect(() => readFocus({ "photos/a.jpg": [0.5, 1.5] })).toThrow(/two numbers/);
     expect(readFocus(null)).toEqual({});
   });
-  test("the alt text draft lists what was seen, in both languages, and guesses no German word", () => {
+  test("the alt text draft lists what was seen, in English only: translation does the rest", () => {
     const coffee = draftAlt({ labels: [{ name: "coffee", confidence: 0.9 }, { name: "liquid", confidence: 0.9 }, { name: "cup", confidence: 0.8 }, { name: "zebra_crossing", confidence: 0.5 }], text: [], faces: [] });
-    expect(coffee.en).toBe("Coffee, cup, zebra crossing.");
-    expect(coffee.de).toBe("Kaffee, Tasse.");
+    expect(coffee).toEqual({ en: "Coffee, cup, zebra crossing." });
     const poster = draftAlt({ labels: [{ name: "sign", confidence: 0.7 }], text: ["BEER PONG", "EVERY WEDNESDAY"], faces: [] });
-    expect(poster.en).toBe('Sign; text: "BEER PONG / EVERY WEDNESDAY".');
-    expect(poster.de).toBe('Schild; Text: "BEER PONG / EVERY WEDNESDAY".');
-    expect(draftAlt({ labels: [{ name: "people", confidence: 0.9 }], faces: [{}, {}] }).de).toBe("2 Personen.");
-    expect(draftAlt({})).toEqual({ en: "", de: "" });
-    expect(coffee.de).not.toContain("ß");
+    expect(poster).toEqual({ en: 'Sign; text: "BEER PONG / EVERY WEDNESDAY".' });
+    expect(draftAlt({ labels: [{ name: "people", confidence: 0.9 }], faces: [{}, {}] })).toEqual({ en: "2 people." });
+    expect(draftAlt({})).toEqual({ en: "" });
   });
   test("the tools list names what is missing and how to install it", () => {
     const none = toolReport(() => null, "darwin");
@@ -220,6 +252,12 @@ describe("focus and pictures", () => {
 });
 
 import { contentApi, setFocus } from "../src/studio/content-api";
+import type { Translator } from "../src/translate";
+/** A translator that needs no Swift: "[de] text". "auto" is taken to be English. */
+const fakeTranslate: Translator = async (texts, targets, source = "en") => {
+  const from = source === "auto" ? "en" : source;
+  return { texts: Object.fromEntries(targets.map((l) => [l, texts.map((x) => (l === from ? x : `[${l}] ${x}`))])), missing: [], failed: [], source: from };
+};
 import { mkdtempSync, mkdirSync as mkdir2, cpSync as cp2, existsSync as exists2, readFileSync as read2 } from "node:fs";
 import { tmpdir as tmp2 } from "node:os";
 import sharp2 from "sharp";
@@ -228,7 +266,7 @@ describe("studio: content routes", () => {
   const root = mkdtempSync(join(tmp2(), "studio-content-"));
   mkdir2(join(root, "site", "data"), { recursive: true });
   mkdir2(join(root, "site", "events"), { recursive: true });
-  for (const f of ["albums.yml", "menu.yml", "focus.yml"]) cp2(join(SITE, "data", f), join(root, "site", "data", f));
+  for (const f of ["albums.yml", "menu.yml", "focus.yml", "site.yml"]) cp2(join(SITE, "data", f), join(root, "site", "data", f));
   const written: string[] = [];
   let removed = 0;
   const fetched: string[] = [];
@@ -239,6 +277,7 @@ describe("studio: content routes", () => {
     readKey: async () => null,
     fetchFn: (async (url: any) => { fetched.push(String(url)); return String(url).includes("res.eventfrog.net") ? new Response(await sharp2({ create: { width: 40, height: 60, channels: 3, background: "#804020" } }).png().toBuffer()) : new Response(await fixture("eventfrog-series.html"), { headers: { "Content-Type": "text/html" } }); }) as any,
     look: async () => ({ focus: { x: 0.25, y: 0.75 }, labels: [{ name: "coffee", confidence: 0.9 }], text: [], faces: [{ x: 0, y: 0, w: 0.1, h: 0.1 }] }),
+    translate: fakeTranslate,
   });
   const call = async (route: string, body: any = {}) => { const res = await api(route, async () => body); return res ? { status: res.status, data: await res.json() } : null; };
   const picture = async () => (await sharp2({ create: { width: 300, height: 200, channels: 3, background: "#203040" } }).withExif({ IFD0: { Copyright: "secret owner" } }).jpeg().toBuffer()).toString("base64");
@@ -248,7 +287,7 @@ describe("studio: content routes", () => {
   });
   test("looking at a picture gives a focus, a face count and a draft, and leaves no copy behind", async () => {
     const res = (await call("POST look", { base64: await picture() }))!;
-    expect(res.data).toMatchObject({ width: 300, height: 200, focus: [0.25, 0.75], faces: 1, draft: { en: "One person; coffee.", de: "Eine Person; Kaffee." }, note: null });
+    expect(res.data).toMatchObject({ width: 300, height: 200, focus: [0.25, 0.75], faces: 1, draft: { en: "One person; coffee." }, note: null });
     expect([...new Bun.Glob("look-*").scanSync({ cwd: join(root, ".cache", "studio") })]).toEqual([]);
     expect((await call("POST look", { base64: "" }))!.status).toBe(400);
     expect((await call("POST look", { base64: Buffer.from("not a picture").toString("base64") }))!.status).toBe(422);
@@ -264,7 +303,7 @@ describe("studio: content routes", () => {
     expect(md).toContain("Warm, mit Spass.");
     expect(parseYaml(read2(join(root, "site/data/focus.yml"), "utf8"))["moments/2026-11-20-mulled-wine.jpg"]).toEqual([0.25, 0.75]);
     expect((await call("POST photo", { ...post, album: "nope" }))!.data.error).toBe("album_unknown");
-    expect((await call("POST photo", { ...post, alt: { en: "Only English", de: "" } }))!.data.error).toBe("both_languages");
+    expect((await call("POST photo", { ...post, alt: { en: "", de: "Nur Deutsch" } }))!.data.error).toBe("english_needed");
     expect((await call("POST photo", { ...post, caption: { en: "../../etc", de: "x" } }))!.data.path).toBe("moments/2026-11-20-etc.jpg");
     for (const p of written) expect([p, inEditScope(p)]).toEqual([p, true]);
   });
@@ -304,6 +343,8 @@ describe("studio: content routes", () => {
     expect(text).toContain("category: comedy");
     expect(text).toContain("source_url: \"https://eventfrog.ch/");
     expect(text).toMatch(/image: "photos\/event-[a-z0-9-]+\.jpg"/);
+    // The page does not say the language of its text: the Mac recognised it (English here) and it is the English text.
+    expect(text).toContain(`text:\n  en: "${read.data.events[0].text.replace(/"/g, '\\"')}"`);
     expect(fetched.filter((u) => u.includes("res.eventfrog.net")).length).toBe(1);
     expect((await call("POST eventfrog/add", { events: read.data.events }))!.data).toEqual({ ok: true, added: 0, skipped: read.data.events.length });
     expect((await call("POST eventfrog/add", { events: [{ title: "Bad", start: "2026-12-01T20:00:00+01:00", end: "2026-12-01T22:00:00+01:00", url: "https://evil.example/x", image: null }] }))!.data).toEqual({ ok: true, added: 0, skipped: 1 });

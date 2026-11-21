@@ -8,6 +8,7 @@ import { renameAlbum } from "../src/content";
 import { contentApi } from "../src/studio/content-api";
 import { inEditScope } from "../src/editor/scope";
 import { STRINGS } from "../src/studio/strings";
+import { fakeTranslator } from "./fake-translate";
 
 import { FROZEN_SITE, LIVE_SITE } from "./frozen";
 const SITE = FROZEN_SITE;
@@ -15,7 +16,7 @@ const SITE = FROZEN_SITE;
 function studio() {
   const root = mkdtempSync(join(tmpdir(), "studio-tidy-"));
   for (const d of ["data", "events", "photos", "moments", "content/en"]) mkdirSync(join(root, "site", d), { recursive: true });
-  for (const f of ["albums.yml", "menu.yml", "focus.yml", "home.yml"]) cpSync(join(SITE, "data", f), join(root, "site", "data", f));
+  for (const f of ["albums.yml", "menu.yml", "focus.yml", "home.yml", "site.yml"]) cpSync(join(SITE, "data", f), join(root, "site", "data", f));
   for (const f of ["menu-lazy-monkey.jpg", "menu-toffee-crush.jpg", "event-beer-pong.jpg", "latte-art-pour.jpg"]) cpSync(join(SITE, "photos", f), join(root, "site", "photos", f));
   cpSync(join(SITE, "events", "beer-pong.md"), join(root, "site", "events", "beer-pong.md"));
   const written: string[] = [];
@@ -25,6 +26,7 @@ function studio() {
     changed: () => undefined,
     readKey: async () => null,
     look: async () => ({ labels: [], text: [], faces: [] }),
+    translate: fakeTranslator(),
   });
   const call = async (route: string, body: any = {}) => { const res = await api(route, async () => body); return res ? { status: res.status, data: await res.json() } : null; };
   const has = (p: string) => existsSync(join(root, "site", p));
@@ -33,7 +35,7 @@ function studio() {
 }
 
 describe("studio: an album can be renamed", () => {
-  test("the name changes in both languages, the short name and the file's comments stay", async () => {
+  test("the name changes in every language given, the short name and the file's comments stay", async () => {
     const before = await Bun.file(join(SITE, "data", "albums.yml")).text();
     const after = renameAlbum(before, "drinks", { en: "Drinks & Cocktails", de: "Drinks und Cocktails, groß" });
     expect(after.startsWith("# Gallery albums.")).toBe(true);
@@ -42,15 +44,16 @@ describe("studio: an album can be renamed", () => {
     expect(now.find((a: any) => a.slug === "drinks").title).toEqual({ en: "Drinks & Cocktails", de: "Drinks und Cocktails, gross" });
     expect(now.filter((a: any) => a.slug !== "drinks")).toEqual(was.filter((a: any) => a.slug !== "drinks"));
     expect(() => renameAlbum(before, "nope", { en: "A", de: "B" })).toThrow("album_unknown");
-    expect(() => renameAlbum(before, "drinks", { en: "A", de: " " })).toThrow("both_languages");
-    expect(() => renameAlbum(before, "drinks", { en: 1, de: 2 } as any)).toThrow("both_languages");
+    expect(() => renameAlbum(before, "drinks", { en: " ", de: "A" })).toThrow("english_needed");
+    expect(() => renameAlbum(before, "drinks", { en: 1, de: 2 } as any)).toThrow("english_needed");
+    expect(parseYaml(renameAlbum(before, "drinks", { en: "Only English" })).albums.find((a: any) => a.slug === "drinks").title).toEqual({ en: "Only English" });
   });
-  test("through the route, and its words exist in both languages", async () => {
+  test("through the route, and its words exist", async () => {
     const s = studio();
     expect((await s.call("PUT album", { slug: "drinks", title: { en: "Cocktails", de: "Cocktails" } }))!.status).toBe(200);
     expect(parseYaml(s.read("data/albums.yml")).albums.find((a: any) => a.slug === "drinks").title.en).toBe("Cocktails");
     expect((await s.call("PUT album", { slug: "../x", title: { en: "A", de: "B" } }))!.data.error).toBe("album_unknown");
-    for (const lang of ["en", "de"] as const) for (const key of ["album_rename", "album_rename_title", "album_renamed"] as const) expect(STRINGS[lang][key]).toBeTruthy();
+    for (const key of ["album_rename", "album_rename_title", "album_renamed"] as const) expect(STRINGS[key]).toBeTruthy();
   });
 });
 

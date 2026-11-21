@@ -13,6 +13,14 @@ export type Imported = {
   organiser: string | null;
   price_chf: number | null;
   text: string; // one or two plain sentences, may be empty
+  /** The short text in each language Eventfrog has it in, by language code ("de", "en"); empty when the language is not known. */
+  texts: Record<string, string>;
+};
+
+/** "de", "de-CH" or "DE" as "de"; null for anything that is not a language code. */
+const langOf = (locale: unknown): string | null => {
+  const code = typeof locale === "string" ? locale.trim().slice(0, 2).toLowerCase() : "";
+  return /^[a-z]{2}$/.test(code) && /^[a-zA-Z]{2}([-_][a-zA-Z0-9]+)?$/.test(String(locale).trim()) ? code : null;
 };
 
 const HOSTS = /^(www\.)?eventfrog\.(ch|de|at|net)$/;
@@ -57,10 +65,13 @@ function fromLd(node: any, parent?: any): Imported | null {
   const offer = node.offers ?? parent?.offers;
   const low = offer?.lowPrice ?? offer?.price;
   const price = node.isAccessibleForFree === true ? 0 : low !== undefined && low !== "" && !Number.isNaN(Number(low)) ? Number(low) : null;
+  const text = shortText(node.description ?? parent?.description ?? "");
+  // A page says the language of its text only when its data names it; otherwise the Studio finds out.
+  const lang = langOf(node.inLanguage ?? parent?.inLanguage);
   return {
     title: plainText(node.name), start: String(node.startDate), end: String(node.endDate ?? node.startDate), url: String(node.url ?? parent?.url ?? ""),
     image: eventfrogImage(node.image ?? parent?.image), organiser: node.organizer?.name ? plainText(node.organizer.name) : parent?.organizer?.name ? plainText(parent.organizer.name) : null,
-    price_chf: price, text: shortText(node.description ?? parent?.description ?? ""),
+    price_chf: price, text, texts: lang && text ? { [lang]: text } : {},
   };
 }
 
@@ -116,11 +127,18 @@ export const EVENTFROG_API = "https://api.eventfrog.net";
 /** One event of the organiser API's list, as far as its shape is known (docs/decisions has the source). */
 export function fromApiEvent(e: any): Imported | null {
   if (!e || e.cancelled || e.visibility?.published === false || typeof e.beginDate !== "string") return null;
-  const info = (e.localizedInfo ?? []).find((l: any) => l?.title) ?? {};
+  const infos: any[] = Array.isArray(e.localizedInfo) ? e.localizedInfo : [];
+  const info = infos.find((l: any) => l?.title) ?? {};
   if (!info.title) return null;
+  // Every language the organiser wrote the event in; the first one of a language wins.
+  const texts: Record<string, string> = {};
+  for (const l of infos) {
+    const lang = langOf(l?.locale), said = shortText(l?.shortDescription ?? l?.description ?? "");
+    if (lang && said && !texts[lang]) texts[lang] = said;
+  }
   return {
     title: plainText(info.title), start: e.beginDate, end: typeof e.endDate === "string" ? e.endDate : e.beginDate, url: typeof e.url === "string" ? e.url : "",
-    image: eventfrogImage(e.emblemToShow?.url ?? e.emblem?.url ?? null), organiser: null, price_chf: null, text: shortText(info.shortDescription ?? info.description ?? ""),
+    image: eventfrogImage(e.emblemToShow?.url ?? e.emblem?.url ?? null), organiser: null, price_chf: null, text: shortText(info.shortDescription ?? info.description ?? ""), texts,
   };
 }
 

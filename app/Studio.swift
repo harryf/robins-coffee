@@ -12,7 +12,7 @@ import AppKit
 import Darwin
 import WebKit
 
-// The few words the shell itself can show, in English and German (Swiss spelling).
+// The few words the shell itself can show. The Studio speaks English only.
 struct Words {
     let noFolderTitle: String
     let noFolderText: (String) -> String
@@ -37,19 +37,6 @@ struct Words {
         undo: "Undo", redo: "Redo", cut: "Cut", copy: "Copy", paste: "Paste", selectAll: "Select All",
         quitApp: "Quit ROBIN's Studio", hide: "Hide ROBIN's Studio", window: "Window", minimize: "Minimize", close: "Close", reload: "Reload"
     )
-    static let de = Words(
-        noFolderTitle: "Der Ordner der Website fehlt",
-        noFolderText: { "Das Studio wurde für den Ordner\n\($0)\ngebaut, aber er ist nicht da oder er ist nicht das Repository der Website. Lege den Ordner zurück oder baue die App dort neu, wo er jetzt liegt:\n\nbun scripts/build-app.ts" },
-        noBunTitle: "bun ist nicht installiert",
-        noBunText: "Das Studio braucht bun. Installiere es im Terminal mit\n\ncurl -fsSL https://bun.sh/install | bash\n\noder mit Homebrew:\n\nbrew install oven-sh/bun/bun\n\nÖffne das Studio danach noch einmal.",
-        noServerTitle: "Das Studio konnte nicht starten",
-        noServerText: { "Der lokale Server hat nicht geantwortet. Das hat er gemeldet:\n\n\($0)" },
-        quit: "Beenden",
-        edit: "Bearbeiten",
-        undo: "Widerrufen", redo: "Wiederholen", cut: "Ausschneiden", copy: "Kopieren", paste: "Einsetzen", selectAll: "Alles auswählen",
-        quitApp: "ROBIN's Studio beenden", hide: "ROBIN's Studio ausblenden", window: "Fenster", minimize: "Im Dock ablegen", close: "Schliessen", reload: "Neu laden"
-    )
-    static var current: Words { (Locale.preferredLanguages.first ?? "en").lowercased().hasPrefix("de") ? de : en }
 }
 
 /// bun, from the usual places first, then from the person's login shell.
@@ -89,7 +76,7 @@ func freePort() -> Int? {
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDelegate {
-    let words = Words.current
+    let words = Words.en
     var window: NSWindow!
     var web: WKWebView!
     var server: Process?

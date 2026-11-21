@@ -10,6 +10,60 @@ const DAY = /^\d{4}-\d{2}-\d{2}$/, TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 export const STAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(\.\d{1,3})?(Z|[+-]\d{2}:\d{2})$/;
 const noSharpS = (s: string) => s.replace(/ß/g, "ss");
 
+/**
+ * A text of the site in its languages: English always, every other language when there is
+ * one. A language without a text is left out of the file and the site shows English there.
+ */
+export type Texts = { en: string; [lang: string]: string | undefined };
+/** A language code as site.yml lists it. */
+export const LANG = /^[a-z]{2}$/;
+const ORDER = ["en", "de", "fr", "it"];
+const rankLang = (code: string) => { const at = ORDER.indexOf(code); return at < 0 ? ORDER.length : at; };
+
+/** True when a value is a text map: language codes to strings, nothing else. */
+export function textsShape(v: unknown): boolean {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return false;
+  return Object.entries(v).every(([k, x]) => LANG.test(k) && (x == null || typeof x === "string"));
+}
+/** True when a text map has an English text. */
+export const hasEnglish = (v: unknown): boolean => textsShape(v) && typeof (v as Texts).en === "string" && !!(v as Texts).en.trim();
+
+/** A text map as it is written into a file: trimmed, empty languages left out, English first, German without the sharp s. */
+export function cleanTexts(v: Partial<Texts>): Record<string, string> {
+  const out: Record<string, string> = {};
+  const rows = Object.entries(v).filter(([k, x]) => LANG.test(k) && typeof x === "string" && x.trim()).sort(([a], [b]) => rankLang(a) - rankLang(b) || a.localeCompare(b));
+  for (const [k, x] of rows) out[k] = k === "de" ? noSharpS(x!.trim()) : x!.trim();
+  return out;
+}
+
+/**
+ * What a form's text keeps and what this Mac still has to translate. `given` is what the
+ * form sent (English, plus any translation shown in its fold), `old` what the file had,
+ * `languages` the site's languages. For each language other than English:
+ * - a translation the form sent is kept, unless the English changed and it is the old
+ *   one unchanged (then it no longer says what the English says, and is made again);
+ * - one the form sent empty is made again;
+ * - one the form did not send is kept from the file while the English did not change.
+ * Everything else is to be translated. So an unchanged English is never translated
+ * again, and a German text written by hand stays.
+ */
+export function planTexts(given: Partial<Texts>, old: Partial<Record<string, string | undefined>> | null | undefined, languages: string[]): { keep: Texts; need: string[] } {
+  const en = String(given.en ?? "").trim();
+  const same = !!old && String(old.en ?? "").trim() === en;
+  const keep: Texts = { en };
+  const need: string[] = [];
+  for (const lang of languages) {
+    if (lang === "en" || !LANG.test(lang)) continue;
+    const sent = given[lang], was = typeof old?.[lang] === "string" ? old[lang]!.trim() : "";
+    if (typeof sent === "string" && sent.trim()) {
+      if (!same && old && sent.trim() === was) need.push(lang);
+      else keep[lang] = sent.trim();
+    } else if (sent === undefined && same && was) keep[lang] = was;
+    else need.push(lang);
+  }
+  return { keep, need };
+}
+
 export type EventInput = {
   title: string; name?: string;
   /** One day, a list of days, or a weekday code for a weekly evening. */
@@ -17,7 +71,7 @@ export type EventInput = {
   from?: string; to?: string;
   /** Full times instead of date/from/to (an import knows them exactly). */
   start?: string; end?: string;
-  text?: { en?: string; de?: string };
+  text?: Partial<Texts>;
   image?: string; ticket_url?: string; price_chf?: number | null;
   category?: "comedy" | "music" | "other"; organiser?: string; source_url?: string;
 };
@@ -27,9 +81,9 @@ export function eventProblems(e: EventInput): string[] {
   const out: string[] = [];
   // Shape first: everything below may then treat a field as the text it should be.
   if (!e || typeof e !== "object") return ["event_shape_wrong"];
-  for (const v of [e.title, e.name, e.organiser, e.ticket_url, e.source_url, e.image, e.date, e.until, e.from, e.to, e.every, e.start, e.end, e.text?.en, e.text?.de]) if (v != null && typeof v !== "string") return ["event_shape_wrong"];
+  for (const v of [e.title, e.name, e.organiser, e.ticket_url, e.source_url, e.image, e.date, e.until, e.from, e.to, e.every, e.start, e.end]) if (v != null && typeof v !== "string") return ["event_shape_wrong"];
   if (e.dates !== undefined && (!Array.isArray(e.dates) || e.dates.some((d) => typeof d !== "string"))) return ["event_shape_wrong"];
-  if (e.text !== undefined && (e.text === null || typeof e.text !== "object")) return ["event_shape_wrong"];
+  if (e.text !== undefined && !textsShape(e.text)) return ["event_shape_wrong"];
   if (e.category !== undefined && !["comedy", "music", "other"].includes(e.category)) return ["event_shape_wrong"];
   if (!e.title?.trim()) out.push("event_title_missing");
   const whens = [e.start ? 1 : 0, e.date ? 1 : 0, e.dates?.length ? 1 : 0, e.every ? 1 : 0].reduce((a, b) => a + b, 0);
@@ -41,7 +95,7 @@ export function eventProblems(e: EventInput): string[] {
   for (const t of [e.from, e.to]) if (t && !TIME.test(t)) out.push("event_time_wrong");
   if (e.to && !e.from) out.push("event_time_wrong");
   if (e.ticket_url && !/^https:\/\/[^\s]+$/.test(e.ticket_url)) out.push("event_link_wrong");
-  if (!!e.text?.en?.trim() !== !!e.text?.de?.trim()) out.push("both_languages");
+  if (e.text && !e.text.en?.trim() && Object.values(e.text).some((x) => typeof x === "string" && x.trim())) out.push("english_needed");
   if (e.image && !/^photos\/[a-z0-9-]+\.jpg$/.test(e.image)) out.push("event_image_wrong");
   if (e.price_chf != null && !(typeof e.price_chf === "number" && e.price_chf >= 0 && Number.isFinite(e.price_chf))) out.push("event_price_wrong");
   if (e.source_url && !/^https:\/\/[^\s]+$/.test(e.source_url)) out.push("event_link_wrong");
@@ -69,7 +123,7 @@ export function eventFile(e: EventInput): { path: string; text: string } {
   lines.push(`category: ${e.category ?? "other"}`);
   if (e.organiser?.trim()) lines.push(`organiser: ${q(e.organiser.trim())}`);
   if (e.image) lines.push(`image: ${q(e.image)}`);
-  if (e.text?.en?.trim()) lines.push("text:", `  en: ${q(e.text.en.trim())}`, `  de: ${q(noSharpS(e.text.de!.trim()))}`);
+  if (e.text?.en?.trim()) lines.push("text:", ...Object.entries(cleanTexts(e.text)).map(([k, v]) => `  ${k}: ${q(v)}`));
   lines.push(`ticket_url: ${q(e.ticket_url ?? "")}`);
   if (e.source_url) lines.push(`source_url: ${q(e.source_url)}`);
   lines.push("---", "");
@@ -77,17 +131,17 @@ export function eventFile(e: EventInput): { path: string; text: string } {
   return { path: `events/${single ? first + "-" : ""}${slug}.md`, text: lines.join("\n") };
 }
 
-export type AlbumInput = { slug?: string; title: { en: string; de: string }; cover?: string };
+export type AlbumInput = { slug?: string; title: Texts; cover?: string };
 
 /** albums.yml with one more album; comments and order of the file are kept. */
 export function addAlbum(yamlText: string, a: AlbumInput): { text: string; slug: string } {
-  if (!a.title?.en?.trim() || !a.title?.de?.trim()) throw new Error("both_languages");
+  if (!hasEnglish(a?.title)) throw new Error("english_needed");
   const slug = a.slug?.trim() || slugify(a.title.en);
   if (!/^[a-z0-9-]+$/.test(slug)) throw new Error("album_slug_wrong");
   const doc = parseDocument(yamlText);
   const list: any[] = (parseYaml(yamlText)?.albums ?? []) as any[];
   if (list.some((x) => x.slug === slug)) throw new Error("album_exists");
-  const entry: any = { slug, title: { en: a.title.en.trim(), de: noSharpS(a.title.de.trim()) } };
+  const entry: any = { slug, title: cleanTexts(a.title) };
   if (a.cover) entry.cover = a.cover;
   if (!doc.has("albums")) doc.set("albums", []);
   const node = doc.createNode(entry) as any;
@@ -97,28 +151,29 @@ export function addAlbum(yamlText: string, a: AlbumInput): { text: string; slug:
 }
 
 /** albums.yml with one album's name changed. The slug stays, so every photo of the album stays in it. */
-export function renameAlbum(yamlText: string, slug: string, title: { en: string; de: string }): string {
-  if (typeof title?.en !== "string" || typeof title?.de !== "string" || !title.en.trim() || !title.de.trim()) throw new Error("both_languages");
+export function renameAlbum(yamlText: string, slug: string, title: Texts): string {
+  if (!hasEnglish(title)) throw new Error("english_needed");
   const doc = parseDocument(yamlText);
   const album = (doc.get("albums") as any)?.items?.find((a: any) => a.get("slug") === slug);
   if (!album) throw new Error("album_unknown");
-  const node = doc.createNode({ en: title.en.trim(), de: noSharpS(title.de.trim()) }) as any;
+  const node = doc.createNode(cleanTexts(title)) as any;
   node.flow = true;
   album.set("title", node);
   return doc.toString({ lineWidth: 0 });
 }
 
-export type DrinkInput = { name: string; text: { en: string; de: string }; price_chf: number; photo?: string; alt?: { en: string; de: string } };
+export type DrinkInput = { name: string; text: Texts; price_chf: number; photo?: string; alt?: Texts };
 
 export function drinkProblems(d: DrinkInput): string[] {
   const out: string[] = [];
   if (!d || typeof d !== "object") return ["drink_name_missing"];
-  for (const v of [d.name, d.photo, d.text?.en, d.text?.de, d.alt?.en, d.alt?.de]) if (v != null && typeof v !== "string") return ["both_languages"];
+  for (const v of [d.name, d.photo]) if (v != null && typeof v !== "string") return ["english_needed"];
+  if ((d.text != null && !textsShape(d.text)) || (d.alt != null && !textsShape(d.alt))) return ["english_needed"];
   if (!d.name?.trim()) out.push("drink_name_missing");
-  if (!d.text?.en?.trim() || !d.text?.de?.trim()) out.push("both_languages");
+  if (!hasEnglish(d.text)) out.push("english_needed");
   if (!(typeof d.price_chf === "number" && d.price_chf >= 0)) out.push("drink_price_wrong");
   if (d.photo && !/^photos\/[a-z0-9-]+\.jpg$/.test(d.photo)) out.push("event_image_wrong");
-  if (d.photo && (!d.alt?.en?.trim() || !d.alt?.de?.trim())) out.push("alt_missing");
+  if (d.photo && !hasEnglish(d.alt)) out.push("alt_missing");
   return out;
 }
 
@@ -126,7 +181,7 @@ export function drinkProblems(d: DrinkInput): string[] {
  * menu.yml with a drink added to a part of the menu, or replaced when the part already
  * has one of that name. A part that does not exist yet is created from `partTitle`.
  */
-export function setDrink(yamlText: string, part: string, d: DrinkInput, partTitle?: { en: string; de: string }): string {
+export function setDrink(yamlText: string, part: string, d: DrinkInput, partTitle?: Texts): string {
   const problems = drinkProblems(d);
   if (problems.length) throw new Error(problems.join(", "));
   if (!/^[a-z0-9-]+$/.test(part)) throw new Error("menu_part_wrong");
@@ -135,13 +190,13 @@ export function setDrink(yamlText: string, part: string, d: DrinkInput, partTitl
   const sections = doc.get("sections") as any;
   let section = sections.items.find((s: any) => s.get("slug") === part);
   if (!section) {
-    if (!partTitle?.en?.trim() || !partTitle?.de?.trim()) throw new Error("both_languages");
-    section = doc.createNode({ slug: part, title: { en: partTitle.en.trim(), de: noSharpS(partTitle.de.trim()) }, drinks: [] });
+    if (!partTitle || !hasEnglish(partTitle)) throw new Error("english_needed");
+    section = doc.createNode({ slug: part, title: cleanTexts(partTitle), drinks: [] });
     (section.get("title", true) as any).flow = true;
     sections.add(section);
   }
-  const entry: any = { name: d.name.trim(), text: { en: d.text.en.trim(), de: noSharpS(d.text.de.trim()) }, price_chf: d.price_chf };
-  if (d.photo) { entry.photo = d.photo; entry.alt = { en: d.alt!.en.trim(), de: noSharpS(d.alt!.de.trim()) }; }
+  const entry: any = { name: d.name.trim(), text: cleanTexts(d.text), price_chf: d.price_chf };
+  if (d.photo) { entry.photo = d.photo; entry.alt = cleanTexts(d.alt!); }
   const node = doc.createNode(entry) as any;
   for (const k of ["text", "alt"]) if (node.has(k)) node.get(k, true).flow = true;
   if (!section.has("drinks")) section.set("drinks", []);
@@ -180,7 +235,7 @@ export function hasDrink(yamlText: string, part: string, name: string): boolean 
  * It keeps its place in the list, also under a new name. Moved to another part it goes
  * to the end of that part. A new name that another drink of the part already has is refused.
  */
-export function changeDrink(yamlText: string, was: { part: string; name: string }, part: string, d: DrinkInput, partTitle?: { en: string; de: string }): string {
+export function changeDrink(yamlText: string, was: { part: string; name: string }, part: string, d: DrinkInput, partTitle?: Texts): string {
   const problems = drinkProblems(d);
   if (problems.length) throw new Error(problems.join(", "));
   const doc = parseDocument(yamlText);
@@ -194,7 +249,7 @@ export function changeDrink(yamlText: string, was: { part: string; name: string 
   return setDrink(doc.toString({ lineWidth: 0 }), part, d);
 }
 
-export type MomentEdit = { caption: { en: string; de: string }; alt: { en: string; de: string }; album?: string | null; feed?: boolean };
+export type MomentEdit = { caption: Texts; alt: Texts; album?: string | null; feed?: boolean };
 
 /**
  * The text file of a photo with a new caption, alt text, album and home page switch.
@@ -203,10 +258,10 @@ export type MomentEdit = { caption: { en: string; de: string }; alt: { en: strin
 export function editMoment(mdText: string, m: MomentEdit): string {
   const found = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/.exec(mdText);
   if (!found) throw new Error("photo_not_found");
-  for (const v of [m?.caption?.en, m?.caption?.de, m?.alt?.en, m?.alt?.de]) if (typeof v !== "string" || !v.trim()) throw new Error("both_languages");
+  if (!hasEnglish(m?.caption) || !hasEnglish(m?.alt)) throw new Error("english_needed");
   if (m.album != null && m.album !== "" && (typeof m.album !== "string" || !/^[a-z0-9-]+$/.test(m.album))) throw new Error("album_unknown");
   const doc = parseDocument(found[1]!);
-  const texts = (v: { en: string; de: string }) => doc.createNode({ en: v.en.trim(), de: noSharpS(v.de.trim()) });
+  const texts = (v: Texts) => doc.createNode(cleanTexts(v));
   if (m.album) doc.set("album", m.album); else doc.delete("album");
   if (m.feed === false) doc.set("feed", false); else doc.delete("feed");
   doc.set("caption", texts(m.caption));
@@ -263,7 +318,7 @@ export function eventFields(data: Record<string, any>): EventInput {
     if (data.from) e.from = String(data.from);
     if (data.to) e.to = String(data.to);
   }
-  if (data.text && typeof data.text === "object") e.text = { en: String(data.text.en ?? ""), de: String(data.text.de ?? "") };
+  if (data.text && typeof data.text === "object") e.text = Object.fromEntries(Object.entries(data.text).filter(([k, v]) => LANG.test(k) && v != null).map(([k, v]) => [k, String(v)])) as Partial<Texts>;
   if (data.image) e.image = String(data.image);
   e.ticket_url = String(data.ticket_url ?? "");
   e.price_chf = typeof data.price_chf === "number" ? data.price_chf : null;

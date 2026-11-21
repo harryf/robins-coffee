@@ -5,7 +5,7 @@ import { updateLine } from "./system";
 import { describeChanges } from "../describe";
 import type { PublishResult } from "../publish";
 import type { StudioState } from "../server";
-import { STRINGS, type Lang, type Strings } from "../strings";
+import { STRINGS as t } from "../strings";
 import { h, type Api, type Ctx, type Kid } from "./dom";
 import { SECTIONS } from "./sections";
 
@@ -15,15 +15,6 @@ const api: Api = async (method, path, body) => {
   return { status: res.status, data: await res.json().catch(() => ({})) };
 };
 
-const stored = (() => {
-  try {
-    return localStorage.getItem("studio-lang");
-  } catch {
-    return null;
-  }
-})();
-let lang: Lang = stored === "en" || stored === "de" ? stored : navigator.language.toLowerCase().startsWith("de") ? "de" : "en";
-let t: Strings = STRINGS[lang];
 let state: StudioState | null = null;
 let current = SECTIONS.find((s) => s.id === location.hash.slice(1)) ?? SECTIONS[0]!;
 let listeners: ((state: StudioState) => void)[] = [];
@@ -49,18 +40,9 @@ app.append(
 );
 
 const ctx = (): Ctx => ({
-  t, lang, api,
+  t, api,
   state: () => state,
   onState: (listener) => listeners.push(listener),
-  setLang(next) {
-    lang = next;
-    t = STRINGS[lang];
-    try {
-      localStorage.setItem("studio-lang", lang);
-    } catch {}
-    openSection();
-    draw();
-  },
 });
 
 function openSection() {
@@ -152,7 +134,7 @@ function drawChanges() {
 }
 
 function draw() {
-  document.documentElement.lang = lang;
+  document.documentElement.lang = "en";
   document.title = t.app_name;
   sideHead.textContent = t.app_name;
   nav.setAttribute("aria-label", t.nav_label);

@@ -1,5 +1,7 @@
 // The Studio's routes for content: photos and albums, the menu, events, Eventfrog, the
-// calendar, restoring an old version, tools. Every path written or removed here is made
+// calendar, restoring an old version, tools, translations. A form sends its texts in
+// English; on save every other language of site.yml is translated on this Mac (see
+// planTexts in src/content.ts for what is kept), and a language it cannot do is left out. Every path written or removed here is made
 // from checked parts under a fixed folder and is inside the edit scope, so a request
 // cannot name a file of its own. The rules of each file live in src/content.ts.
 import { existsSync, realpathSync } from "node:fs";
@@ -10,10 +12,11 @@ import { cleanPhoto } from "../../scripts/add-photo";
 import { inEditScope } from "../editor/scope";
 import { momentMarkdown } from "../moment";
 import { parseFrontMatter } from "../render";
-import { eventFile, eventProblems, eventFields, keepComments, addAlbum, setDrink, changeDrink, hasDrink, removeDrink, drinkProblems, editMoment, dropCover, photoDay, slugify, type EventInput, renameAlbum } from "../content";
+import { eventFile, eventProblems, eventFields, keepComments, addAlbum, setDrink, changeDrink, hasDrink, removeDrink, drinkProblems, editMoment, dropCover, photoDay, slugify, type EventInput, renameAlbum, planTexts, hasEnglish, textsShape, cleanTexts, LANG, type Texts } from "../content";
 import { importFromPage, listOrganiserEvents, eventfrogImage, eventfrogUrl, fetchChecked, type Imported } from "../eventfrog";
 import { draftAlt, type Focus } from "../focus";
 import { look as realLook, toolReport, type Seen } from "../vision";
+import { appleTranslator, type Translator } from "../translate";
 import { calendarMonths, zonedDay } from "./calendar";
 import { RestoreRefused } from "./git";
 
@@ -34,16 +37,30 @@ export type ContentDeps = {
   /** True while a publish runs: nothing is restored under it. */
   busy?: () => boolean;
   now?: () => Date;
+  /** Translates English texts on this Mac; tests hand in a fake. */
+  translate?: Translator;
+  /** Opens an address with the Mac's own opener; used only for the Translation Languages settings. */
+  open?: (url: string) => void;
 };
+
+/** System Settings at Language and Region, where Translation Languages are added. */
+export const TRANSLATION_SETTINGS = "x-apple.systempreferences:com.apple.Localization-Settings.extension";
+/** What a save tells the screen about translating: the languages whose pack is missing, or why nothing could be translated. */
+export type Told = { missing: string[]; note: string | null };
 
 const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
 const refuse = (status: number, error: string, more: Record<string, unknown> = {}) => json({ error, ...more }, status);
 const DAY = /^\d{4}-\d{2}-\d{2}$/, NAME = /^[a-z0-9-]{1,90}$/;
 const EVENT_PATH = /^site\/events\/([a-z0-9-]+)\.md$/;
-const both = (v: any) => typeof v?.en === "string" && typeof v?.de === "string" && v.en.trim() !== "" && v.de.trim() !== "";
 const validFocus = (f: any): f is Focus => Array.isArray(f) && f.length === 2 && f.every((n) => typeof n === "number" && n >= 0 && n <= 1);
 const MAX_PHOTO = 40 * 1024 * 1024;
-const noSharpS = (s: string) => s.trim().replace(/ß/g, "ss");
+const MAX_TEXT = 2000;
+/** A text as a moment file gets it: trimmed, empty languages out, German without the sharp s. */
+const cleanFor = (v: Texts) => cleanTexts(v) as Texts;
+/** A text map out of a file, as strings by language; null when the file had none. */
+const textsOf = (v: unknown): Record<string, string> | null => (v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.entries(v).filter(([k, x]) => LANG.test(k) && typeof x === "string")) as Record<string, string> : null);
+/** Adds what a save has to say about translating to its answer, only when there is something to say. */
+const withTold = (data: Record<string, unknown>, told: Told) => (told.missing.length || told.note ? { ...data, translated: told } : data);
 const reason = (error: unknown, fallback: string) => (error instanceof Error && /^[a-z_]+$/.test(error.message.split(", ")[0]!) ? error.message.split(", ")[0]! : fallback);
 
 /** focus.yml with one photo's focus set; the file's comments are kept. */
@@ -94,6 +111,8 @@ export function contentApi(deps: ContentDeps) {
   const fetchFn = deps.fetchFn ?? fetch;
   const look = deps.look ?? realLook;
   const now = deps.now ?? (() => new Date());
+  const translator = deps.translate ?? appleTranslator(root);
+  const openUrl = deps.open ?? ((url: string) => void Bun.spawn(["/usr/bin/open", url], { stdin: "ignore", stdout: "ignore", stderr: "ignore" }));
   const text = (path: string) => Bun.file(join(root, path)).text().catch(() => "");
   const there = (path: string) => existsSync(join(root, path));
   const photoBytes = (base64: unknown): Uint8Array | null => {
@@ -106,6 +125,66 @@ export function contentApi(deps: ContentDeps) {
     if (there(path)) await unlink(join(root, path));
   };
   const albumList = async (): Promise<any[]> => parseYaml(await text("site/data/albums.yml"))?.albums ?? [];
+  /** The site's languages from site.yml, English first; only English when the file says nothing. */
+  const languages = async (): Promise<string[]> => {
+    let list: unknown;
+    try { list = parseYaml(await text("site/data/site.yml"))?.languages; } catch { list = null; }
+    const codes = Array.isArray(list) ? list.filter((l): l is string => typeof l === "string" && LANG.test(l)) : [];
+    return ["en", ...new Set(codes.filter((l) => l !== "en"))];
+  };
+
+  /**
+   * The texts of one save in every language of the site. Each job is what the form sent
+   * and what the file had; planTexts says what is kept and what is missing, and all that is
+   * missing goes to the translator in one run. A language it could not do stays out.
+   */
+  async function fillTexts(jobs: { given: Partial<Texts>; old?: Record<string, string> | null }[]): Promise<{ texts: Texts[]; told: Told }> {
+    const langs = await languages();
+    const plans = jobs.map((j) => planTexts(j.given, j.old, langs));
+    const english = [...new Set(plans.filter((p) => p.need.length && p.keep.en).map((p) => p.keep.en))];
+    const targets = [...new Set(plans.flatMap((p) => p.need))];
+    const told: Told = { missing: [], note: null };
+    if (!english.length) return { texts: plans.map((p) => p.keep), told };
+    let done: Awaited<ReturnType<Translator>> = { texts: {}, missing: [], failed: [] };
+    try { done = await translator(english, targets); } catch (error) { told.note = error instanceof Error ? error.message : String(error); }
+    for (const p of plans) for (const lang of p.need) {
+      const made = done.texts[lang]?.[english.indexOf(p.keep.en)];
+      if (typeof made === "string" && made.trim()) p.keep[lang] = made.trim();
+    }
+    told.missing = targets.filter((l) => done.missing.includes(l));
+    told.note ??= done.note ?? (done.failed.length ? "failed" : null);
+    return { texts: plans.map((p) => p.keep), told };
+  }
+
+  /**
+   * The short text of an imported event in the site's languages. Eventfrog's own text of a
+   * language is used as it is; the others are translated from English when Eventfrog has
+   * it, else from the language it has. A text whose language is not known (a public page)
+   * is recognised by the Mac. Without English in the end there is no text: the site falls
+   * back to English for every language.
+   */
+  async function importTexts(e: any): Promise<{ text?: Texts; told: Told }> {
+    const langs = await languages();
+    const told: Told = { missing: [], note: null };
+    const known: Record<string, string> = {};
+    if (textsShape(e?.texts)) for (const [k, v] of Object.entries(e.texts as Record<string, unknown>)) if (typeof v === "string" && v.trim() && langs.includes(k)) known[k] = v.trim().slice(0, MAX_TEXT);
+    const source = known.en ? "en" : langs.find((l) => known[l]) ?? null;
+    const from = source ? known[source]! : typeof e?.text === "string" ? e.text.trim().slice(0, MAX_TEXT) : "";
+    if (!from) return { told };
+    const out: Record<string, string> = { ...known };
+    const need = langs.filter((l) => !out[l]);
+    if (need.length) {
+      try {
+        const done = await translator([from], need, source ?? "auto");
+        for (const l of need) if (done.texts[l]?.[0]?.trim()) out[l] = done.texts[l]![0]!.trim();
+        told.missing = need.filter((l) => done.missing.includes(l));
+        told.note = done.note ?? null;
+      } catch (error) { told.note = error instanceof Error ? error.message : String(error); }
+    }
+    return out.en ? { text: out as Texts, told } : { told };
+  }
+  /** Several saves' notes as one: every missing language once. */
+  const joinTold = (all: Told[]): Told => ({ missing: [...new Set(all.flatMap((t) => t.missing))].sort(), note: all.find((t) => t.note)?.note ?? null });
   const names = async (folder: string, ending: string) => (there(`site/${folder}`) ? (await readdir(join(root, "site", folder))).filter((n) => n.endsWith(ending) && n !== "README.md").sort() : []);
   /** A name nothing in the folder has yet: the name itself, or with -2, -3 behind it. */
   const freeName = (folder: "moments" | "photos", base: string) => {
@@ -123,11 +202,12 @@ export function contentApi(deps: ContentDeps) {
     const moments = await Promise.all((await names("moments", ".md")).map(async (n) => {
       const id = n.slice(0, -3);
       const { data } = parseFrontMatter(await text(`site/moments/${n}`));
-      const pair = (v: any) => ({ en: String(v?.en ?? ""), de: String(v?.de ?? "") });
+      const pair = (v: any) => ({ ...textsOf(v), en: String(v?.en ?? "") });
       return { id, date: data.date instanceof Date ? data.date.toISOString().slice(0, 10) : String(data.date ?? ""), album: data.album ? String(data.album) : null, feed: data.feed !== false, caption: pair(data.caption), alt: pair(data.alt), photo: there(`site/moments/${id}.jpg`) ? `moments/${id}.jpg` : null };
     }));
     moments.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.id.localeCompare(b.id)));
     return {
+      languages: await languages(),
       albums: (await albumList()).map((a: any) => ({ slug: a.slug, title: a.title })),
       moments,
       menu: (parseYaml(await text("site/data/menu.yml"))?.sections ?? []).map((s: any) => ({ slug: s.slug, title: s.title, drinks: (s.drinks ?? []).map((d: any) => ({ name: d.name, price_chf: d.price_chf, text: d.text, photo: d.photo ?? null, alt: d.alt ?? null })) })),
@@ -160,7 +240,7 @@ export function contentApi(deps: ContentDeps) {
     }
     const fileDay = typeof modified === "number" && Number.isFinite(modified) && modified > 0 ? zonedDay(new Date(modified)) : null;
     const date = photoDay({ taken: seen?.taken, fileDay, today: zonedDay(now()) });
-    return { width, height, focus: seen?.focus ? [seen.focus.x, seen.focus.y] : null, faces: seen?.faces.length ?? 0, words: seen?.text.slice(0, 12) ?? [], draft: seen ? draftAlt(seen) : { en: "", de: "" }, date: date.day, date_from: date.from, note };
+    return { width, height, focus: seen?.focus ? [seen.focus.x, seen.focus.y] : null, faces: seen?.faces.length ?? 0, words: seen?.text.slice(0, 12) ?? [], draft: seen ? draftAlt(seen) : { en: "" }, date: date.day, date_from: date.from, note };
   }
 
   async function saveFocus(photo: string, focus: unknown) {
@@ -183,10 +263,10 @@ export function contentApi(deps: ContentDeps) {
   }
 
   /** The album a photo form names: an existing one, a new one made now, or none. A string is a refusal. */
-  async function albumFor(b: any): Promise<{ slug: string | null } | string> {
+  async function albumFor(b: any, newTitle?: Texts): Promise<{ slug: string | null } | string> {
     if (b.newAlbum != null) {
       try {
-        const made = addAlbum(await text("site/data/albums.yml"), { title: b.newAlbum });
+        const made = addAlbum(await text("site/data/albums.yml"), { title: newTitle ?? b.newAlbum });
         await deps.write("site/data/albums.yml", made.text);
         return { slug: made.slug };
       } catch (error) { return reason(error, "album_wrong"); }
@@ -213,8 +293,9 @@ export function contentApi(deps: ContentDeps) {
     }
   }
 
+  const drinkOf = (menu: string, part: string, name: string): any => (parseYaml(menu)?.sections ?? []).find((s: any) => s?.slug === part)?.drinks?.find((d: any) => d?.name === name) ?? null;
   const drinkPhoto = (menu: string, part: string, name: string): string | null => {
-    const drink = (parseYaml(menu)?.sections ?? []).find((s: any) => s?.slug === part)?.drinks?.find((d: any) => d?.name === name);
+    const drink = drinkOf(menu, part, name);
     return typeof drink?.photo === "string" ? drink.photo : null;
   };
 
@@ -268,31 +349,36 @@ export function contentApi(deps: ContentDeps) {
         const bytes = photoBytes(b.base64);
         if (!bytes) return refuse(400, "photo_unreadable");
         if (typeof b.date !== "string" || !DAY.test(b.date) || Number.isNaN(Date.parse(b.date))) return refuse(422, "event_date_wrong");
-        if (!both(b.caption) || !both(b.alt)) return refuse(422, "both_languages");
-        if (b.newAlbum != null && !both(b.newAlbum)) return refuse(422, "both_languages");
+        if (!hasEnglish(b.caption) || !hasEnglish(b.alt)) return refuse(422, "english_needed");
+        if (b.newAlbum != null && !hasEnglish(b.newAlbum)) return refuse(422, "english_needed");
         let cleaned;
         try { cleaned = await cleanPhoto(bytes); } catch { return refuse(422, "photo_unreadable"); }
-        const album = await albumFor(b);
+        const filled = await fillTexts([{ given: b.caption }, { given: b.alt }, ...(b.newAlbum != null ? [{ given: b.newAlbum }] : [])]);
+        const [caption, alt, newTitle] = filled.texts as [Texts, Texts, Texts?];
+        const album = await albumFor(b, newTitle);
         if (typeof album === "string") return refuse(422, album);
         // The name is made here, from the English caption: nobody has to think of one.
-        const id = freeName("moments", `${b.date}-${photoName(b.caption.en)}`);
+        const id = freeName("moments", `${b.date}-${photoName(caption.en)}`);
         await deps.write(`site/moments/${id}.jpg`, cleaned.data);
-        await deps.write(`site/moments/${id}.md`, momentMarkdown({ date: b.date, album: album.slug ?? undefined, feed: b.feed !== false, caption: { en: b.caption.en.trim(), de: noSharpS(b.caption.de) }, alt: { en: b.alt.en.trim(), de: noSharpS(b.alt.de) } }));
+        await deps.write(`site/moments/${id}.md`, momentMarkdown({ date: b.date, album: album.slug ?? undefined, feed: b.feed !== false, caption: cleanFor(caption), alt: cleanFor(alt) }));
         await saveFocus(`moments/${id}.jpg`, b.focus);
-        return json({ ok: true, id, path: `moments/${id}.jpg`, album: album.slug });
+        return json(withTold({ ok: true, id, path: `moments/${id}.jpg`, album: album.slug }, filled.told));
       }
 
       case "PUT photo": {
         const b = await body();
         const id = typeof b.id === "string" && NAME.test(b.id) ? b.id : "";
         if (!id || !there(`site/moments/${id}.md`)) return refuse(404, "photo_not_found");
-        if (!both(b.caption) || !both(b.alt)) return refuse(422, "both_languages");
-        if (b.newAlbum != null && !both(b.newAlbum)) return refuse(422, "both_languages");
-        const album = await albumFor(b);
+        if (!hasEnglish(b.caption) || !hasEnglish(b.alt)) return refuse(422, "english_needed");
+        if (b.newAlbum != null && !hasEnglish(b.newAlbum)) return refuse(422, "english_needed");
+        const before = parseFrontMatter(await text(`site/moments/${id}.md`)).data;
+        const filled = await fillTexts([{ given: b.caption, old: textsOf(before.caption) }, { given: b.alt, old: textsOf(before.alt) }, ...(b.newAlbum != null ? [{ given: b.newAlbum }] : [])]);
+        const [caption, alt, newTitle] = filled.texts as [Texts, Texts, Texts?];
+        const album = await albumFor(b, newTitle);
         if (typeof album === "string") return refuse(422, album);
         try {
-          await deps.write(`site/moments/${id}.md`, editMoment(await text(`site/moments/${id}.md`), { caption: b.caption, alt: b.alt, album: album.slug, feed: b.feed !== false }));
-          return json({ ok: true, id, album: album.slug });
+          await deps.write(`site/moments/${id}.md`, editMoment(await text(`site/moments/${id}.md`), { caption, alt, album: album.slug, feed: b.feed !== false }));
+          return json(withTold({ ok: true, id, album: album.slug }, filled.told));
         } catch (error) { return refuse(422, reason(error, "photo_not_found")); }
       }
 
@@ -313,17 +399,24 @@ export function contentApi(deps: ContentDeps) {
 
       case "POST album": {
         try {
-          const made = addAlbum(await text("site/data/albums.yml"), { title: (await body()).title });
+          const b = await body();
+          if (!hasEnglish(b.title)) return refuse(422, "english_needed");
+          const filled = await fillTexts([{ given: b.title }]);
+          const made = addAlbum(await text("site/data/albums.yml"), { title: filled.texts[0]! });
           await deps.write("site/data/albums.yml", made.text);
-          return json({ ok: true, slug: made.slug });
+          return json(withTold({ ok: true, slug: made.slug }, filled.told));
         } catch (error) { return refuse(422, reason(error, "album_wrong")); }
       }
 
       case "PUT album": {
         const b = await body();
         try {
-          await deps.write("site/data/albums.yml", renameAlbum(await text("site/data/albums.yml"), String(b.slug ?? ""), b.title));
-          return json({ ok: true });
+          if (!hasEnglish(b.title)) return refuse(422, "english_needed");
+          const was = (await albumList()).find((a) => a?.slug === String(b.slug ?? ""));
+          if (!was) return refuse(422, "album_unknown");
+          const filled = await fillTexts([{ given: b.title, old: textsOf(was.title) }]);
+          await deps.write("site/data/albums.yml", renameAlbum(await text("site/data/albums.yml"), String(b.slug ?? ""), filled.texts[0]!));
+          return json(withTold({ ok: true }, filled.told));
         } catch (error) { return refuse(422, reason(error, "album_wrong")); }
       }
 
@@ -341,14 +434,20 @@ export function contentApi(deps: ContentDeps) {
           const menu = await text("site/data/menu.yml");
           const before = was ? drinkPhoto(menu, was.part, was.name) : null;
           const part = b.part ? String(b.part) : slugify(String(b.partTitle?.en ?? ""));
-          // A dry run first: a refusal must not leave a picture behind.
-          const change = (d: typeof drink) => (was ? changeDrink(menu, was, part, d, b.partTitle) : setDrink(menu, part, d, b.partTitle));
+          if (!b.part && !hasEnglish(b.partTitle)) return refuse(422, "english_needed");
           if (!was && hasDrink(menu, part, String(drink.name))) return refuse(422, "drink_exists");
+          const old = was ? drinkOf(menu, was.part, was.name) : null;
+          const filled = await fillTexts([{ given: drink.text, old: textsOf(old?.text) }, ...(drink.alt ? [{ given: drink.alt, old: textsOf(old?.alt) }] : []), ...(b.part ? [] : [{ given: b.partTitle }])]);
+          drink.text = filled.texts[0];
+          if (drink.alt) drink.alt = filled.texts[1];
+          const partTitle = b.part ? undefined : filled.texts.at(-1);
+          // A dry run first: a refusal must not leave a picture behind.
+          const change = (d: typeof drink) => (was ? changeDrink(menu, was, part, d, partTitle) : setDrink(menu, part, d, partTitle));
           change(drink);
           if (picture !== "none") drink.photo = await writePicture("menu", String(drink.name), picture);
           await deps.write("site/data/menu.yml", change(drink));
           await sweepPictures([before]);
-          return json({ ok: true, photo: drink.photo ?? null });
+          return json(withTold({ ok: true, photo: drink.photo ?? null }, filled.told));
         } catch (error) { return refuse(422, reason(error, "drink_wrong")); }
       }
 
@@ -379,6 +478,12 @@ export function contentApi(deps: ContentDeps) {
         const problems = eventProblems(event);
         if (problems.length) return refuse(422, problems[0]!, { problems });
         if (event.image && !there(`site/${event.image}`)) return refuse(422, "event_image_wrong");
+        let told: Told = { missing: [], note: null };
+        if (event.text?.en?.trim()) {
+          const filled = await fillTexts([{ given: event.text, old: kept?.text ? textsOf(kept.text) : null }]);
+          event.text = filled.texts[0];
+          told = filled.told;
+        } else delete event.text;
         // The file keeps its place when the name and the day did not change, also when it was
         // named by hand ("queens-gambit" for "Queen's Gambit"); otherwise the old one goes.
         const made = `site/${eventFile(event).path}`;
@@ -389,7 +494,7 @@ export function contentApi(deps: ContentDeps) {
         await deps.write(path, editing ? keepComments(oldText, file.text) : file.text);
         if (editing && path !== old) { await remove(old); deps.changed(); }
         await sweepPictures([kept?.image ?? null]);
-        return json({ ok: true, path, image: event.image ?? null });
+        return json(withTold({ ok: true, path, image: event.image ?? null }, told));
       }
 
       case "DELETE event": {
@@ -421,18 +526,49 @@ export function contentApi(deps: ContentDeps) {
         const list: Imported[] = Array.isArray(b.events) ? b.events.slice(0, 40) : [];
         const category = ["comedy", "music", "other"].includes(b.category) ? b.category : "other";
         let added = 0, skipped = 0;
+        const notes: Told[] = [];
         for (const e of list) {
           try {
             if (typeof e?.title !== "string" || typeof e.start !== "string" || typeof e.end !== "string") throw new Error("shape");
             const url = e.url ? eventfrogUrl(e.url).href : "";
             const image = await importPicture(e.image, slugify(e.title));
-            const file = eventFile({ title: e.title.trim(), start: e.start, end: e.end, ticket_url: url, source_url: url || undefined, price_chf: typeof e.price_chf === "number" ? e.price_chf : null, category, organiser: typeof e.organiser === "string" ? e.organiser : undefined, image: image ?? undefined });
-            if (there(`site/${file.path}`)) { skipped++; continue; }
+            const fields: EventInput = { title: e.title.trim(), start: e.start, end: e.end, ticket_url: url, source_url: url || undefined, price_chf: typeof e.price_chf === "number" ? e.price_chf : null, category, organiser: typeof e.organiser === "string" ? e.organiser : undefined, image: image ?? undefined };
+            if (there(`site/${eventFile(fields).path}`)) { skipped++; continue; }
+            const said = await importTexts(e);
+            notes.push(said.told);
+            const file = eventFile(said.text ? { ...fields, text: said.text } : fields);
             await deps.write(`site/${file.path}`, file.text);
             added++;
           } catch { skipped++; }
         }
-        return json({ ok: true, added, skipped });
+        return json(withTold({ ok: true, added, skipped }, joinTold(notes)));
+      }
+
+      case "POST translate": {
+        // What the form shows under an English text right after it is typed. Nothing is written.
+        const b = await body();
+        const texts: unknown[] = Array.isArray(b.texts) ? b.texts : [];
+        if (!texts.length || texts.length > 20 || texts.some((x) => typeof x !== "string" || !x.trim() || x.length > MAX_TEXT)) return refuse(422, "english_needed");
+        const others = (await languages()).filter((l) => l !== "en");
+        try {
+          const done = await translator((texts as string[]).map((x) => x.trim()), others);
+          return json({ languages: others, texts: done.texts, missing: done.missing, note: done.note ?? (done.failed.length ? "failed" : null) });
+        } catch (error) { return json({ languages: others, texts: {}, missing: [], note: error instanceof Error ? error.message : String(error) }); }
+      }
+
+      case "GET translate/status": {
+        // Which languages this Mac can translate into right now: asks the system, translates nothing.
+        const others = (await languages()).filter((l) => l !== "en");
+        try {
+          const done = await translator([], others);
+          return json({ languages: others, ready: others.filter((l) => done.texts[l]), missing: done.missing, note: done.note ?? null });
+        } catch (error) { return json({ languages: others, ready: [], missing: [], note: error instanceof Error ? error.message : String(error) }); }
+      }
+
+      case "POST translate/settings": {
+        // One fixed address: System Settings at Language and Region. Nothing from the request is opened.
+        openUrl(TRANSLATION_SETTINGS);
+        return json({ ok: true });
       }
 
       case "POST restore": {

@@ -20,7 +20,7 @@ export function publishNotes(changes: FileChange[], details: string[] = []): str
 const count = (changes: FileChange[], status: Status) => changes.filter((c) => c.status === status).length;
 
 /** One line for everything that changed, fixed order: hours, events, photos, albums, menu, venue, pages, labels, the rest. */
-export function describeChanges(changes: FileChange[], t: Strings = STRINGS.en): string {
+export function describeChanges(changes: FileChange[], t: Strings = STRINGS): string {
   const parts: string[] = [];
   const rest = new Set(changes);
   const take = (test: (path: string) => boolean) => {

@@ -14,7 +14,7 @@ import { dirname, join } from "node:path";
 import { parse as parseYaml } from "yaml";
 import { hoursEditable, validateWeek, weekFromYaml, weekToYaml, DAYS, type Week } from "../editor/changes";
 import { inEditScope } from "../editor/scope";
-import { STRINGS as EDITOR_STRINGS, pickLang } from "../editor/strings";
+import { STRINGS as EDITOR_STRINGS } from "../editor/strings";
 import { tokensCss } from "../tokens";
 import { studioGitHub } from "./checks";
 import type { FileChange } from "./describe";
@@ -59,6 +59,8 @@ export type StudioOptions = {
   /** For tests: the fetch used for Eventfrog, and the Apple Vision call. */
   fetchFn?: ContentDeps["fetchFn"];
   look?: ContentDeps["look"];
+  /** For tests: the translator, so no Swift runs. */
+  translate?: ContentDeps["translate"];
   /** Ask the remote for the newest main when starting. */
   fetchOnStart?: boolean;
 };
@@ -206,7 +208,7 @@ export async function startStudio(options: StudioOptions) {
   // Read once: the version cannot change while this server runs, an update happens before it starts.
   const version: StudioState["version"] = { ...(await studioVersion(root)), update: await readReport(root) };
 
-  const contentRoutes = contentApi({ root, write, changed: () => { send("state"); void site_.build(); }, readKey: (name) => keys.read(name), fetchFn: options.fetchFn, look: options.look, previewDir: site_.dir, git, busy: () => publishing.running || starting });
+  const contentRoutes = contentApi({ root, write, changed: () => { send("state"); void site_.build(); }, readKey: (name) => keys.read(name), fetchFn: options.fetchFn, look: options.look, translate: options.translate, open, previewDir: site_.dir, git, busy: () => publishing.running || starting });
 
   async function api(req: Request, url: URL): Promise<Response> {
     const route = `${req.method} ${url.pathname.slice("/_studio/api/".length)}`;
@@ -219,13 +221,13 @@ export async function startStudio(options: StudioOptions) {
         return json({ editable: hoursEditable(text), week: weekFromYaml(text) });
       }
       case "PUT hours": {
-        const { week, lang } = (await body()) as { week?: Week; lang?: string };
+        const { week } = (await body()) as { week?: Week };
         const text = await Bun.file(join(root, HOURS)).text();
         const shaped = !!week && DAYS.every((d) => week[d] && typeof week[d].closed === "boolean" && typeof week[d].open === "string" && (week[d].close === null || typeof week[d].close === "string"));
         if (!week || !shaped) return refuse(400, "not a week");
         if (!hoursEditable(text)) return refuse(409, "hours_closed_form");
-        // The reasons come from the phone editor's strings file, which has them in both languages.
-        const problems = validateWeek(week, EDITOR_STRINGS[pickLang(lang ?? null, undefined)]);
+        // The reasons come from the phone editor's strings file; the Studio speaks English.
+        const problems = validateWeek(week, EDITOR_STRINGS.en);
         if (problems.length) return json({ problems }, 422);
         await write(HOURS, weekToYaml(text, week));
         return json({ ok: true });
@@ -310,13 +312,11 @@ export async function startStudio(options: StudioOptions) {
       if (existsSync(join(file, "index.html"))) return new Response(null, { status: 302, headers: { Location: url.pathname + "/" + url.search } });
       file = join(site_.dir, "404.html");
       status = 404;
-      if (!existsSync(file)) return new Response(site_.state().status === "building" ? STRINGS.en.build_building : STRINGS.en.build_failed, { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8", "Retry-After": "2" } });
+      if (!existsSync(file)) return new Response(site_.state().status === "building" ? STRINGS.build_building : STRINGS.build_failed, { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8", "Retry-After": "2" } });
     }
     if (!file.endsWith(".html")) return new Response(Bun.file(file), { status, headers: { "Cache-Control": "no-store" } });
     const html = await Bun.file(file).text();
-    // In the language of the page: a German page says it in German.
-    const words = STRINGS[/<html[^>]*\blang="de"/i.test(html) ? "de" : "en"].preview_mark;
-    return new Response(previewMark(html, words), { status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
+    return new Response(previewMark(html, STRINGS.preview_mark), { status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
   }
 
   const self: Self = { port: options.port ?? DEFAULT_PORT, token: crypto.randomUUID() + crypto.randomUUID() };
@@ -358,7 +358,7 @@ export async function startStudio(options: StudioOptions) {
         if (url.pathname.startsWith("/_studio/photo/")) return workingPhoto(root, url.pathname);
         if (url.pathname === "/_studio") return new Response(null, { status: 302, headers: { Location: "/_studio/" } });
         if (url.pathname === "/_studio/") {
-          const html = `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="studio-token" content="${self.token}"><title>${STRINGS.en.app_name}</title><link rel="stylesheet" href="/_studio/app.css"></head><body><div id="app"></div><script type="module" src="/_studio/app.js"></script></body></html>\n`;
+          const html = `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="studio-token" content="${self.token}"><title>${STRINGS.app_name}</title><link rel="stylesheet" href="/_studio/app.css"></head><body><div id="app"></div><script type="module" src="/_studio/app.js"></script></body></html>\n`;
           return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Frame-Options": "DENY", "Content-Security-Policy": "frame-ancestors 'none'; default-src 'self'; img-src 'self' blob:", "Referrer-Policy": "no-referrer" } });
         }
         if (url.pathname === "/_studio/app.js") return new Response(appJs, { headers: { "Content-Type": "text/javascript; charset=utf-8", "Cache-Control": "no-store" } });
