@@ -1002,6 +1002,10 @@ describe("studio: the lines under a publish", () => {
       'Album added: "Comedy" (`comedy`)',
       'Album removed: "Old" (`old`)',
     ]);
+    // The cut of a new picture is not a line of its own; the cut of a picture that was there is.
+    const cut = (after: string) => detailLines([{ path: "site/data/focus.yml", status: "modified", before: '"photos/a.jpg": [0.5, 0.5]\n', after }, { path: "site/moments/n.jpg", status: "added", before: null, after: null }]);
+    expect(cut('"photos/a.jpg": [0.5, 0.5]\n"moments/n.jpg": [0.2, 0.3]\n')).toEqual(["Photo added: `n.jpg`"]);
+    expect(cut('"photos/a.jpg": [0.1, 0.5]\n"moments/n.jpg": [0.2, 0.3]\n')).toEqual(["Where a picture is cut updated: photos/a.jpg", "Photo added: `n.jpg`"]);
     expect(detailLines([{ path: "site/moments/x.md", status: "removed", before: moment, after: null }, { path: "site/moments/x.jpg", status: "removed", before: null, after: null }])).toEqual(['Photo removed: `x.jpg`, "Open mic night", album "comedy"']);
   });
 

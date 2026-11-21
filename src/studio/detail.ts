@@ -73,10 +73,13 @@ function event(f: FileTexts): string[] {
 }
 
 /** The top level keys of a data file whose value is not what it was. */
-function keys(label: string, before: string | null, after: string | null): string[] {
+function keys(label: string, before: string | null, after: string | null, skip: (key: string) => boolean = () => false): string[] {
   const was = yaml(before);
   const now = yaml(after);
-  const changed = [...new Set([...Object.keys(was), ...Object.keys(now)])].filter((k) => JSON.stringify(was[k]) !== JSON.stringify(now[k]));
+  const all = [...new Set([...Object.keys(was), ...Object.keys(now)])].filter((k) => JSON.stringify(was[k]) !== JSON.stringify(now[k]));
+  const changed = all.filter((k) => !skip(k));
+  // Everything that changed is told by another line already.
+  if (all.length && !changed.length) return [];
   return [changed.length ? `${label} updated: ${changed.map((k) => clean(k)).join(", ")}` : `${label} updated`];
 }
 
@@ -108,7 +111,8 @@ export function detailLines(files: FileTexts[], albumTitles: Record<string, stri
     else if (/^site\/events\/.+\.md$/.test(f.path) && !/\/README\.md$/i.test(f.path)) lines.push(...event(f));
     else if (f.path === "site/data/site.yml") lines.push(...keys("Venue details", f.before, f.after));
     else if (f.path === "site/data/home.yml") lines.push(...keys("Home page", f.before, f.after));
-    else if (f.path === "site/data/focus.yml") lines.push(...keys("Where a picture is cut", f.before, f.after));
+    // The cut of a picture that comes or goes in the same change is part of that picture's own line.
+    else if (f.path === "site/data/focus.yml") lines.push(...keys("Where a picture is cut", f.before, f.after, (k) => files.some((x) => x.path === `site/${k}` && x.status !== "modified")));
     else if (/^site\/photos\/.+\.jpg$/.test(f.path)) lines.push(`Picture ${DID[f.status]}: \`${clean(f.path.slice("site/photos/".length))}\``);
     else lines.push(`\`${clean(f.path)}\` (${f.status})`);
   }
