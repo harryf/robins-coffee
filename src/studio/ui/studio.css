@@ -43,6 +43,12 @@ a { color: var(--c-violet); }
 .muted { color: var(--c-muted); font-size: var(--size-sm); }
 .ok { color: var(--c-green); font-weight: var(--weight-semi); }
 .problem { padding: var(--space-3) var(--space-4); border: var(--border-thin) solid var(--c-amber); border-radius: var(--radius-sm); color: var(--c-amber); font-size: var(--size-sm); display: grid; gap: var(--space-2); }
+/* "The Studio was updated", once after an update. */
+.notice { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-2) var(--space-4); padding: var(--space-3) var(--space-4); border: var(--border-thin) solid var(--c-green); border-radius: var(--radius-sm); background: var(--c-surface); }
+.notice[hidden] { display: none; }
+.notice > p { grid-column: 1; }
+.notice__text { font-weight: var(--weight-semi); }
+.notice__close { grid-column: 2; grid-row: 1; }
 .problem pre { margin: 0; overflow-x: auto; color: var(--c-text); font-size: var(--size-xs); white-space: pre-wrap; }
 
 .form { display: grid; gap: var(--space-4); max-width: var(--measure-form); }

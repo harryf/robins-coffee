@@ -5,7 +5,8 @@
 // It listens on 127.0.0.1 only and stops with the process. src/studio/guard.ts says who
 // may call the API and which files it may write; this file wires the parts together.
 import { readConfig, saveFolder } from "./config";
-import { readReport, studioVersion, type UpdateReport } from "./update";
+import { recordInstall, readReport, studioVersion, withVersions, type UpdateReport } from "./update";
+import { changelogUrl, updateNotice, type UpdateNotice } from "./startup";
 import { contentApi, workingPhoto, type ContentDeps } from "./content-api";
 import { parseArgs } from "node:util";
 import { existsSync } from "node:fs";
@@ -73,7 +74,17 @@ export type StudioState = {
   publish: { running: boolean; steps: Step[]; result: PublishResult | null; started?: number; ended?: number };
   preview: string;
   /** The Studio's own version, the commit the folder is on, and what the look for a newer one found at start. */
-  version: { number: string; commit: string; update: UpdateReport | null };
+  version: {
+    number: string;
+    commit: string;
+    update: UpdateReport | null;
+    /** When this Mac first ran this version (ISO), from the launcher's record. */
+    installed: string | null;
+    /** The changelog at the exact commit the folder runs. */
+    changelog: string | null;
+    /** "The Studio was updated", until it is closed. */
+    notice: UpdateNotice | null;
+  };
 };
 
 const json = (data: unknown, status = 200) => Response.json(data, { status, headers: { "Cache-Control": "no-store" } });
@@ -81,6 +92,14 @@ const refuse = (status: number, error: string) => json({ error }, status);
 
 /** "owner/name" of a GitHub address as git writes it (https or ssh), or null for anything else. */
 export const githubRepo = (address: string): string | null => /^(?:https:\/\/github\.com\/|git@github\.com:|ssh:\/\/git@github\.com\/)([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+?)(?:\.git)?\/?$/.exec(address.trim())?.[1] ?? null;
+
+/** git in the folder, reading only: for the version numbers of an update. */
+const localGit = (root: string) => async (args: string[]): Promise<string> => {
+  const proc = Bun.spawn(["git", ...args], { cwd: root, stdin: "ignore", stdout: "pipe", stderr: "ignore" });
+  const out = await new Response(proc.stdout).text();
+  if ((await proc.exited) !== 0) throw new Error(`git ${args[0]} failed`);
+  return out;
+};
 
 async function originRepo(root: string): Promise<string | null> {
   const proc = Bun.spawn(["git", "remote", "get-url", "origin"], { cwd: root, stdin: "ignore", stdout: "pipe", stderr: "ignore" });
@@ -205,7 +224,24 @@ export async function startStudio(options: StudioOptions) {
   for (const name of await readdir(join(root, ".cache", "studio")).catch(() => [] as string[])) if (name.startsWith("look-")) await unlink(join(root, ".cache", "studio", name)).catch(() => {});
 
   // Read once: the version cannot change while this server runs, an update happens before it starts.
-  const version: StudioState["version"] = { ...(await studioVersion(root)), update: await readReport(root) };
+  const running = await studioVersion(root);
+  // The start that brings this version ran the launcher of the version before, which wrote
+  // neither the numbers nor the install record: both are filled in here when missing.
+  const report = await readReport(root);
+  const filled = report?.result === "updated" && !report.toVersion ? await withVersions(localGit(root), report) : report;
+  // When the update landed on the commit this folder runs, the number running is the truth.
+  const update = filled && filled.result === "updated" && filled.to === running.full && running.number !== "?" ? { ...filled, toVersion: running.number } : filled;
+  const installed = await recordInstall(root, update).catch(() => null);
+  const noticePath = join(root, ".cache", "studio", "notice.json");
+  const seen = await Bun.file(noticePath).json().then((d: any) => (typeof d?.seen === "string" ? d.seen : null), () => null);
+  let version: StudioState["version"] = {
+    number: running.number,
+    commit: running.commit,
+    update,
+    installed: installed?.version === running.number ? installed.at : null,
+    changelog: changelogUrl(repo, running.full, running.number),
+    notice: updateNotice(update, seen),
+  };
 
   const contentRoutes = contentApi({ root, write, changed: () => { send("state"); void site_.build(); }, readKey: (name) => keys.read(name), fetchFn: options.fetchFn, look: options.look, translate: options.translate, open, previewDir: site_.dir, git, busy: () => publishing.running || starting });
 
@@ -266,6 +302,17 @@ export async function startStudio(options: StudioOptions) {
         }
         void runPublish();
         return json({ ok: true }, 202);
+      case "POST notice": {
+        // The update note was closed: it does not come back for this update.
+        const to = version.notice?.to;
+        if (to) {
+          await mkdir(dirname(noticePath), { recursive: true });
+          await Bun.write(noticePath, JSON.stringify({ seen: to }) + "\n");
+          version = { ...version, notice: null };
+          send("state");
+        }
+        return json({ ok: true });
+      }
       case "GET folder":
         return json({ current: root, saved: (await readConfig()).folder ?? null });
       case "PUT folder": {

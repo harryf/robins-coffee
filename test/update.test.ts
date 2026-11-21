@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { selfUpdate, readReport, reportPath, studioVersion, type UpdateDeps } from "../src/studio/update";
+import { selfUpdate, readReport, reportPath, studioVersion, readInstalled, recordInstall, installedPath, type UpdateDeps } from "../src/studio/update";
 import { folderProblem, readConfig, saveFolder } from "../src/studio/config";
 import { updateLine } from "../src/studio/ui/system";
 import { STRINGS } from "../src/studio/strings";
@@ -127,7 +127,39 @@ describe("studio: it updates itself at start", () => {
     expect((await readReport(w.mine))!.result).toBe("updated");
     writeFileSync(reportPath(w.mine), "{ not json");
     expect(await readReport(w.mine)).toBeNull();
-    expect(await studioVersion(w.mine)).toEqual({ number: "0.9.0", commit: w.head().slice(0, 7) });
+    expect(await studioVersion(w.mine)).toEqual({ number: "0.9.0", commit: w.head().slice(0, 7), full: w.head() });
+  });
+  test("an update reports the version numbers before and after, read with git at each commit", async () => {
+    const w = world();
+    const steps: string[] = [];
+    w.release({ "src/studio/version.json": '{ "version": "0.9.1" }\n', "bun.lock": "x\n", "app/Studio.swift": "// new\n" });
+    expect(await selfUpdate(w.deps({ step: (s) => void steps.push(s) }))).toMatchObject({ result: "updated", fromVersion: "0.9.0", toVersion: "0.9.1", appRebuilt: true });
+    expect(steps).toEqual(["installing", "rebuilding"]);
+    // Nothing newer: no numbers, no steps.
+    expect(await selfUpdate(w.deps({ step: (s) => void steps.push(s) }))).not.toHaveProperty("toVersion");
+    expect(steps).toEqual(["installing", "rebuilding"]);
+    // A version file that cannot be read leaves the number out; the update itself still counts.
+    const w2 = world();
+    w2.release({ "src/studio/version.json": "not json\n" });
+    const report = await selfUpdate(w2.deps());
+    expect(report).toMatchObject({ result: "updated", fromVersion: "0.9.0" });
+    expect(report).not.toHaveProperty("toVersion");
+  });
+  test("the install record: dated when a version is first seen, kept while it runs", async () => {
+    const w = world();
+    expect(await readInstalled(w.mine)).toBeNull();
+    // First record, no update this start: now.
+    const first = await recordInstall(w.mine, { result: "current", at: "2026-11-20T22:00:00.000Z" }, new Date("2026-11-21T09:00:00Z"));
+    expect(first).toEqual({ version: "0.9.0", commit: w.head(), at: "2026-11-21T09:00:00.000Z" });
+    // Later starts keep the first day.
+    expect(await recordInstall(w.mine, null, new Date("2026-12-01T09:00:00Z"))).toEqual(first);
+    // A new version that came by an update: the update's time.
+    w.release({ "src/studio/version.json": '{ "version": "0.9.1" }\n' });
+    const report = await selfUpdate(w.deps());
+    expect(await recordInstall(w.mine, report, new Date("2026-12-02T09:00:00Z"))).toEqual({ version: "0.9.1", commit: w.head(), at: report.at });
+    expect(await readInstalled(w.mine)).toEqual({ version: "0.9.1", commit: w.head(), at: report.at });
+    writeFileSync(installedPath(w.mine), "{ broken");
+    expect(await readInstalled(w.mine)).toBeNull();
   });
   test("every reason has words", () => {
     {

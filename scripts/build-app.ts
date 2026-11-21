@@ -43,6 +43,21 @@ export async function appIcon(background: string): Promise<Uint8Array> {
   }
 }
 
+/**
+ * The start screen the window shows before the Studio answers: a page, the roundel and the
+ * two fonts in one folder (Contents/Resources/start), so it needs no server.
+ */
+export async function writeStartScreen(dir: string): Promise<string> {
+  const { startPage, START_PAGE, START_LOGO, START_FONTS } = await import("../src/studio/start-page");
+  const { STRINGS } = await import("../src/studio/strings");
+  const tokens = JSON.parse(await Bun.file(join(ROOT, "site", "data", "tokens.json")).text());
+  await mkdir(join(dir, "fonts"), { recursive: true });
+  await Bun.write(join(dir, START_PAGE), startPage(tokens, STRINGS));
+  await Bun.write(join(dir, START_LOGO), Bun.file(join(ROOT, "site", "assets", "brand", "logo-roundel-white.png")));
+  for (const [name, from] of Object.entries(START_FONTS)) await Bun.write(join(dir, "fonts", name), Bun.file(join(ROOT, "node_modules", from)));
+  return join(dir, START_PAGE);
+}
+
 /** The bundle's Info.plist. `repository` is where the app will start the Studio; `background` is the window colour before the page loads. */
 export function infoPlist(repository: string, version: string, background: string): string {
   const entries: [string, string][] = [
@@ -130,6 +145,12 @@ Needs the Swift compiler: xcode-select --install`);
       await Bun.write(join(fresh, "Contents", "Resources", "AppIcon.icns"), await appIcon(background));
     } catch (error) {
       console.error(`(the app has no icon: ${error instanceof Error ? error.message : String(error)})`);
+    }
+    // So is the start screen: without it the window shows its plain night colour until the Studio answers.
+    try {
+      await writeStartScreen(join(fresh, "Contents", "Resources", "start"));
+    } catch (error) {
+      console.error(`(the app has no start screen: ${error instanceof Error ? error.message : String(error)})`);
     }
     await rm(old, { recursive: true, force: true });
     if (existsSync(app)) await rename(app, old);

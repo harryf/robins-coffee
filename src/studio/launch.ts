@@ -10,7 +10,11 @@ import { dirname, join, resolve } from "node:path";
 import { readConfig } from "./config";
 import { authEnv } from "./git";
 import { keychain } from "./keychain";
-import { readReport, reportPath, selfUpdate, type UpdateReport } from "./update";
+import { stepLine, type StartStep } from "./startup";
+import { readReport, recordInstall, reportPath, selfUpdate, type UpdateReport } from "./update";
+
+// One line per step for the app's start screen (see src/studio/startup.ts).
+const say = (step: StartStep) => console.log(stepLine(step));
 
 const root = join(import.meta.dir, "..", "..");
 const args = Bun.argv.slice(2);
@@ -32,6 +36,7 @@ const appDir = installed && existsSync(installed) && resolve(installed).endsWith
 let report: UpdateReport;
 if (offline) report = { result: "skipped", reason: "offline", at: new Date().toISOString() };
 else {
+  say("checking");
   try {
     // The key is only for a private copy; a public repository answers without one. An ssh origin ignores it.
     const token = await keychain().read("github").catch(() => null);
@@ -43,6 +48,7 @@ else {
       install: async () => void (await run([process.execPath, "install", "--frozen-lockfile"], {}, 180_000)),
       rebuildApp: async () => void (await run([process.execPath, join("scripts", "build-app.ts"), "--out", appDir], {}, 180_000)),
       hasApp: () => existsSync(join(appDir, "ROBINs Studio.app")),
+      step: say,
     });
   } catch (error) {
     report = { result: "failed", reason: "merge", at: new Date().toISOString() };
@@ -51,8 +57,11 @@ else {
 }
 await mkdir(dirname(reportPath(root)), { recursive: true });
 await Bun.write(reportPath(root), JSON.stringify(report, null, 2) + "\n");
-if (report.result === "updated") console.log(`Updated the Studio (${report.from?.slice(0, 7)} to ${report.to?.slice(0, 7)}).`);
+if (report.result === "updated") console.log(`Updated the Studio (${report.fromVersion ?? report.from?.slice(0, 7)} to ${report.toVersion ?? report.to?.slice(0, 7)}).`);
+// The day this Mac first ran this version, for Settings. A failure here must not stop the start.
+await recordInstall(root, report).catch((error) => console.error(`install record: ${error instanceof Error ? error.message : String(error)}`));
 
+say("starting");
 // The server gets this process's own input and output: when the app lets go of the
 // input (its lifeline), the server sees it and stops, and so does this.
 const server = Bun.spawn([process.execPath, join("src", "studio", "server.ts"), ...args], { cwd: root, stdin: "inherit", stdout: "inherit", stderr: "inherit" });
