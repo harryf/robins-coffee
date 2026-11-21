@@ -329,6 +329,7 @@ export async function startStudio(options: StudioOptions) {
           return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Frame-Options": "DENY", "Content-Security-Policy": "frame-ancestors 'none'; default-src 'self'; img-src 'self' blob:", "Referrer-Policy": "no-referrer" } });
         }
         if (url.pathname === "/_studio/app.js") return new Response(appJs, { headers: { "Content-Type": "text/javascript; charset=utf-8", "Cache-Control": "no-store" } });
+        if (url.pathname === "/_studio/logo.png") return new Response(Bun.file(join(root, "site", "assets", "brand", "logo-roundel-white.png")), { headers: { "Content-Type": "image/png", "Cache-Control": "no-store" } });
         if (url.pathname === "/_studio/app.css") return new Response(appCss, { headers: { "Content-Type": "text/css; charset=utf-8", "Cache-Control": "no-store" } });
         const font = FONTS[url.pathname.slice("/_studio/fonts/".length)];
         if (url.pathname.startsWith("/_studio/fonts/") && font) return new Response(Bun.file(join(root, "node_modules", font)), { headers: { "Content-Type": "font/woff2" } });

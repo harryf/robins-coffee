@@ -101,3 +101,42 @@ describe("studio: a picture nothing uses any more is deleted", () => {
     expect(existsSync(join(s.root, edited.data.path))).toBe(false);
   });
 });
+
+import { readConfig, saveFolder } from "../src/studio/config";
+import { infoPlist } from "../scripts/build-app";
+
+describe("studio: installing it on another Mac", () => {
+  const ROOT = join(import.meta.dir, "..");
+  const LINE = "curl -fsSL https://raw.githubusercontent.com/harryf/robins-coffee/main/scripts/install-studio.sh | bash";
+  test("the install page shows, in both languages, exactly the line the script documents, and is kept out of search", async () => {
+    const script = await Bun.file(join(ROOT, "scripts", "install-studio.sh")).text();
+    expect(script).toContain(`#   ${LINE}`);
+    for (const lang of ["en", "de"]) {
+      const page = await Bun.file(join(SITE, "content", lang, "studio.md")).text();
+      expect(page).toContain("\n```\n" + LINE + "\n```\n");
+      expect(page).toContain("noindex: true");
+      expect(page).toContain("https://github.com/harryf/robins-coffee/blob/main/scripts/install-studio.sh");
+      expect(page).not.toContain("ß");
+    }
+  });
+  test("the script is valid shell, stops at the first error, asks for no password and reaches only its own places", async () => {
+    const script = await Bun.file(join(ROOT, "scripts", "install-studio.sh")).text();
+    expect(Bun.spawnSync(["bash", "-n", join(ROOT, "scripts", "install-studio.sh")]).exitCode).toBe(0);
+    expect(script).toContain("set -euo pipefail");
+    expect(script).not.toMatch(/\bsudo\b/);
+    const hosts = [...script.matchAll(/https:\/\/([a-z0-9.-]+)/g)].map((m) => m[1]);
+    expect([...new Set(hosts)].sort()).toEqual(["bun.sh", "github.com", "harryf.github.io", "raw.githubusercontent.com"]);
+    expect(script).not.toMatch(/rm -rf/);
+  });
+  test("the place of the app is remembered beside the folder, and choosing another folder keeps it", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "studio-install-"));
+    const file = join(dir, "config.json");
+    writeFileSync(file, JSON.stringify({ folder: "/old", app: "/Users/x/Applications/ROBINs Studio.app", other: 1 }));
+    expect(await readConfig(file)).toEqual({ folder: "/old", app: "/Users/x/Applications/ROBINs Studio.app" });
+    await saveFolder(ROOT, file);
+    expect(await readConfig(file)).toEqual({ folder: ROOT, app: "/Users/x/Applications/ROBINs Studio.app" });
+  });
+  test("the app names its icon", () => {
+    expect(infoPlist("/x", "0.9.3", "#150a17")).toContain("<key>CFBundleIconFile</key>\n  <string>AppIcon</string>");
+  });
+});
