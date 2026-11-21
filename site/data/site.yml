@@ -33,4 +33,4 @@ events_feed_venue: "robins"
 # While true every page carries noindex, so the preview never competes with the
 # live WordPress site. Set to false in the DNS cut-over pull request.
 preview: true
-languages: [en, de]
+languages: [en, de, fr, it]

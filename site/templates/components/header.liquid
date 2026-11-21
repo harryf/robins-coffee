@@ -1,4 +1,4 @@
-{% comment %} header: site, t, home_url, other (the same page in the other language, may be nil), events_url, gallery_url, on_photo (true when the page starts with the hero photo). The theme switch (coffee cup: day colours, cocktail: night colours) is shown by site.js, so it is absent without JavaScript. {% endcomment %}
+{% comment %} header: site, t, home_url, langs_menu (this page in each language it exists in: lang, url, name, current), lang (the page language), events_url, gallery_url, on_photo (true when the page starts with the hero photo). The theme switch (coffee cup: day colours, cocktail: night colours) is shown by site.js, so it is absent without JavaScript. The language menu is a disclosure, so it opens without JavaScript; site.js closes it on a click outside and remembers the language picked. {% endcomment %}
 <header class="site-header{% if on_photo %} on-photo{% endif %}">
   <div class="wrap site-header__row">
     <a class="brand" href="{{ home_url | url }}" aria-label="{{ site.legal_name }}">
@@ -10,8 +10,15 @@
       <a class="nav-link" href="{{ gallery_url | url }}">{{ t.nav_gallery }}</a>
       {% render 'components/open-pill', t: t %}
       <button class="theme-switch" type="button" role="switch" aria-checked="true" aria-label="{{ t.theme_switch }}" data-theme-switch hidden><span data-theme-side="day" aria-hidden="true">☕</span><span data-theme-side="night" aria-hidden="true">🍸</span></button>
-      {%- if other %}
-      <a class="lang" href="{{ other.url | url }}" hreflang="{{ other.lang }}" lang="{{ other.lang }}">{{ t.lang_switch }}</a>
+      {%- if langs_menu.size > 1 %}
+      <details class="langs" data-langs>
+        <summary class="langs__now" aria-label="{{ t.lang_menu }}: {{ t.lang_name }}">{{ lang | upcase }}<span class="langs__arrow" aria-hidden="true"></span></summary>
+        <ul class="langs__menu">
+          {%- for l in langs_menu %}
+          <li><a class="langs__item" href="{{ l.url | url }}" hreflang="{{ l.lang }}" lang="{{ l.lang }}" data-lang="{{ l.lang }}"{% if l.current %} aria-current="page"{% endif %}><span class="langs__code" aria-hidden="true">{{ l.lang | upcase }}</span> {{ l.name }}</a></li>
+          {%- endfor %}
+        </ul>
+      </details>
       {%- endif %}
     </div>
   </div>

@@ -20,9 +20,9 @@ const photos: Record<string, Photo> = Object.fromEntries(photoPaths.map((p) => [
 const tokens = JSON.parse(files["data/tokens.json"]!);
 
 describe("renderer", () => {
-  test("renders home in both languages plus the style guide", async () => {
+  test("renders home in four languages plus the style guide", async () => {
     const pages = await renderSite(files, { base: "/robins-coffee/", photos });
-    expect(pages.map((p) => p.out).sort()).toEqual(["404.html", "de/events/index.html", "de/gallery/index.html", "de/index.html", "de/studio/index.html", "edit/index.html", "events/index.html", "gallery/index.html", "index.html", "studio/index.html", "styleguide/index.html"]);
+    expect(pages.map((p) => p.out).sort()).toEqual(["404.html", "de/events/index.html", "de/gallery/index.html", "de/index.html", "de/studio/index.html", "edit/index.html", "events/index.html", "fr/events/index.html", "fr/gallery/index.html", "fr/index.html", "gallery/index.html", "index.html", "it/events/index.html", "it/gallery/index.html", "it/index.html", "studio/index.html", "styleguide/index.html"]);
     const en = pages.find((p) => p.out === "index.html")!.html;
     const de = pages.find((p) => p.out === "de/index.html")!.html;
     expect(en).toContain('<html lang="en">');
@@ -185,9 +185,96 @@ describe("gallery", () => {
     expect(new Set(albums.map((a: any) => a.slug)).size).toBe(albums.length);
   });
 
-  test("both languages define the same interface words", () => {
-    const { en, de } = parseFrontMatter("---\n" + files["data/i18n.yml"] + "\n---\n").data;
-    expect(Object.keys(de).sort()).toEqual(Object.keys(en).sort());
+  test("every language defines the same interface words", () => {
+    const words = parseYaml(files["data/i18n.yml"]!);
+    const site = parseYaml(files["data/site.yml"]!);
+    expect(Object.keys(words).sort()).toEqual([...site.languages].sort());
+    for (const lang of site.languages) expect([lang, Object.keys(words[lang]).sort()]).toEqual([lang, Object.keys(words.en).sort()]);
+  });
+});
+
+describe("four languages: English first, German, French and Italian", () => {
+  const LANGS = ["en", "de", "fr", "it"];
+  const flat = (v: any): string[] => (typeof v === "string" ? [v] : Array.isArray(v) ? v.flatMap(flat) : v && typeof v === "object" ? Object.values(v).flatMap(flat) : []);
+
+  test("the site lists English first, then German, French and Italian", () => {
+    expect(parseYaml(files["data/site.yml"]!).languages).toEqual(LANGS);
+  });
+
+  test("the words of every language are filled in, with no em dash, and German has no ß", () => {
+    const words = parseYaml(files["data/i18n.yml"]!);
+    for (const lang of LANGS) {
+      const all = flat(words[lang]);
+      expect(all.join("\n")).not.toContain("\u2014");
+      expect(words[lang].months.length).toBe(12);
+      expect(Object.keys(words[lang].days).length).toBe(7);
+    }
+    expect(flat(words.de).join("\n")).not.toContain("ß");
+    expect(LANGS.map((l) => words[l].lang_name)).toEqual(["English", "Deutsch", "Français", "Italiano"]);
+  });
+
+  test("home, events and gallery exist in every language; the pages for the bar's staff stay English and German", async () => {
+    const pages = await renderSite(files, { base: "/", photos });
+    for (const slug of ["", "events", "gallery"]) expect(pages.filter((p) => p.slug === slug).map((p) => p.lang).sort()).toEqual([...LANGS].sort());
+    expect(pages.filter((p) => p.slug === "studio").map((p) => p.lang).sort()).toEqual(["de", "en"]);
+    const fr = pages.find((p) => p.out === "fr/index.html")!.html;
+    const it = pages.find((p) => p.out === "it/index.html")!.html;
+    expect(fr).toContain('<html lang="fr">');
+    expect(it).toContain('<html lang="it">');
+    expect(fr).toContain("Au programme");
+    expect(it).toContain("In programma");
+    expect(fr).toContain('<meta property="og:locale" content="fr_CH">');
+    expect(it).toContain('<meta property="og:locale:alternate" content="de_CH">');
+    expect(fr).toContain('hreflang="it" href=');
+  });
+
+  test("a text written only in English shows in English on the other pages", async () => {
+    const only = { ...files };
+    only["moments/2026-10-10-a-regular.md"] = only["moments/2026-10-10-a-regular.md"]!.replace(/\n  de: .*\n/g, "\n").replace(/\n  fr: .*\n/g, "\n").replace(/\n  it: .*\n/g, "\n");
+    expect(only["moments/2026-10-10-a-regular.md"]).not.toContain("de:");
+    const pages = await renderSite(only, { base: "/", photos });
+    for (const out of ["fr/gallery/index.html", "it/gallery/index.html", "de/gallery/index.html"]) expect([out, pages.find((p) => p.out === out)!.html.includes("One of our regulars, looking cool.")]).toEqual([out, true]);
+  });
+
+  test("the header offers every language the page has, each in its own words, the current one marked", async () => {
+    const pages = await renderSite(files, { base: "/robins-coffee/", photos });
+    const fr = pages.find((p) => p.out === "fr/events/index.html")!.html;
+    const menu = fr.slice(fr.indexOf("<details class=\"langs\""), fr.indexOf("</details>"));
+    expect([...menu.matchAll(/hreflang="([a-z]+)"/g)].map((m) => m[1])).toEqual(LANGS);
+    expect(menu).toContain('aria-label="Langue: Français"');
+    expect(menu).toContain('href="/robins-coffee/it/events/" hreflang="it" lang="it" data-lang="it"><span class="langs__code" aria-hidden="true">IT</span> Italiano</a>');
+    expect(menu).toContain('data-lang="fr" aria-current="page"');
+    const studio = pages.find((p) => p.out === "studio/index.html")!.html;
+    expect([...studio.slice(studio.indexOf("<details class=\"langs\""), studio.indexOf("</details>")).matchAll(/hreflang="([a-z]+)"/g)].map((m) => m[1])).toEqual(["en", "de"]);
+  });
+
+  // The head script of an English page, run with a made-up browser.
+  const runLangScript = (html: string, opts: { languages: string[]; stored?: string | null; search?: string; hash?: string }) => {
+    const m = /<script>\n\/\/ The first visit to an English page[\s\S]*?<\/script>/.exec(html);
+    if (!m) return "no script";
+    let went: string | null = null;
+    const body = m[0].replace(/^<script>/, "").replace(/<\/script>$/, "");
+    const store = { getItem: () => opts.stored ?? null };
+    new Function("navigator", "localStorage", "location", body)({ languages: opts.languages, language: opts.languages[0] }, store, { search: opts.search ?? "", hash: opts.hash ?? "", replace: (u: string) => { went = u; } });
+    return went;
+  };
+
+  test("a first visit to an English page goes to the browser's language; a choice made before wins; English browsers stay", async () => {
+    const pages = await renderSite(files, { base: "/robins-coffee/", photos });
+    const home = pages.find((p) => p.out === "index.html")!.html;
+    const events = pages.find((p) => p.out === "events/index.html")!.html;
+    expect(runLangScript(home, { languages: ["de-CH", "en"] })).toBe("/robins-coffee/de/");
+    expect(runLangScript(home, { languages: ["fr-CH"] })).toBe("/robins-coffee/fr/");
+    expect(runLangScript(events, { languages: ["es-ES", "it-IT", "de"] , search: "?theme=day", hash: "#x" })).toBe("/robins-coffee/it/events/?theme=day#x");
+    expect(runLangScript(home, { languages: ["en-GB", "de-CH"] })).toBe(null);
+    expect(runLangScript(home, { languages: ["es-ES", "pt"] })).toBe(null);
+    expect(runLangScript(home, { languages: ["de-CH"], stored: "en" })).toBe(null);
+    expect(runLangScript(home, { languages: ["en-US"], stored: "it" })).toBe("/robins-coffee/it/");
+  });
+
+  test("ANTI: a page in German, French or Italian never moves the visitor, nor does the 404 page", async () => {
+    const pages = await renderSite(files, { base: "/robins-coffee/", photos });
+    for (const out of ["de/index.html", "fr/index.html", "it/events/index.html", "404.html"]) expect([out, runLangScript(pages.find((p) => p.out === out)!.html, { languages: ["en-US"], stored: "en" })]).toEqual([out, "no script"]);
   });
 });
 
@@ -508,7 +595,7 @@ describe("polish", () => {
   test("every page a search engine may list exists in every language", async () => {
     const pages = await renderSite(files, { base: "/", photos });
     const listed = pages.filter((p) => !p.data.noindex);
-    for (const p of listed) expect(listed.filter((o) => o.slug === p.slug).map((o) => o.lang).sort()).toEqual(["de", "en"]);
+    for (const p of listed) expect(listed.filter((o) => o.slug === p.slug).map((o) => o.lang).sort()).toEqual(["de", "en", "fr", "it"]);
   });
 
   test("the 404 page sits at the root, speaks both languages and uses no link relative to itself", async () => {
@@ -524,10 +611,10 @@ describe("polish", () => {
   test("the sitemap lists the public pages with full addresses and their language versions", async () => {
     const pages = await renderSite(files, { base: "/robins-coffee/", photos });
     const xml = sitemapXml(pages, "en", (p) => "https://example.org/robins-coffee" + p);
-    expect([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])).toEqual(["/", "/de/", "/de/events/", "/de/gallery/", "/events/", "/gallery/"].map((p) => "https://example.org/robins-coffee" + p));
+    expect([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])).toEqual(["/", "/de/", "/de/events/", "/de/gallery/", "/events/", "/fr/", "/fr/events/", "/fr/gallery/", "/gallery/", "/it/", "/it/events/", "/it/gallery/"].map((p) => "https://example.org/robins-coffee" + p));
     expect(xml).not.toContain("styleguide");
     expect(xml).not.toContain("404");
-    expect(xml.match(/hreflang="x-default" href="https:\/\/example.org\/robins-coffee\/events\/"/g)!.length).toBe(2);
+    expect(xml.match(/hreflang="x-default" href="https:\/\/example.org\/robins-coffee\/events\/"/g)!.length).toBe(4);
   });
 
   test("every page carries link preview data; the picture is absolute and described in the page language", async () => {

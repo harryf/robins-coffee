@@ -98,6 +98,8 @@ export function wallClock(d: Date, timeZone: string): WallClock {
   return { year, month, day, weekday, time: `${parts.hour}:${parts.minute}` };
 }
 
+/** "novembre" as a heading: "Novembre". French and Italian write month names small inside a date. */
+const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const fillDate = (pattern: string, p: WallClock, t: any) =>
   pattern.replace("{weekday}", t.days_short[p.weekday]).replace("{day}", String(p.day)).replace("{month}", t.months_short[p.month - 1]).replace("{year}", String(p.year));
 
@@ -211,7 +213,7 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
     const meta = [price, e.organiser && e.organiser !== e.name ? e.organiser : "", t.event_languages?.[e.language] ?? ""].filter(Boolean).join(" · ");
     return {
       meta_label: meta,
-      ...e, when_label: e.all_day ? fillDate(t.date_event, p, t) : `${fillDate(t.date_event, p, t)}, ${p.time}`, text: e.text?.[lang] ?? e.text?.[defaultLang] ?? "", month_label: `${t.months[p.month - 1]} ${p.year}`,
+      ...e, when_label: e.all_day ? fillDate(t.date_event, p, t) : `${fillDate(t.date_event, p, t)}, ${p.time}`, text: e.text?.[lang] ?? e.text?.[defaultLang] ?? "", month_label: `${capital(t.months[p.month - 1])} ${p.year}`,
       price_label: e.price_chf === null ? "" : e.price_chf === 0 ? t.free_entry : `CHF ${e.price_chf}`,
       language_label: t.event_languages?.[e.language] ?? "", img: e.image ? squareOf(opts.photos[e.image]) : null,
     };
@@ -245,7 +247,8 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
     current = { depth: page.depth };
     const t = data.i18n[page.lang];
     const alternates = pages.filter((p) => p.slug === page.slug).map((p) => ({ lang: p.lang, url: p.url }));
-    const other = alternates.find((a) => a.lang !== page.lang);
+    // The language menu: this page in every language it exists in, each named in its own words.
+    const langsMenu = langs.flatMap((l) => alternates.filter((a) => a.lang === l).map((a) => ({ lang: l, url: a.url, name: data.i18n[l].lang_name, current: l === page.lang })));
     // The link preview picture: the page's own `og_photo`, or the hero photo. Its alt text is the moment's.
     const ogKey: string | undefined = page.data.og_photo ?? data.home?.hero_photo;
     const ogMoment = moments.find((m) => m.photo === ogKey);
@@ -260,7 +263,7 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
       home: data.home, tokens: data.tokens, hours: data.hours,
       hours_rows: hoursRows(data.hours, t),
       home_url: page.lang === defaultLang ? "/" : `/${page.lang}/`,
-      alternates, other, og,
+      alternates, langs_menu: langsMenu, default_lang: defaultLang, og,
       x_default: alternates.find((a) => a.lang === defaultLang)?.url,
       og_locales_other: alternates.filter((a) => a.lang !== page.lang).map((a) => data.i18n[a.lang].og_locale),
       // Every language at once, for the one page that speaks them all (404).
