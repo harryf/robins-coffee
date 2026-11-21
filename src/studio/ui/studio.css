@@ -103,6 +103,10 @@ input.time { width: 5.5rem; text-align: center; font-variant-numeric: tabular-nu
 textarea { min-height: 5rem; padding: var(--space-2) var(--space-3); border: var(--border-thin) solid var(--c-line); border-radius: var(--radius-sm); background: var(--c-bg); color: var(--c-text); font: inherit; resize: vertical; }
 .field { display: grid; gap: var(--space-1); }
 .field__label { font-size: var(--size-sm); font-weight: var(--weight-semi); }
+/* The translations under an English field: closed until asked for. */
+.fold { display: grid; gap: var(--space-2); margin-top: var(--space-1); padding: var(--space-2) var(--space-3); border: var(--border-thin) solid var(--c-line); border-radius: var(--radius-sm); }
+.fold > summary { cursor: pointer; font-size: var(--size-sm); color: var(--c-muted); }
+.fold[open] > summary { color: var(--c-text); margin-bottom: var(--space-1); }
 .field__pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--space-3); }
 .field input[type="text"], .field input[type="url"], .field input[type="date"], .field input[type="number"], .field select, .field textarea { width: 100%; }
 .rows { display: grid; gap: var(--space-2); list-style: none; padding: 0; margin: 0; }
