@@ -18,6 +18,7 @@ import { STRINGS as EDITOR_STRINGS, pickLang } from "../editor/strings";
 import { tokensCss } from "../tokens";
 import { studioGitHub } from "./checks";
 import type { FileChange } from "./describe";
+import { detailLines } from "./detail";
 import { studioGit, type StudioGit } from "./git";
 import { knownHost, previewFile, previewOrigin, refuseApi, safeEditPath, studioHostOnly, studioOrigin, type Self, previewHostOnly } from "./guard";
 import { isKeyName, keychain, KEY_NAMES, validKey, type Keychain } from "./keychain";
@@ -131,6 +132,24 @@ export async function startStudio(options: StudioOptions) {
   }
   const hinted = { ...git, changes: async () => withHints(await git.changes()) };
 
+  /** One plain line per thing that is about to be published: each file as it was live and as it is in the folder now. */
+  async function details(): Promise<string[]> {
+    const isText = (path: string) => /\.(md|yml)$/.test(path);
+    const now = (path: string) => Bun.file(join(root, path)).text().catch(() => null);
+    const files = await Promise.all((await git.changes()).map(async (c) => ({
+      ...c,
+      before: c.status !== "added" && isText(c.path) ? await git.liveText(c.path) : null,
+      after: c.status !== "removed" && isText(c.path) ? await now(c.path) : null,
+    })));
+    const titles: Record<string, string> = {};
+    try {
+      for (const a of parseYaml((await now(ALBUMS)) ?? "")?.albums ?? []) titles[String(a.slug)] = String(a.title?.en ?? a.slug);
+    } catch {
+      // An albums file that cannot be read names its albums by their short names.
+    }
+    return detailLines(files, titles);
+  }
+
   async function state(): Promise<StudioState> {
     const has = await Promise.all(KEY_NAMES.map((name) => keys.has(name))).then((found) => Object.fromEntries(KEY_NAMES.map((name, i) => [name, found[i]!])), () => null);
     return {
@@ -149,7 +168,7 @@ export async function startStudio(options: StudioOptions) {
     send("state");
     const token = await keys.read("github").catch(() => null);
     const result: PublishResult = token
-      ? await publish({ git: hinted, github: makeGitHub(repo, token), report: (step) => { publishing.steps.push(step); send("state"); } })
+      ? await publish({ git: hinted, github: makeGitHub(repo, token), details, report: (step) => { publishing.steps.push(step); send("state"); } })
       : { ok: false, reason: "no_key" };
     publishing = { running: false, steps: publishing.steps, result };
     send("state");

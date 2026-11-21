@@ -1,0 +1,36 @@
+# Facts about the venue. One place; pages, footer and structured data all read from here.
+name: "ROBIN's"
+# The address the site will live at after the DNS cut-over; used for absolute URLs
+# in structured data. The GitHub Pages preview still points here on purpose.
+url: "https://robins-coffee.ch"
+legal_name: "ROBIN's Bar & Coffee"
+founded: 2022
+street: "Zähringerstrasse 33"
+postal_code: "8001"
+city: "Zürich"
+country: "CH"
+latitude: 47.3757403
+longitude: 8.5444532
+# The bar's landline, as on its Google listing (Harry, 20 Nov 2026).
+phone: "+41 44 253 62 02"
+email: "info@robins-coffee.ch"
+# The bar's own Google Maps entry (not the comedy club's entry at the same address).
+maps_url: "https://maps.app.goo.gl/pUvDQa4cqUcahSdu6"
+# Shown under "Find us" with a link to the entry. Typed by hand from the entry; update
+# the three values together. A script will keep it fresh once the listing API is in reach.
+google_rating:
+  value: "4.8"
+  count: 299
+  as_of: 2026-11-15
+instagram: "robinsbarandcoffee"
+timezone: "Europe/Zurich"
+# Where the site's files live. The editor at /edit/ sends its changes there as pull requests.
+repo: "harryf/robins-coffee"
+branch: "main"
+# The comedy club's calendar feed; the build keeps the dates at this venue.
+events_feed: "https://inyourfacecomedy.ch/events.json"
+events_feed_venue: "robins"
+# While true every page carries noindex, so the preview never competes with the
+# live WordPress site. Set to false in the DNS cut-over pull request.
+preview: true
+languages: [en, de]

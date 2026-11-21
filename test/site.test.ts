@@ -9,7 +9,8 @@ import { contrast, tokensCss } from "../src/tokens";
 import { cleanPhoto, MAX_EDGE } from "../scripts/add-photo";
 import { fromIyfFeed, fromManual, mergeEvents, upcoming, toIcs, zonedIso, REPEAT_DAYS, type SiteEvent } from "../src/events";
 
-const SITE = join(import.meta.dir, "..", "site");
+import { FROZEN_SITE } from "./frozen";
+const SITE = FROZEN_SITE;
 const files: Files = {};
 for (const p of new Bun.Glob("**/*.{md,yml,json,liquid}").scanSync({ cwd: SITE })) files[p] = await Bun.file(join(SITE, p)).text();
 const momentPhotos = [...new Bun.Glob("moments/*.jpg").scanSync({ cwd: SITE })];

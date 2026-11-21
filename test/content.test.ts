@@ -7,7 +7,8 @@ import { fromManual, fromIyfFeed, mergeEvents } from "../src/events";
 import { inEditScope } from "../src/editor/scope";
 
 const fixture = (name: string) => Bun.file(join(import.meta.dir, "fixtures", name)).text();
-const SITE = join(import.meta.dir, "..", "site");
+import { FROZEN_SITE } from "./frozen";
+const SITE = FROZEN_SITE;
 
 describe("event files", () => {
   test("a hand event with a day, a time, a text and no ticket link reads back as it was written", () => {

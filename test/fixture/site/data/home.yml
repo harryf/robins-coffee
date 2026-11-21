@@ -1,0 +1,27 @@
+# The home page is a stack of sections, top to bottom. A new section is a new
+# component in site/templates/sections/ plus one line here.
+sections: [hero, ticker, events, menu, moments, about, visit, contact]
+events_count: 4
+hero_photo: "moments/2026-11-07-elias-at-the-taps.jpg"
+# The hero of the day theme (coffee). Leave it out to show hero_photo in both themes.
+hero_photo_day: "photos/latte-art-pour.jpg"
+moments_count: 9
+# The four photos of the 2022 site, shown under the About text. Added with
+# `bun scripts/add-photo.ts <file> --plain --slug <name>`.
+about_photos:
+  - photo: "photos/barista-at-the-machine.jpg"
+    alt:
+      en: "A barista at the espresso machine holds a paper cup up to the light."
+      de: "Ein Barista an der Espressomaschine hält einen Pappbecher ins Licht."
+  - photo: "photos/espresso-patterned-cup.jpg"
+    alt:
+      en: "A hand holds an espresso in a brightly patterned cup and saucer above the cobblestones."
+      de: "Eine Hand hält einen Espresso in einer bunt gemusterten Tasse über dem Kopfsteinpflaster."
+  - photo: "photos/latte-art-pour.jpg"
+    alt:
+      en: "Milk is poured into a cappuccino, drawing a pattern on the foam."
+      de: "Milch wird in einen Cappuccino gegossen und zeichnet ein Muster in den Schaum."
+  - photo: "photos/espresso-blue-cup.jpg"
+    alt:
+      en: "A hand holds an espresso in a turquoise cup and saucer above the cobblestones."
+      de: "Eine Hand hält einen Espresso in einer türkisfarbenen Tasse über dem Kopfsteinpflaster."

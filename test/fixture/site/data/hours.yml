@@ -1,0 +1,26 @@
+# Opening hours. Drives the page, the footer, the "open now" pill and the
+# structured data; later also the Google Business Profile.
+# Source: the bar's Google Maps entry, read 15 Nov 2026 (the old website only said
+# "until late"). Days: mo tu we th fr sa su. Times are Zurich wall clock, 24 h.
+# A close time at or before the open time means "after midnight" (02:00 = 2 am the
+# next morning). close: null means "until late".
+regular:
+  - days: [mo, tu, we, th]
+    open: "16:00"
+    close: "00:00"
+  - days: [fr]
+    open: "16:00"
+    close: "02:00"
+  - days: [sa]
+    open: "10:00"
+    close: "02:00"
+  - days: [su]
+    open: "10:00"
+    close: "00:00"
+# Dated exceptions, for example:
+#   - date: 2026-12-25
+#     closed: true
+#   - date: 2026-12-31
+#     open: "18:00"
+#     close: "03:00"
+exceptions: []

