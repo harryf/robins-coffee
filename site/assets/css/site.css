@@ -324,7 +324,7 @@ a.event__thumb { cursor: zoom-in; }
 .season + .season, .season + .h-lg { margin-top: var(--space-8); }
 /* A season's drinks sit in the middle of the card, however many there are. */
 .season .drinks { display: flex; flex-wrap: wrap; justify-content: center; }
-.season .drinks > * { flex: 1 1 9.5rem; max-width: 14rem; }
+.season .drinks > * { flex: 1 1 9.5rem; max-width: var(--measure-card); }
 .season__head { text-align: center; }
 .season__state, .menu-card__season { color: var(--c-rust); font: var(--weight-bold) var(--size-xs)/var(--leading-label) var(--font-body); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
 .season__name { font: var(--weight-regular) var(--size-xl)/var(--leading-display) var(--font-display); letter-spacing: var(--tracking-display); margin-top: var(--space-2); text-wrap: balance; }
