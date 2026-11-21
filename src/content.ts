@@ -1,4 +1,4 @@
-// Writers for the content files an editor changes: events, albums, the drinks menu.
+// Writers for the content files the Studio changes: events, albums, the drinks menu.
 // Pure and browser-safe: text in, text out. The Studio and the scripts share them, so a
 // form and a hand edit produce the same file.
 import { parse as parseYaml, parseDocument } from "yaml";

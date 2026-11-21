@@ -1,5 +1,5 @@
 // What a moment's text file looks like, and the limits every published photo keeps.
-// Pure and browser-safe: scripts/add-photo.ts and the editor both use it.
+// Pure and browser-safe: scripts/add-photo.ts and the Studio both use it.
 export const MAX_EDGE = 2400;
 export const JPEG_QUALITY = 84;
 

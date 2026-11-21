@@ -9,7 +9,7 @@ import { dirname, join } from "node:path";
 import sharp from "sharp";
 import { parse as parseYaml } from "yaml";
 import { changeDrink, dropCover, editMoment, eventFields, eventFile, exifDay, hasDrink, keepComments, photoDay } from "../src/content";
-import { inEditScope } from "../src/editor/scope";
+import { inEditScope } from "../src/scope";
 import { fromManual } from "../src/events";
 import { parseFrontMatter } from "../src/render";
 import { calendarMonths, dayShort, dayWords, fileOfEvent, whenWords } from "../src/studio/calendar";

@@ -2,8 +2,8 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync, cpSync, statSync } from "node:fs";
 import { networkInterfaces, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { GitHubError, type Pull } from "../src/editor/github";
-import { inEditScope } from "../src/editor/scope";
+import { GitHubError, type Pull } from "../src/github";
+import { inEditScope } from "../src/scope";
 import { checkState, studioGitHub } from "../src/studio/checks";
 import { branchName, describeChanges, type FileChange } from "../src/studio/describe";
 import { authEnv, parseNameStatus, studioGit } from "../src/studio/git";
@@ -79,8 +79,8 @@ function fakeGitHub(bare: string | null, over: Partial<PublishGitHub> & { owner?
       calls.push("access");
       return { login: "harryf", canWrite: over.canWrite ?? true, owner: over.owner ?? true };
     },
-    async editorPulls() {
-      calls.push("editorPulls");
+    async editPulls() {
+      calls.push("editPulls");
       return pulls;
     },
     async openPull(branch, base, title) {
@@ -337,7 +337,7 @@ describe("studio: publish steps", () => {
       `push ${branch}`,
       "fetchMain", "switchTo main", "fastForwardMain", `deleteBranch ${branch}`,
     ]);
-    expect(gh.calls).toEqual(["access", "editorPulls", `openPull ${branch} -> main: Opening hours updated, 1 event added`, "check abcd", "check abcd", "check abcd", `merge #21 ${branch}`]);
+    expect(gh.calls).toEqual(["access", "editPulls", `openPull ${branch} -> main: Opening hours updated, 1 event added`, "check abcd", "check abcd", "check abcd", `merge #21 ${branch}`]);
     expect(steps).toEqual(["access", "branch", "commit", "push", "pull", "checks", "merge", "sync"]);
     expect(where()).toBe("main");
   });
@@ -821,7 +821,7 @@ describe("studio: the server", () => {
     expect(existsSync(join(dirname(root), "outside.txt"))).toBe(false);
   });
 
-  test("a saved change to the hours rewrites hours.yml by the editor's rules, rebuilds the preview and tells open tabs to reload", async () => {
+  test("a saved change to the hours rewrites hours.yml by the form's rules, rebuilds the preview and tells open tabs to reload", async () => {
     const hours = await (await call("GET", "hours")).json();
     expect(hours.editable).toBe(true);
     expect(await (await pv(`/`)).text()).not.toContain("11:35");
@@ -839,7 +839,7 @@ describe("studio: the server", () => {
     expect(now.changes).toEqual([{ path: "site/data/hours.yml", status: "modified", publishable: true }]);
   }, 60_000);
 
-  test("hours the editor's rules refuse are not written, and the reason is said in English", async () => {
+  test("hours the form's rules refuse are not written, and the reason is said in English", async () => {
     const before = hoursFile();
     const hours = await (await call("GET", "hours")).json();
     const bad = { ...hours.week, tu: { closed: false, open: "16:00", close: "16:00" } };

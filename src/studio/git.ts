@@ -5,7 +5,7 @@
 // The GitHub token never appears in a command line or an address. Commands that talk
 // to GitHub get it as an Authorization header through git's environment based
 // configuration (GIT_CONFIG_COUNT / KEY / VALUE), scoped to github.com.
-import { inEditScope } from "../editor/scope";
+import { inEditScope } from "../scope";
 import { existsSync } from "node:fs";
 import { lstat, mkdir, realpath, rm } from "node:fs/promises";
 import { dirname, join } from "node:path";

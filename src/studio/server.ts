@@ -12,9 +12,8 @@ import { existsSync } from "node:fs";
 import { lstat, mkdir, readdir, realpath, unlink } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { parse as parseYaml } from "yaml";
-import { hoursEditable, validateWeek, weekFromYaml, weekToYaml, DAYS, type Week } from "../editor/changes";
-import { inEditScope } from "../editor/scope";
-import { STRINGS as EDITOR_STRINGS } from "../editor/strings";
+import { hoursEditable, validateWeek, weekFromYaml, weekToYaml, DAYS, type Week } from "../hours";
+import { inEditScope } from "../scope";
 import { tokensCss } from "../tokens";
 import { studioGitHub } from "./checks";
 import type { FileChange } from "./describe";
@@ -226,8 +225,7 @@ export async function startStudio(options: StudioOptions) {
         const shaped = !!week && DAYS.every((d) => week[d] && typeof week[d].closed === "boolean" && typeof week[d].open === "string" && (week[d].close === null || typeof week[d].close === "string"));
         if (!week || !shaped) return refuse(400, "not a week");
         if (!hoursEditable(text)) return refuse(409, "hours_closed_form");
-        // The reasons come from the phone editor's strings file; the Studio speaks English.
-        const problems = validateWeek(week, EDITOR_STRINGS.en);
+        const problems = validateWeek(week);
         if (problems.length) return json({ problems }, 422);
         await write(HOURS, weekToYaml(text, week));
         return json({ ok: true });

@@ -38,9 +38,6 @@
 <link rel="icon" href="{{ '/favicon.ico' | url }}" sizes="32x32">
 <link rel="icon" type="image/png" sizes="192x192" href="{{ '/assets/icons/icon-192.png' | asset }}">
 <link rel="apple-touch-icon" href="{{ '/assets/icons/apple-touch-icon.png' | asset }}">
-{%- if page.layout == 'editor' %}
-<link rel="manifest" href="{{ '/edit/manifest.webmanifest' | url }}">
-{%- endif %}
 {%- if page.lang == default_lang and langs_menu.size > 1 %}
 <script>
 // The first visit to an English page goes to the same page in the language the browser

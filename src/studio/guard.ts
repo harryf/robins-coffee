@@ -8,7 +8,7 @@
 // Origin and Host are not the server's own) nor read the editing screen's HTML to
 // find the token.
 import { normalize } from "node:path";
-import { inEditScope } from "../editor/scope";
+import { inEditScope } from "../scope";
 
 export const TOKEN_HEADER = "x-studio-token";
 

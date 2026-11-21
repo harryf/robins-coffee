@@ -1,7 +1,7 @@
-// The one GitHub call the Studio needs beyond src/editor/github.ts: where the required
-// `build` check of a commit stands. Kept here so the phone editor's file stays as it is.
+// The one GitHub call the Studio needs beyond src/github.ts: where the required
+// `build` check of a commit stands.
 // The token travels only in the Authorization header, only to api.github.com.
-import { github, GitHubError } from "../editor/github";
+import { github, GitHubError } from "../github";
 import type { CheckState, PublishGitHub } from "./publish";
 
 export const CHECK_NAME = "build";
@@ -18,7 +18,7 @@ export function studioGitHub(repo: string, token: string, doFetch: typeof fetch 
   const base = github(repo, token, doFetch);
   return {
     access: () => base.access(),
-    editorPulls: () => base.editorPulls(),
+    editPulls: () => base.editPulls(),
     openPull: (branch, into, title, body) => base.openPull(branch, into, title, body),
     publish: (n, branch, sha) => base.publish(n, branch, sha),
     async check(sha) {

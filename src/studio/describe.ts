@@ -1,7 +1,7 @@
 // What a set of changed files means in plain words: "Opening hours updated, 2 events
 // added". Pure: no disk, no git. The same function writes the line on the screen (in
 // the screen's language) and the commit subject and pull request title (English).
-import { slugify } from "../editor/changes";
+import { slugify } from "../slug";
 import { STRINGS, type Strings } from "./strings";
 
 export type Status = "added" | "modified" | "removed";

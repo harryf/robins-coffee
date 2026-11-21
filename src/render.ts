@@ -1,10 +1,9 @@
 // The renderer: content + data + templates in, HTML pages out.
 //
 // This module is PURE and BROWSER-SAFE on purpose: no file system, no Node APIs.
-// The build (src/build.ts) feeds it files read from disk; the editor PWA will feed
-// it the same files fetched from GitHub plus the editor's unsaved changes, so the
-// preview an editor sees is the real build, not an imitation. Keep it that way:
-// anything that needs disk, sharp or the network belongs in the caller.
+// The build (src/build.ts) feeds it files read from disk, and the Studio's preview is
+// that same build, not an imitation. Keep it that way: anything that needs disk,
+// sharp or the network belongs in the caller.
 import { Liquid } from "liquidjs";
 import { marked } from "marked";
 import { parse as parseYaml } from "yaml";
@@ -19,7 +18,7 @@ export type Photo = { width: number; height: number; jpg: Variant[]; webp: Varia
 export const squareOf = (p: Photo | undefined | null): Photo | null => (!p ? null : p.sq ? { width: p.sq.jpg.at(-1)!.w, height: p.sq.jpg.at(-1)!.w, jpg: p.sq.jpg, webp: p.sq.webp } : p);
 export const OG_SIZE = { width: 1200, height: 630 };
 export type RenderOptions = {
-  /** "/" on the domain, "/robins-coffee/" on GitHub Pages, or "relative" for file:// and the editor preview. */
+  /** "/" on the domain, "/robins-coffee/" on GitHub Pages, or "relative" for file://. */
   base: string;
   photos: Record<string, Photo>;
   /** Scheme and host the build is served from, for absolute URLs (hreflang, canonical). Defaults to site.url. */
@@ -135,7 +134,7 @@ export function groupGallery<M extends { id: string; album?: string }>(moments: 
 
 /**
  * The output file a page's `permalink` names: plain lower case folders and a name
- * ending in .html, nothing else. A page text is content that anyone with the editor can
+ * ending in .html, nothing else. A page text is content that anyone with the Studio can
  * change, and it must never choose a file outside the built site ("../../x").
  */
 export function pageFile(permalink: unknown, source = "a page"): string {
@@ -181,7 +180,7 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
   // hreflang and canonical must be absolute; in a relative build there is no address, so the path is kept.
   const origin = (opts.origin ?? site.url).replace(/\/$/, "");
   engine.registerFilter("absolute", (p: string) => (opts.base === "relative" ? url(p) : origin + url(p)));
-  // A photo the editor has not sent yet has no file on the site: its path is a blob: address, used as it is.
+  // A photo path that is already an address (blob:, data:, http) is used as it is.
   const photoUrl = (path: string) => (/^(blob|data|https?):/.test(path) ? path : url("/" + path));
   engine.registerFilter("srcset", (vs: Variant[]) => (vs ?? []).map((v) => `${photoUrl(v.path)} ${v.w}w`).join(", "));
   engine.registerFilter("largest", (vs: Variant[]) => photoUrl(vs.at(-1)!.path));

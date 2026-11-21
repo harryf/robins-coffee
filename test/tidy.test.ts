@@ -6,7 +6,7 @@ import sharp from "sharp";
 import { parse as parseYaml } from "yaml";
 import { renameAlbum } from "../src/content";
 import { contentApi } from "../src/studio/content-api";
-import { inEditScope } from "../src/editor/scope";
+import { inEditScope } from "../src/scope";
 import { STRINGS } from "../src/studio/strings";
 import { fakeTranslator } from "./fake-translate";
 

@@ -1,6 +1,6 @@
 // The registry of sections. To add a screen (photos, menu, events): write a
 // Section and put it in SECTIONS. The shell reads this list and nothing else.
-import { DAYS, type Week } from "../../editor/changes";
+import { DAYS, type Week } from "../../hours";
 import type { HistoryEntry } from "../history";
 import { KEY_NAMES } from "../keychain";
 import { h, type Ctx, type Section } from "./dom";

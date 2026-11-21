@@ -4,7 +4,7 @@ import { parse as parseYaml } from "yaml";
 import { eventFile, eventProblems, addAlbum, setDrink, removeDrink, drinkProblems, slugify, planTexts, cleanTexts } from "../src/content";
 import { parseEventfrogPage, importFromPage, eventfrogUrl, eventfrogImage, plainText, shortText, fromApiEvent, listOrganiserEvents } from "../src/eventfrog";
 import { fromManual, fromIyfFeed, mergeEvents } from "../src/events";
-import { inEditScope } from "../src/editor/scope";
+import { inEditScope } from "../src/scope";
 
 const fixture = (name: string) => Bun.file(join(import.meta.dir, "fixtures", name)).text();
 import { FROZEN_SITE } from "./frozen";

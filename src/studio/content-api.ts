@@ -9,7 +9,7 @@ import { mkdir, unlink, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { parse as parseYaml, parseDocument } from "yaml";
 import { cleanPhoto } from "../../scripts/add-photo";
-import { inEditScope } from "../editor/scope";
+import { inEditScope } from "../scope";
 import { momentMarkdown } from "../moment";
 import { parseFrontMatter } from "../render";
 import { eventFile, eventProblems, eventFields, keepComments, addAlbum, setDrink, changeDrink, hasDrink, removeDrink, drinkProblems, editMoment, dropCover, photoDay, slugify, type EventInput, renameAlbum, planTexts, hasEnglish, textsShape, cleanTexts, LANG, type Texts } from "../content";

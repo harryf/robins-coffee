@@ -115,36 +115,13 @@ async function buildOg(files: Files, photos: Record<string, Photo>, focus: Recor
 }
 
 /**
- * The editor at /edit/: its script (the renderer and the forms, bundled for the browser),
- * the site's text files and photo list in one file so the editor can show the real
- * page without a login, a web app manifest and a small service worker.
+ * The phone editor that lived at /edit/ is retired (ROBIN's Studio replaced it). Its address
+ * keeps a note (site/content/en/edit.md), and /edit/sw.js is a service worker that removes
+ * itself, so a phone that installed the editor as an app stops running its old code.
  */
-const EDITOR: { version: string; min_supported: string } = await Bun.file(join(ROOT, "src", "editor", "version.json")).json();
-
-async function buildEditorScript(): Promise<string> {
-  const dir = join(OUT, "edit");
-  await mkdir(dir, { recursive: true });
-  const built = await Bun.build({ entrypoints: [join(ROOT, "src", "editor", "main.ts")], target: "browser", minify: true, outdir: dir, naming: "editor.js", define: { EDITOR_VERSION: JSON.stringify(EDITOR.version) } });
-  if (!built.success) throw new Error("editor bundle failed:\n" + built.logs.join("\n"));
-  return Bun.hash(await Bun.file(join(dir, "editor.js")).arrayBuffer()).toString(36).slice(0, 8);
-}
-
-async function buildEditorData(files: Files, photos: Record<string, Photo>, version: string) {
-  const dir = join(OUT, "edit");
-  const site = parseYaml(files["data/site.yml"]!);
-  const night = JSON.parse(files["data/tokens.json"]!).color.night;
-  // One name for this build: the commit on the build server, the time on a laptop. The running
-  // editor compares its own with the one in version.json to learn that the site has moved on.
-  const built_at = new Date().toISOString();
-  const build = process.env.BUILD_COMMIT ?? built_at;
-  await Bun.write(join(dir, "version.json"), JSON.stringify({ ...EDITOR, build, built_at }));
-  await Bun.write(join(dir, "site.json"), JSON.stringify({ built_at, commit: process.env.BUILD_COMMIT ?? null, build, base, preview_root: base.replace(/pr-preview\/pr-\d+\/$/, ""), version, repo: site.repo, branch: site.branch, files, photos }));
-  await Bun.write(join(dir, "manifest.webmanifest"), JSON.stringify({
-    name: `${site.name} editor`, short_name: `${site.name} edit`, id: "./", start_url: "./", scope: "./", display: "standalone",
-    background_color: night.bg, theme_color: night.bg,
-    icons: [192, 512].map((s) => ({ src: `../assets/icons/icon-${s}.png`, sizes: `${s}x${s}`, type: "image/png" })),
-  }, null, 1));
-  await cp(join(ROOT, "src", "editor", "sw.js"), join(dir, "sw.js"));
+async function buildRetiredEditor() {
+  await mkdir(join(OUT, "edit"), { recursive: true });
+  await cp(join(ROOT, "src", "retired-editor-sw.js"), join(OUT, "edit", "sw.js"));
 }
 
 /** Favicons: the R on the night colour for the small sizes, the roundel for the home screen sizes. Bitmaps until vector logos arrive. */
@@ -231,9 +208,9 @@ for (const p of Object.keys(focus)) if (!existsSync(join(SITE, p))) throw new Er
 const photos = await buildPhotos(focus);
 await buildOg(files, photos, focus);
 await buildIcons(files);
-// The version in asset addresses changes when the stylesheet or the editor's script
-// does, so a browser never keeps an old copy of either after a deploy.
-const version = Bun.hash((await buildAssets(files)) + (await buildEditorScript())).toString(36).slice(0, 8);
+// The version in asset addresses changes when the stylesheet does, so a browser never
+// keeps an old copy after a deploy.
+const version = Bun.hash(await buildAssets(files)).toString(36).slice(0, 8);
 const now = new Date();
 const events = await loadEvents(files);
 await buildEventImages(upcoming(events, now, 60), photos);
@@ -243,7 +220,7 @@ files["data/events.json"] = JSON.stringify({ generated_at: now.toISOString(), ev
 await Bun.write(join(OUT, "events.json"), files["data/events.json"]);
 await Bun.write(join(OUT, "events.ics"), toIcs(upcoming(events, now), parseYaml(files["data/site.yml"]!), now));
 const pages = await renderSite(files, { base, photos, version, origin: values.origin, now });
-await buildEditorData(files, photos, version);
+await buildRetiredEditor();
 for (const page of pages) {
   // The second lock on the same door as pageFile() in the renderer: nothing is written outside the output folder.
   if (!resolve(OUT, page.out).startsWith(resolve(OUT) + sep)) throw new Error(`page ${page.out} would be written outside ${values.out}/`);
@@ -253,7 +230,7 @@ for (const page of pages) {
 await Bun.write(join(OUT, ".nojekyll"), "");
 // While the preview flag is on, ask crawlers to stay away from the whole site.
 const site = parseYaml(files["data/site.yml"]!);
-// The sitemap needs full addresses, so a relative build (file://, editor preview) has none.
+// The sitemap needs full addresses, so a relative build (file://, the Studio preview) has none.
 const abs = (path: string) => (values.origin ?? site.url).replace(/\/$/, "") + resolveUrl(path, base, 0);
 if (base !== "relative") await Bun.write(join(OUT, "sitemap.xml"), sitemapXml(pages, site.languages[0], abs));
 await Bun.write(join(OUT, "robots.txt"), site.preview || base === "relative" ? "User-agent: *\nDisallow: /\n" : `User-agent: *\nAllow: /\nDisallow: ${resolveUrl("/styleguide/", base, 0)}\nDisallow: ${resolveUrl("/edit/", base, 0)}\n\nSitemap: ${abs("/sitemap.xml")}\n`);
