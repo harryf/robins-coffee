@@ -24,7 +24,8 @@ import { SECTIONS } from "../src/studio/ui/sections";
 import { look } from "../src/vision";
 
 const ROOT = join(import.meta.dir, "..");
-const SITE = join(ROOT, "site");
+import { FROZEN_SITE, freezeSite } from "./frozen";
+const SITE = FROZEN_SITE;
 const en = STRINGS.en, de = STRINGS.de;
 
 const temps: string[] = [];
@@ -606,6 +607,7 @@ describe("studio screens: the server", () => {
         mkdirSync(dirname(join(to, p)), { recursive: true });
         cpSync(join(ROOT, p), join(to, p));
       }
+      freezeSite(join(to, "site"));
       symlinkSync(join(ROOT, "node_modules"), join(to, "node_modules"));
       mkdirSync(join(ROOT, ".cache", "photos"), { recursive: true });
       mkdirSync(join(to, ".cache"));

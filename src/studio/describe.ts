@@ -11,6 +11,12 @@ export type Status = "added" | "modified" | "removed";
  */
 export type FileChange = { path: string; status: Status; items?: { added: number; removed: number } };
 
+/** The commit and pull request text under the title: who published, then one line per thing that changed (`details`, from detail.ts), or the bare paths when nobody could say more. */
+export function publishNotes(changes: FileChange[], details: string[] = []): string {
+  const lines = details.length ? details : changes.map((c) => `\`${c.path}\` (${c.status})`);
+  return lines.map((l) => `- ${l}`).join("\n");
+}
+
 const count = (changes: FileChange[], status: Status) => changes.filter((c) => c.status === status).length;
 
 /** One line for everything that changed, fixed order: hours, events, photos, albums, menu, venue, pages, labels, the rest. */

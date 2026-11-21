@@ -78,6 +78,7 @@ function failText(result: Extract<PublishResult, { ok: false }>): string {
     case "no_write": return t.fail_no_write(detail);
     case "git": return t.fail_git(detail);
     case "github": return t.fail_github(detail);
+    case "key_rights": return t.fail_key_rights(detail);
     case "check_failed": return t.fail_check_failed;
     case "check_timeout": return t.fail_check_timeout;
     case "busy": return t.fail_busy;

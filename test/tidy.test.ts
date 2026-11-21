@@ -9,7 +9,8 @@ import { contentApi } from "../src/studio/content-api";
 import { inEditScope } from "../src/editor/scope";
 import { STRINGS } from "../src/studio/strings";
 
-const SITE = join(import.meta.dir, "..", "site");
+import { FROZEN_SITE, LIVE_SITE } from "./frozen";
+const SITE = FROZEN_SITE;
 
 function studio() {
   const root = mkdtempSync(join(tmpdir(), "studio-tidy-"));
@@ -112,7 +113,7 @@ describe("studio: installing it on another Mac", () => {
     const script = await Bun.file(join(ROOT, "scripts", "install-studio.sh")).text();
     expect(script).toContain(`#   ${LINE}`);
     for (const lang of ["en", "de"]) {
-      const page = await Bun.file(join(SITE, "content", lang, "studio.md")).text();
+      const page = await Bun.file(join(LIVE_SITE, "content", lang, "studio.md")).text();
       expect(page).toContain("\n```\n" + LINE + "\n```\n");
       expect(page).toContain("noindex: true");
       expect(page).toContain("https://github.com/harryf/robins-coffee/blob/main/scripts/install-studio.sh");

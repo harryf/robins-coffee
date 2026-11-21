@@ -11,7 +11,7 @@
 //   carries on from there (same branch, same pull request).
 import { inEditScope } from "../editor/scope";
 import { GitHubError, type Pull } from "../editor/github";
-import { branchName, describeChanges, type FileChange } from "./describe";
+import { branchName, describeChanges, publishNotes, type FileChange } from "./describe";
 
 export interface PublishGit {
   /** The branch the working copy is on. */
@@ -48,7 +48,7 @@ export interface PublishGitHub {
 }
 
 export type Step = "access" | "branch" | "commit" | "push" | "pull" | "checks" | "merge" | "sync";
-export type FailReason = "nothing" | "out_of_scope" | "wrong_branch" | "no_key" | "no_write" | "git" | "github" | "check_failed" | "check_timeout" | "busy" | "build";
+export type FailReason = "nothing" | "out_of_scope" | "wrong_branch" | "no_key" | "no_write" | "git" | "github" | "check_failed" | "check_timeout" | "busy" | "build" | "key_rights";
 export type PullRef = { number: number; url: string };
 export type PublishResult =
   | { ok: true; state: "live" | "waiting"; description: string; pull: PullRef; syncProblem?: string }
@@ -58,6 +58,8 @@ export type PublishDeps = {
   git: PublishGit;
   github: PublishGitHub;
   report: (step: Step) => void;
+  /** One plain line per thing that changed, for the commit and the pull request; without it the paths are listed. */
+  details?: () => Promise<string[]>;
   now?: Date;
   sleep?: (ms: number) => Promise<void>;
   /** How often and how long to ask for the check: every 10 s for 15 minutes unless told otherwise. */
@@ -85,6 +87,9 @@ export async function publish(deps: PublishDeps): Promise<PublishResult> {
     if (outside.length) return fail("out_of_scope", outside.map((c) => c.path).join(", "));
     const description = describeChanges(changes);
 
+    // Asked before the commit: afterwards the working copy no longer differs from it.
+    const notes = publishNotes(changes, await deps.details?.().catch(() => []));
+
     report("access");
     const who = await github.access();
     if (!who.canWrite) return fail("no_write", who.login);
@@ -106,7 +111,7 @@ export async function publish(deps: PublishDeps): Promise<PublishResult> {
         const names = pending.map((c) => c.path);
         if (names.some((p) => !inEditScope(p))) throw new Error("a file outside the content folders changed while publishing");
         await git.stage(names);
-        await git.commit(resume ? describeChanges(pending) : description, { name: who.login, email: `${who.login}@users.noreply.github.com` });
+        await git.commit(resume ? describeChanges(pending) : `${description}\n\n${notes}`, { name: who.login, email: `${who.login}@users.noreply.github.com` });
       } catch (error) {
         // Nothing is committed: go back to where we started, the edits stay in the folder.
         if (!resume) await git.switchTo(start).then(() => git.deleteBranch(branch)).catch(() => undefined);
@@ -120,7 +125,7 @@ export async function publish(deps: PublishDeps): Promise<PublishResult> {
     const sha = await git.head();
 
     report("pull");
-    const body = `Published from the Studio by @${who.login}.\n\n${changes.map((c) => `- \`${c.path}\` (${c.status})`).join("\n")}\n`;
+    const body = `Published from the Studio by @${who.login}.\n\n${notes}\n`;
     const found = (await github.editorPulls()).find((p) => p.head.ref === branch) ?? (await github.openPull(branch, MAIN, description, body));
     pull = { number: found.number, url: found.html_url };
     if (!who.owner) return { ok: true, state: "waiting", description, pull };
@@ -152,6 +157,8 @@ export async function publish(deps: PublishDeps): Promise<PublishResult> {
     }
     return { ok: true, state: "live", description, pull };
   } catch (error) {
+    // 403 is GitHub knowing the key and refusing the step: a permission is missing on it.
+    if (error instanceof GitHubError && error.status === 403) return fail("key_rights", plain(error));
     return fail(error instanceof GitHubError ? "github" : "git", plain(error));
   }
 }

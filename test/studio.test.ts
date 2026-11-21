@@ -15,6 +15,7 @@ import { RELOAD_SCRIPT, startStudio, type StudioState } from "../src/studio/serv
 import { STRINGS } from "../src/studio/strings";
 
 const ROOT = join(import.meta.dir, "..");
+import { freezeSite } from "./frozen";
 const en = STRINGS.en;
 const de = STRINGS.de;
 // Put together at run time, so a search of the folder for it finds only a real leak, never this file.
@@ -296,13 +297,35 @@ describe("studio: publish steps", () => {
     expect(calls).toEqual([
       `createBranch ${branch}`,
       "stage site/data/hours.yml site/events/2026-12-02-beer-pong.md",
-      "commit Opening hours updated, 1 event added",
+      "commit Opening hours updated, 1 event added\n\n- `site/data/hours.yml` (modified)\n- `site/events/2026-12-02-beer-pong.md` (added)",
       `push ${branch}`,
       "fetchMain", "switchTo main", "fastForwardMain", `deleteBranch ${branch}`,
     ]);
     expect(gh.calls).toEqual(["access", "editorPulls", `openPull ${branch} -> main: Opening hours updated, 1 event added`, "check abcd", "check abcd", "check abcd", `merge #21 ${branch}`]);
     expect(steps).toEqual(["access", "branch", "commit", "push", "pull", "checks", "merge", "sync"]);
     expect(where()).toBe("main");
+  });
+
+  test("the commit and the pull request say what changed in plain lines when the Studio can tell", async () => {
+    const { git, calls } = fakeGit();
+    const bodies: string[] = [];
+    const gh = fakeGitHub(null);
+    const open = gh.github.openPull;
+    gh.github.openPull = (branch, base, title, body) => { bodies.push(body); return open(branch, base, title, body); };
+    await publish({ git, github: gh.github, report: () => {}, details: async () => ['Opening hours now: mo 17:00 to 00:00', 'Album added: "Comedy" (`comedy`)'], ...quick });
+    expect(calls).toContain('commit Opening hours updated\n\n- Opening hours now: mo 17:00 to 00:00\n- Album added: "Comedy" (`comedy`)');
+    expect(bodies).toEqual(['Published from the Studio by @harryf.\n\n- Opening hours now: mo 17:00 to 00:00\n- Album added: "Comedy" (`comedy`)\n']);
+    // A describer that breaks never stops a publish: the paths are listed.
+    const plain = fakeGit();
+    expect(await publish({ git: plain.git, github: fakeGitHub(null).github, report: () => {}, details: async () => { throw new Error("no"); }, ...quick })).toMatchObject({ ok: true });
+    expect(plain.calls).toContain("commit Opening hours updated\n\n- `site/data/hours.yml` (modified)");
+  });
+
+  test("a key that GitHub knows but refuses (403) is told apart: the words name the two permissions", async () => {
+    const { git } = fakeGit();
+    const refused = fakeGitHub(null, { openPull: async () => { throw new GitHubError(403, "GitHub said no (403): Resource not accessible by personal access token"); } });
+    expect(await publish({ git, github: refused.github, report: () => {}, ...quick })).toEqual({ ok: false, reason: "key_rights", detail: "GitHub said no (403): Resource not accessible by personal access token" });
+    for (const lang of ["en", "de"] as const) expect(STRINGS[lang].fail_key_rights("x")).toMatch(/Contents.*Pull requests.*Read and write/);
   });
 
   test("someone who is not the owner: it stops at the pull request and says where it is", async () => {
@@ -520,7 +543,7 @@ describe("studio: git on a real folder", () => {
     expect(await publish({ git, github: fakeGitHub(bare).github, report: () => {}, ...quick })).toMatchObject({ ok: true });
 
     const encoded = btoa(`x-access-token:${DUMMY_TOKEN}`);
-    const records = readFileSync(log, "utf8").split("END\n").filter(Boolean).map((r) => ({ argv: r.split("\n")[0]!, env: r.split("\n").slice(1).join("\n") }));
+    const records = readFileSync(log, "utf8").split("END\n").filter(Boolean).map((r) => ({ argv: r.split("\n").filter((l) => l && !l.startsWith("GIT_CONFIG")).join("\n"), env: r.split("\n").filter((l) => l.startsWith("GIT_CONFIG")).join("\n") }));
     expect(records.length).toBeGreaterThan(8);
     for (const r of records) {
       expect(r.argv).not.toContain(DUMMY_TOKEN);
@@ -658,6 +681,7 @@ describe("studio: the server", () => {
         mkdirSync(dirname(join(to, p)), { recursive: true });
         cpSync(join(ROOT, p), join(to, p));
       }
+      freezeSite(join(to, "site"));
       symlinkSync(join(ROOT, "node_modules"), join(to, "node_modules"));
       mkdirSync(join(ROOT, ".cache", "photos"), { recursive: true });
       mkdirSync(join(to, ".cache"));
@@ -931,4 +955,56 @@ describe("studio: the command", () => {
     expect(await Promise.race([proc.exited, Bun.sleep(10_000).then(() => "still running")])).toBe(0);
     expect(await fetch(`http://127.0.0.1:${port}/_studio/`).then(() => true, () => false)).toBe(false);
   }, 40_000);
+});
+
+// ---------- what exactly changed ----------
+
+describe("studio: the lines under a publish", () => {
+  const { detailLines } = require("../src/studio/detail") as typeof import("../src/studio/detail");
+  const moment = '---\ndate: 2026-11-21\nalbum: comedy\ncaption:\n  en: "Open mic night"\n  de: "Open Mic"\nalt:\n  en: "A comedian on the small stage."\n  de: "Eine Komikerin auf der kleinen Bühne."\n---\n';
+  const albums = (...a: [string, string][]) => `albums:\n${a.map(([slug, en]) => `  - slug: ${slug}\n    title: { en: "${en}", de: "${en}" }\n`).join("")}`;
+
+  test("a photo is told once with its file, caption, album and what it shows; an album by its title", () => {
+    expect(detailLines([
+      { path: "site/moments/2026-11-21-open-mic.jpg", status: "added", before: null, after: null },
+      { path: "site/moments/2026-11-21-open-mic.md", status: "added", before: null, after: moment },
+      { path: "site/data/albums.yml", status: "modified", before: albums(["bar", "Behind the bar"], ["old", "Old"]), after: albums(["bar", "At the bar"], ["comedy", "Comedy"]) },
+    ], { comedy: "Comedy" })).toEqual([
+      'Photo added: `2026-11-21-open-mic.jpg`, "Open mic night", album "Comedy". Shows: "A comedian on the small stage."',
+      'Album renamed: "Behind the bar" is now "At the bar"',
+      'Album added: "Comedy" (`comedy`)',
+      'Album removed: "Old" (`old`)',
+    ]);
+    expect(detailLines([{ path: "site/moments/x.md", status: "removed", before: moment, after: null }, { path: "site/moments/x.jpg", status: "removed", before: null, after: null }])).toEqual(['Photo removed: `x.jpg`, "Open mic night", album "comedy"']);
+  });
+
+  test("hours, events, drinks and venue details are named; anything else keeps its path", () => {
+    const menu = (price: number, extra = "") => `sections:\n  - slug: s\n    title: { en: S, de: S }\n    drinks:\n      - name: "Lazy Monkey"\n        price_chf: ${price}\n${extra}`;
+    expect(detailLines([
+      { path: "site/data/hours.yml", status: "modified", before: null, after: 'regular:\n  - days: [mo, tu]\n    open: "16:00"\n    close: null\n  - days: [su]\n    closed: true\nexceptions:\n  - date: 2026-12-25\n    closed: true\n' },
+      { path: "site/events/quiz.md", status: "added", before: null, after: '---\ntitle: "Quiz at ROBIN\'s"\nname: "Quiz"\ndate: 2026-12-03\nfrom: "19:30"\nticket_url: "https://example.org/t"\n---\n' },
+      { path: "site/events/pong.md", status: "removed", before: '---\ntitle: "Beer Pong"\nevery: we\n---\n', after: null },
+      { path: "site/data/menu.yml", status: "modified", before: menu(18), after: menu(19, '      - name: "New One"\n        price_chf: 16\n') },
+      { path: "site/data/site.yml", status: "modified", before: "phone: a\ncity: z\n", after: "phone: b\ncity: z\n" },
+      { path: "site/photos/menu-new-one.jpg", status: "added", before: null, after: null },
+      { path: "site/data/i18n.yml", status: "modified", before: null, after: null },
+    ])).toEqual([
+      "Opening hours now: mo tu 16:00 to late; su closed",
+      "Exception on 2026-12-25: closed",
+      'Event added: "Quiz", 2026-12-03 at 19:30, tickets at https://example.org/t',
+      'Event removed: "Beer Pong", every we',
+      'Drink updated: "Lazy Monkey", CHF 19',
+      'Drink added: "New One", CHF 16',
+      "Venue details updated: phone",
+      "Picture added: `menu-new-one.jpg`",
+      "`site/data/i18n.yml` (modified)",
+    ]);
+  });
+
+  test("ANTI: a text from a file cannot break out of its line or open a code block, and a broken file still gives a line", () => {
+    const bad = '---\ncaption:\n  en: "one\\ntwo ``` @someone"\n---\n';
+    const [line] = detailLines([{ path: "site/moments/a.md", status: "modified", before: null, after: bad }]);
+    expect(line).toBe('Photo updated: `a.jpg`, "one two @ someone"');
+    expect(detailLines([{ path: "site/data/menu.yml", status: "modified", before: ": : :", after: "[" }])).toEqual(["Menu updated"]);
+  });
 });

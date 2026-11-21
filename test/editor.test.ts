@@ -8,7 +8,8 @@ import { compareVersions, updateState } from "../src/editor/version";
 import { github, toBase64, GitHubError } from "../src/editor/github";
 import { outOfScope } from "../scripts/check-edit-scope";
 
-const SITE = join(import.meta.dir, "..", "site");
+import { FROZEN_SITE } from "./frozen";
+const SITE = FROZEN_SITE;
 const files: Files = {};
 for (const p of new Bun.Glob("**/*.{md,yml,json,liquid}").scanSync({ cwd: SITE })) files[p] = await Bun.file(join(SITE, p)).text();
 const photoPaths = [...new Bun.Glob("{moments,photos}/*.jpg").scanSync({ cwd: SITE })];
