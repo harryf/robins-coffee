@@ -8,6 +8,7 @@ ROBIN's Studio ist die App, mit der die Bar diese Website ändert: Öffnungszeit
 ## Was du brauchst
 
 - **Einen Mac** mit macOS 12 oder neuer. Zum Nachschauen: Klicke oben links auf das Apple-Zeichen, dann auf **Über diesen Mac**.
+- **macOS 26 (Tahoe) oder neuer für die Übersetzungen.** Du schreibst jeden Text auf Englisch; der Mac macht daraus Deutsch, Französisch und Italienisch. Auf einem älteren Mac läuft das Studio trotzdem, und die Website zeigt Englisch, wo eine Übersetzung fehlt.
 - **Eine Internetverbindung**, für die Installation und jedes Mal, wenn du veröffentlichst.
 - **Eine E-Mail-Adresse**, die du jetzt öffnen kannst. GitHub schickt einen Code dorthin.
 - **Ein kostenloses GitHub-Konto, das Harry eingeladen hat, und einen Schlüssel daraus.** GitHub ist der Dienst, der die Dateien der Website aufbewahrt. Die drei Schritte unter "Voraussetzungen" richten das ein. Ohne sie kannst du das Studio installieren und dich umschauen, aber nicht veröffentlichen.
@@ -70,6 +71,16 @@ Es fragt nach keinem Passwort. Der erste Start dauert eine Minute, weil das Stud
 
 Die App heisst **ROBINs Studio** und liegt im Ordner Programme in deinem Benutzerordner. Drücke Command und Leertaste, tippe `Studio`, drücke Enter. Ziehe ihr Symbol ins Dock, damit es dort bleibt.
 
+### Die Sprachen für die Übersetzungen laden
+
+Das Studio übersetzt auf diesem Mac mit Apples eigener Übersetzung, also wird nichts, was du schreibst, irgendwohin geschickt. Der Mac braucht dafür einmal drei Sprachen:
+
+1. Öffne **Systemeinstellungen**, dann **Allgemein**, dann **Sprache & Region**.
+2. Klicke weiter unten auf **Übersetzungssprachen**.
+3. Klicke auf den Download-Knopf neben **Deutsch**, **Französisch** und **Italienisch**. Warte, bis jede fertig ist.
+
+Das Studio sagt dir auch, wenn eine Sprache fehlt, mit einem Knopf, der diese Seite öffnet. Solange eine Sprache fehlt, zeigt die Website dort den englischen Text.
+
 ## Zum ersten Mal veröffentlichen
 
 1. Öffne im Studio die **Einstellungen**.
@@ -83,6 +94,7 @@ Wenn das Studio meldet, dass GitHub den Schlüssel abgelehnt hat, prüfe zwei Di
 ## Gut zu wissen
 
 - Das Studio hält sich selbst aktuell. Bei jedem Start sucht es nach einer neueren Version.
+- Schreib auf Englisch. Die Übersetzungen stehen in einem geschlossenen Feld unter jedem Text; öffne es, um sie zu lesen oder ein Wort zu ändern. Lässt du eine leer, macht der Mac sie beim Speichern neu.
 - Nichts geht live, bevor du auf Veröffentlichen drückst. Bis dahin sind deine Änderungen nur auf diesem Mac.
 - Zum erneuten Installieren oder Reparieren führe dieselbe Zeile noch einmal aus. Deine unveröffentlichten Änderungen bleiben.
 - Zum Entfernen: Ziehe ROBINs Studio aus Programme in den Papierkorb und lösche den Ordner `Library/Application Support/ROBINs Studio` in deinem Benutzerordner.
