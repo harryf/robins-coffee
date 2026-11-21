@@ -9,3 +9,5 @@ albums:
     title: { en: "Halloween 2026", de: "Halloween 2026" }
   - slug: behind-the-bar
     title: { en: "Behind the bar", de: "Hinter der Bar" }
+  - slug: comedy
+    title: { en: "Comedy", de: "Komödie" }
