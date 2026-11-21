@@ -13,6 +13,7 @@ import { tokensCss } from "./tokens";
 import { parse as parseYaml } from "yaml";
 import { fromIyfFeed, fromManual, mergeEvents, upcoming, toIcs, type SiteEvent } from "./events";
 import { cropBox, readFocus, type Focus } from "./focus";
+import { readMenu } from "./menu";
 
 const ROOT = join(import.meta.dir, "..");
 const SITE = join(ROOT, "site");
@@ -97,6 +98,9 @@ async function buildOg(files: Files, photos: Record<string, Photo>, focus: Recor
   const night = JSON.parse(files["data/tokens.json"]!).color.night;
   const keys = new Set<string>([parseYaml(files["data/home.yml"]!).hero_photo]);
   for (const [p, text] of Object.entries(files)) if (p.startsWith("content/") && parseFrontMatter(text).data.og_photo) keys.add(parseFrontMatter(text).data.og_photo);
+  // A drink's page shows its drawing: whole, on the dark of the drawing, never cut to the wide shape.
+  const drawings = new Set(readMenu(parseYaml(files["data/menu.yml"] ?? "")).drinks.flatMap((d) => d.pictures.slice(0, 1).map((p) => p.photo)));
+  for (const p of drawings) keys.add(p);
   const { width, height } = OG_SIZE;
   const shade = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0.35" stop-color="${night.bg}" stop-opacity="0"/><stop offset="1" stop-color="${night.bg}" stop-opacity="0.9"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/></svg>`);
   const wordmark = await sharp(join(SITE, "assets", "brand", "wordmark-white.png")).resize({ width: 420 }).toBuffer({ resolveWithObject: true });
@@ -106,7 +110,7 @@ async function buildOg(files: Files, photos: Record<string, Photo>, focus: Recor
     const bytes = new Uint8Array(await Bun.file(join(SITE, key)).arrayBuffer());
     const file = `og/${key.slice(key.indexOf("/") + 1, -4)}-${Bun.hash(bytes).toString(36).slice(0, 8)}.jpg`;
     // Cut around the photo's focus when it has one; otherwise keep the top, where faces usually are.
-    const cut = focus[key] ? sharp(bytes).extract(cropBox(photos[key]!.width, photos[key]!.height, width / height, focus[key])).resize({ width, height }) : sharp(bytes).resize({ width, height, fit: "cover", position: "north" });
+    const cut = drawings.has(key) ? sharp(bytes).resize({ width, height, fit: "contain", background: night.ink ?? night.bg }) : focus[key] ? sharp(bytes).extract(cropBox(photos[key]!.width, photos[key]!.height, width / height, focus[key])).resize({ width, height }) : sharp(bytes).resize({ width, height, fit: "cover", position: "north" });
     await cut
       .composite([{ input: shade }, { input: wordmark.data, left: 64, top: height - wordmark.info.height - 52 }])
       .jpeg({ quality: 82, mozjpeg: true }).toFile(join(OUT, file));
@@ -176,7 +180,11 @@ async function loadEvents(files: Files): Promise<SiteEvent[]> {
   }
 }
 
-/** Flyer thumbnails of the events shown on the site, fetched and resized; a failed one is just left out. */
+/**
+ * Flyers of the events shown on the site, fetched and resized; a failed one is just left out.
+ * Two kinds: square cuts for the card, and the whole flyer, uncut, up to its own width or
+ * 1800 px, for the lightbox, where its small print must be readable.
+ */
 async function buildEventImages(events: SiteEvent[], photos: Record<string, Photo>) {
   // A hand event names a photo of the site ("photos/x.jpg"), which is built already; only addresses are fetched.
   for (const src of new Set(events.map((e) => e.image).filter((s): s is string => !!s && /^https?:/.test(s)))) {
@@ -185,11 +193,18 @@ async function buildEventImages(events: SiteEvent[], photos: Record<string, Phot
       const original = join(CACHE, `event-${key}.orig`);
       if (!existsSync(original)) await Bun.write(original, await (await fetch(src, { signal: AbortSignal.timeout(20_000) })).arrayBuffer());
       const bytes = new Uint8Array(await Bun.file(original).arrayBuffer());
-      const photo: Photo = { width: 400, height: 400, jpg: [], webp: [] };
+      const meta = await sharp(bytes).rotate().metadata();
+      const [width, height] = (meta.orientation ?? 1) >= 5 ? [meta.height!, meta.width!] : [meta.width!, meta.height!];
+      const photo: Photo = { width, height, jpg: [], webp: [], sq: { jpg: [], webp: [] } };
+      const encode = (img: ReturnType<typeof sharp>, ext: "jpg" | "webp", file: string) => (ext === "jpg" ? img.jpeg({ quality: 78, mozjpeg: true }) : img.webp({ quality: 74 })).toFile(join(OUT, "photos", file));
       for (const w of [200, 400]) for (const ext of ["jpg", "webp"] as const) {
         const file = `event-${key}-${w}.${ext}`;
-        const img = sharp(bytes).resize({ width: w, height: w, fit: "cover" }).flatten({ background: "#000000" });
-        await (ext === "jpg" ? img.jpeg({ quality: 78, mozjpeg: true }) : img.webp({ quality: 74 })).toFile(join(OUT, "photos", file));
+        await encode(sharp(bytes).rotate().resize({ width: w, height: w, fit: "cover" }).flatten({ background: "#000000" }), ext, file);
+        photo.sq![ext].push({ w, path: `photos/${file}` });
+      }
+      for (const w of WIDTHS.filter((w) => w < width).concat(width <= WIDTHS.at(-1)! ? [width] : [])) for (const ext of ["jpg", "webp"] as const) {
+        const file = `event-${key}-full${w}.${ext}`;
+        await encode(sharp(bytes).rotate().resize({ width: w }).flatten({ background: "#000000" }), ext, file);
         photo[ext].push({ w, path: `photos/${file}` });
       }
       photos[src] = photo;

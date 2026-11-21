@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import sharp from "sharp";
 import { parse as parseYaml } from "yaml";
-import { changeDrink, dropCover, editMoment, eventFields, eventFile, exifDay, hasDrink, keepComments, photoDay } from "../src/content";
+import { saveDrink, dropCover, editMoment, eventFields, eventFile, exifDay, keepComments, photoDay } from "../src/content";
 import { inEditScope } from "../src/scope";
 import { fromManual } from "../src/events";
 import { parseFrontMatter } from "../src/render";
@@ -80,26 +80,22 @@ test("C99: the sidebar is hours, photos, menu, events, history, settings; no alb
 
 describe("studio screens: the rules of the files", () => {
   const MENU = readFileSync(join(SITE, "data", "menu.yml"), "utf8");
-  const names = (yaml: string, part = "signatures") => parseYaml(yaml).sections.find((s: any) => s.slug === part).drinks.map((d: any) => d.name);
+  const names = (yaml: string) => parseYaml(yaml).drinks.map((d: any) => d.name);
   const drink = { name: "Sleepy Monkey", text: { en: "Pisco", de: "Pisco" }, price_chf: 19 };
+  const season = parseYaml(MENU).seasons[0].slug;
 
-  test("a renamed drink keeps its place in the list; moved to another part it goes to the end there", () => {
+  test("a renamed drink keeps its place and its slug (so its page keeps its address)", () => {
     const before = names(MENU);
     const at = before.indexOf("Lazy Monkey");
-    const renamed = changeDrink(MENU, { part: "signatures", name: "Lazy Monkey" }, "signatures", drink);
-    expect(names(renamed)).toEqual(before.map((n: string, i: number) => (i === at ? "Sleepy Monkey" : n)));
-    expect(parseYaml(renamed).sections[0].drinks[at]).toEqual(drink);
-    expect(renamed.startsWith("# The drinks menu")).toBe(true);
-    const moved = changeDrink(MENU, { part: "signatures", name: "Lazy Monkey" }, "winter", drink, { en: "Winter", de: "Winter" });
-    expect(names(moved)).toEqual(before.filter((n: string) => n !== "Lazy Monkey"));
-    expect(names(moved, "winter")).toEqual(["Sleepy Monkey"]);
+    const renamed = saveDrink(MENU, drink, { was: "lazy-monkey", seasons: [season] });
+    expect(renamed.slug).toBe("lazy-monkey");
+    expect(names(renamed.text)).toEqual(before.map((n: string, i: number) => (i === at ? "Sleepy Monkey" : n)));
+    expect(parseYaml(renamed.text).drinks[at]).toMatchObject({ slug: "lazy-monkey", ...drink });
+    expect(renamed.text.startsWith("# The drinks menu")).toBe(true);
   });
-  test("a new name that another drink of the part has is refused, and so is a drink that is gone", () => {
-    expect(() => changeDrink(MENU, { part: "signatures", name: "Lazy Monkey" }, "signatures", { ...drink, name: "Toffee Crush" })).toThrow("drink_exists");
-    expect(() => changeDrink(MENU, { part: "signatures", name: "Nope" }, "signatures", drink)).toThrow("drink_not_found");
-    expect(hasDrink(MENU, "signatures", " Toffee Crush ")).toBe(true);
-    expect(hasDrink(MENU, "signatures", "Nope")).toBe(false);
-    expect(hasDrink("", "signatures", "Nope")).toBe(false);
+  test("a name that another drink has is refused, whatever its case, and so is a drink that is gone", () => {
+    expect(() => saveDrink(MENU, { ...drink, name: " toffee crush " }, { was: "lazy-monkey", seasons: [] })).toThrow("drink_exists");
+    expect(() => saveDrink(MENU, drink, { was: "nope", seasons: [] })).toThrow("drink_not_found");
   });
 
   const MOMENT = `---\ndate: 2026-10-22\nalbum: halloween-2026\n# cleared by the owner\ncredit: "someone"\ncaption:\n  en: "Old."\n  de: "Alt."\nalt:\n  en: "A skeleton."\n  de: "Ein Skelett."\n---\n`;
@@ -339,33 +335,69 @@ describe("studio screens: the routes", () => {
     expect(has("site/data/menu.yml")).toBe(true);
   });
 
-  test("C105: a drink is saved with its picture in one request: cleaned, under menu-<name>, a free name if taken, focus recorded", async () => {
-    const drink = { name: "Hot Toddy", text: { en: "Whisky, honey", de: "Whisky, Honig" }, price_chf: 14, alt: { en: "A mug.", de: "Eine Tasse." } };
-    expect((await call("POST drink", { part: "signatures", drink, picture: await shot() }))!.data).toEqual({ ok: true, photo: "photos/menu-hot-toddy.jpg" });
+  test("C105: a drink is saved with its pictures in one request: cleaned, under menu-<name>, a free name if taken, focus recorded, texts translated", async () => {
+    const season = parseYaml(read("site/data/menu.yml")).seasons[0].slug;
+    const drink = { name: "Hot Toddy", text: { en: "Whisky, honey" }, price_chf: 14, experience: { en: "Warm and slow." }, ingredients: [{ amount: 4, unit: "cl", item: { en: "Whisky" } }, { item: { en: "Lemon peel" } }], method: [{ en: "Stir." }] };
+    const alt = { en: "A mug." };
+    expect((await call("POST drink", { drink, pictures: [{ picture: await shot(), alt }], seasons: [season] }))!.data).toEqual({ ok: true, slug: "hot-toddy", photos: ["photos/menu-hot-toddy.jpg"] });
     expect((await sharp(join(root, "site/photos/menu-hot-toddy.jpg")).metadata()).exif).toBeUndefined();
     expect(parseYaml(read("site/data/focus.yml"))["photos/menu-hot-toddy.jpg"]).toEqual([0.3, 0.6]);
-    const menu = () => parseYaml(read("site/data/menu.yml")).sections[0].drinks;
-    expect(menu().at(-1)).toEqual({ ...drink, photo: "photos/menu-hot-toddy.jpg" });
+    const file = () => parseYaml(read("site/data/menu.yml"));
+    const made = file().drinks.at(-1);
+    expect(made).toMatchObject({ slug: "hot-toddy", name: "Hot Toddy", price_chf: 14, pictures: [{ photo: "photos/menu-hot-toddy.jpg" }] });
+    // Every text of the form went through this Mac's translator: line, experience, each ingredient, each step, each alt text.
+    for (const texts of [made.text, made.experience, made.ingredients[0].item, made.ingredients[1].item, made.method[0], made.pictures[0].alt]) expect(Object.keys(texts).sort()).toEqual(["de", "en"]);
+    expect(made.ingredients[1]).not.toHaveProperty("amount");
+    expect(file().seasons[0].drinks.at(-1)).toBe("hot-toddy");
     // "Add a drink" never replaces one that is there.
-    expect((await call("POST drink", { part: "signatures", drink }))!.data.error).toBe("drink_exists");
-    // Edit: a new name keeps the place, a new picture gets a free name, the old picture is kept when none is sent.
-    const at = menu().findIndex((d: any) => d.name === "Lazy Monkey");
-    const lazy = menu()[at];
-    expect((await call("POST drink", { part: "signatures", was: { part: "signatures", name: "Lazy Monkey" }, drink: { ...lazy, name: "Sleepy Monkey", price_chf: 19 } }))!.data).toEqual({ ok: true, photo: "photos/menu-lazy-monkey.jpg" });
-    expect(menu()[at]).toEqual({ ...lazy, name: "Sleepy Monkey", price_chf: 19 });
-    expect((await call("POST drink", { part: "signatures", was: { part: "signatures", name: "Hot Toddy" }, drink, picture: await shot("#804020") }))!.data.photo).toBe("photos/menu-hot-toddy-2.jpg");
-    expect(menu().at(-1).photo).toBe("photos/menu-hot-toddy-2.jpg");
+    expect((await call("POST drink", { drink, pictures: [], seasons: [] }))!.data.error).toBe("drink_exists");
+    // Edit: a new name keeps the place and the slug, a picture there already is kept by its path, a new one gets a free name.
+    const at = file().drinks.findIndex((d: any) => d.slug === "lazy-monkey");
+    const lazy = file().drinks[at];
+    expect((await call("POST drink", { was: "lazy-monkey", drink: { ...lazy, name: "Sleepy Monkey", price_chf: 19 }, pictures: lazy.pictures, seasons: [season] }))!.data).toEqual({ ok: true, slug: "lazy-monkey", photos: ["photos/menu-lazy-monkey.jpg"] });
+    expect(file().drinks[at]).toMatchObject({ slug: "lazy-monkey", name: "Sleepy Monkey", price_chf: 19, text: lazy.text, pictures: lazy.pictures });
+    // The drafted mark goes once the drink is saved.
+    expect(file().drinks[at].draft).toBeUndefined();
+    const two = (await call("POST drink", { was: "hot-toddy", drink, pictures: [{ photo: "photos/menu-hot-toddy.jpg", alt }, { picture: await shot("#804020"), alt: { en: "Two mugs on the bar." } }], seasons: [season] }))!.data;
+    expect(two.photos).toEqual(["photos/menu-hot-toddy.jpg", "photos/menu-hot-toddy-2.jpg"]);
+    // A picture taken off goes from the folder when nothing names it any more.
+    expect((await call("POST drink", { was: "hot-toddy", drink, pictures: [{ photo: "photos/menu-hot-toddy-2.jpg", alt }], seasons: [season] }))!.data.photos).toEqual(["photos/menu-hot-toddy-2.jpg"]);
+    expect(has("site/photos/menu-hot-toddy.jpg")).toBe(false);
     // Refusals leave no picture behind.
     const pictures = () => [...new Bun.Glob("site/photos/*.jpg").scanSync({ cwd: root })].sort();
     const before = pictures();
-    expect((await call("POST drink", { part: "signatures", drink: { ...drink, name: "No Alt", alt: undefined }, picture: await shot() }))!.data.error).toBe("alt_missing");
-    expect((await call("POST drink", { part: "signatures", drink: { ...drink, name: "" }, picture: await shot() }))!.data.error).toBe("drink_name_missing");
-    expect((await call("POST drink", { part: "signatures", was: { part: "signatures", name: "Gone" }, drink: { ...drink, name: "Y" }, picture: await shot() }))!.data.error).toBe("drink_not_found");
-    expect((await call("POST drink", { part: "signatures", was: { part: "signatures", name: "Hot Toddy" }, drink: { ...drink, name: "Toffee Crush" }, picture: await shot() }))!.data.error).toBe("drink_exists");
-    expect((await call("POST drink", { part: "signatures", drink: { ...drink, name: "Z" }, picture: { base64: Buffer.from("no").toString("base64") } }))!.data.error).toBe("photo_unreadable");
-    expect((await call("POST drink", { part: "../x", drink: { ...drink, name: "Z" } }))!.data.error).toBe("menu_part_wrong");
+    expect((await call("POST drink", { drink: { ...drink, name: "No Alt" }, pictures: [{ picture: await shot(), alt: { en: "" } }], seasons: [] }))!.data.error).toBe("alt_missing");
+    expect((await call("POST drink", { drink: { ...drink, name: "" }, pictures: [{ picture: await shot(), alt }], seasons: [] }))!.data.error).toBe("drink_name_missing");
+    expect((await call("POST drink", { was: "gone", drink: { ...drink, name: "Y" }, pictures: [{ picture: await shot(), alt }], seasons: [] }))!.data.error).toBe("drink_not_found");
+    expect((await call("POST drink", { was: "hot-toddy", drink: { ...drink, name: "Toffee Crush" }, pictures: [{ picture: await shot(), alt }], seasons: [] }))!.data.error).toBe("drink_exists");
+    expect((await call("POST drink", { drink: { ...drink, name: "Z" }, pictures: [{ picture: { base64: Buffer.from("no").toString("base64") }, alt }], seasons: [] }))!.data.error).toBe("photo_unreadable");
+    expect((await call("POST drink", { drink: { ...drink, name: "Z" }, pictures: [], seasons: ["../x"] }))!.data.error).toBe("season_unknown");
+    expect((await call("POST drink", { was: "../x", drink: { ...drink, name: "Z" }, pictures: [], seasons: [] }))!.data.error).toBe("drink_not_found");
+    expect((await call("POST drink", { drink: { ...drink, name: "Z", ingredients: [{ amount: 2, unit: "pint", item: { en: "Ale" } }] }, pictures: [], seasons: [] }))!.data.error).toBe("ingredient_unit_wrong");
     expect(pictures()).toEqual(before);
-    expect((await call("GET content"))!.data.menu[0].drinks.at(-1)).toEqual({ ...drink, photo: "photos/menu-hot-toddy-2.jpg" });
+    const seen = (await call("GET content"))!.data.menu;
+    expect(seen.drinks.find((d: any) => d.slug === "hot-toddy")).toMatchObject({ name: "Hot Toddy", pictures: [{ photo: "photos/menu-hot-toddy-2.jpg" }] });
+    expect(seen.seasons[0].drinks).toContain("hot-toddy");
+    // Removing the drink takes it out of its seasons; its picture goes with it.
+    expect((await call("DELETE drink", { slug: "hot-toddy" }))!.status).toBe(200);
+    expect(file().seasons[0].drinks).not.toContain("hot-toddy");
+    expect(has("site/photos/menu-hot-toddy-2.jpg")).toBe(false);
+  });
+
+  test("C105b: a season is added, renamed and dated through the route, its drinks stay, and only an empty one can go", async () => {
+    const file = () => parseYaml(read("site/data/menu.yml"));
+    const made = (await call("POST season", { season: { name: { en: "Summer 2027" }, start: "2027-06-01", end: "2027-08-31", description: { en: "Spritz weather." } } }))!.data;
+    expect(made).toEqual({ ok: true, slug: "summer-2027" });
+    expect(file().seasons.at(-1)).toMatchObject({ slug: "summer-2027", name: { en: "Summer 2027", de: expect.any(String) }, start: "2027-06-01", end: "2027-08-31", description: { en: "Spritz weather.", de: expect.any(String) }, drinks: [] });
+    const first = file().seasons[0];
+    expect((await call("POST season", { was: first.slug, season: { name: first.name, start: first.start, end: "2027-03-31", description: first.description } }))!.data.slug).toBe(first.slug);
+    expect(file().seasons[0]).toMatchObject({ slug: first.slug, end: "2027-03-31", drinks: first.drinks, name: first.name });
+    expect(file().seasons[0].draft).toBeUndefined();
+    expect((await call("POST season", { season: { name: { en: "" }, start: "2027-06-01", end: "2027-05-01" } }))!.data.problems).toEqual(["season_name_missing", "season_dates_order"]);
+    expect((await call("POST season", { was: "nope", season: { name: { en: "X" }, start: "2027-06-01", end: "2027-07-01" } }))!.data.error).toBe("season_not_found");
+    expect((await call("DELETE season", { slug: first.slug }))!.data.error).toBe("season_not_empty");
+    expect((await call("DELETE season", { slug: "summer-2027" }))!.status).toBe(200);
+    expect(file().seasons.map((s: any) => s.slug)).toEqual([first.slug]);
   });
 
   test("C106: an event is added and edited with its picture; an edit keeps the file's place, or the old file goes when name or day change", async () => {
@@ -485,9 +517,11 @@ describe("studio screens: a text is typed in English and translated into the sit
     expect(s.yaml("site/data/albums.yml").albums.at(-1)).toEqual({ slug: "comedy", title: { en: "Comedy", de: "[de] Comedy", fr: "[fr] Comedy", it: "[it] Comedy" } });
     // One run of the translator for the whole save.
     expect(s.asked).toEqual([{ texts: ["Open mic night", "A comedian on the stage.", "Comedy"], targets: ["de", "fr", "it"], source: "en" }]);
-    expect((await s.call("POST drink", { partTitle: { en: "Winter" }, drink: { name: "Glühwein", text: { en: "Hot red wine" }, price_chf: 9 } })).data).toEqual({ ok: true, photo: null });
-    const winter = s.yaml("site/data/menu.yml").sections.find((p: any) => p.slug === "winter");
-    expect(winter).toMatchObject({ title: { en: "Winter", fr: "[fr] Winter" }, drinks: [{ name: "Glühwein", text: { en: "Hot red wine", de: "[de] Hot red wine", fr: "[fr] Hot red wine", it: "[it] Hot red wine" } }] });
+    expect((await s.call("POST season", { season: { name: { en: "Winter" }, start: "2026-12-01", end: "2027-02-28", description: { en: "Warm drinks." } } })).data).toEqual({ ok: true, slug: "winter" });
+    expect((await s.call("POST drink", { drink: { name: "Glühwein", text: { en: "Hot red wine" }, experience: { en: "Like a hug." }, price_chf: 9, ingredients: [{ amount: 10, unit: "cl", item: { en: "Red wine" } }], method: [{ en: "Warm it up." }] }, pictures: [], seasons: ["winter"] })).data).toEqual({ ok: true, slug: "gluhwein", photos: [] });
+    const menu = s.yaml("site/data/menu.yml");
+    expect(menu.seasons.find((p: any) => p.slug === "winter")).toMatchObject({ name: { en: "Winter", fr: "[fr] Winter" }, description: { it: "[it] Warm drinks." }, drinks: ["gluhwein"] });
+    expect(menu.drinks.at(-1)).toMatchObject({ name: "Glühwein", text: { en: "Hot red wine", de: "[de] Hot red wine", fr: "[fr] Hot red wine", it: "[it] Hot red wine" }, experience: { de: "[de] Like a hug." }, ingredients: [{ amount: 10, unit: "cl", item: { fr: "[fr] Red wine" } }], method: [{ it: "[it] Warm it up." }] });
     const event = await s.call("POST event", { event: { title: "Quiz", date: "2026-12-03", text: { en: "Bring a team." } } });
     expect(s.front(event.data.path).text).toEqual({ en: "Bring a team.", de: "[de] Bring a team.", fr: "[fr] Bring a team.", it: "[it] Bring a team." });
     // An event without a text asks for no translation.
@@ -534,9 +568,12 @@ describe("studio screens: a text is typed in English and translated into the sit
     expect(s.front("site/moments/2026-10-01-quiz.md").caption.de).toBe("Quiz in der Bar");
     // The same for a drink, an album and an event: the old German stays while the English does.
     const menu = s.yaml("site/data/menu.yml");
-    const first = menu.sections[0], drink = first.drinks[0];
-    await s.call("POST drink", { part: first.slug, was: { part: first.slug, name: drink.name }, drink: { name: drink.name, text: { en: drink.text.en }, price_chf: drink.price_chf + 1, ...(drink.photo ? { photo: drink.photo, alt: { en: drink.alt.en } } : {}) } });
-    expect(s.yaml("site/data/menu.yml").sections[0].drinks[0].text.de).toBe(drink.text.de);
+    const drink = menu.drinks[0];
+    for (const p of drink.pictures) put(s.root, `site/${p.photo}`, readFileSync(join(SITE, p.photo)));
+    const saved = await s.call("POST drink", { was: drink.slug, drink: { name: drink.name, text: { en: drink.text.en }, experience: { en: drink.experience.en }, price_chf: drink.price_chf + 1 }, pictures: drink.pictures.map((p: any) => ({ photo: p.photo, alt: { en: p.alt.en } })), seasons: [menu.seasons[0].slug] });
+    expect(saved.data.ok).toBe(true);
+    const after = s.yaml("site/data/menu.yml").drinks[0];
+    expect([after.price_chf, after.text.de, after.experience.de, after.pictures[0].alt.de]).toEqual([drink.price_chf + 1, drink.text.de, drink.experience.de, drink.pictures[0].alt.de]);
     const album = s.yaml("site/data/albums.yml").albums[0];
     await s.call("PUT album", { slug: album.slug, title: { en: album.title.en } });
     expect(s.yaml("site/data/albums.yml").albums[0].title.de).toBe(album.title.de);
@@ -822,8 +859,8 @@ describe("studio screens: the server", () => {
     const picture = (await jpeg("#804020", { IFD0: { Copyright: "secret owner" } })).toString("base64");
     const photo = await (await call("POST", "photo", { base64: picture, date: "2026-11-19", caption: { en: "A quiet corner", de: "Eine ruhige Ecke" }, alt: { en: "A corner.", de: "Eine Ecke." }, album: "drinks" })).json();
     expect(photo.path).toBe("moments/2026-11-19-a-quiet-corner.jpg");
-    const drink = await (await call("POST", "drink", { part: "signatures", drink: { name: "Hot Toddy", text: { en: "Whisky", de: "Whisky" }, price_chf: 14, alt: { en: "A mug.", de: "Eine Tasse." } }, picture: { base64: picture, focus: [0.5, 0.4] } })).json();
-    expect(drink).toEqual({ ok: true, photo: "photos/menu-hot-toddy.jpg" });
+    const drink = await (await call("POST", "drink", { drink: { name: "Hot Toddy", text: { en: "Whisky", de: "Whisky" }, price_chf: 14 }, pictures: [{ picture: { base64: picture, focus: [0.5, 0.4] }, alt: { en: "A mug.", de: "Eine Tasse." } }], seasons: ["autumn-winter-2026"] })).json();
+    expect(drink).toEqual({ ok: true, slug: "hot-toddy", photos: ["photos/menu-hot-toddy.jpg"] });
     await studio.settled();
     const now = await state();
     expect(now.build.status).toBe("ok");

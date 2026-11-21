@@ -92,6 +92,8 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 /* pill */
 .pill { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-radius: var(--radius-pill); background: var(--c-raised); border: var(--border-thin) solid var(--c-line); color: var(--c-text); font-weight: var(--weight-semi); font-size: var(--size-xs); white-space: nowrap; }
 .pill__dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--c-muted); }
+/* A fact, not a button: dashed and see-through where a button is solid and filled. */
+.pill--walkin { background: transparent; border: var(--border-thin) dashed var(--c-amber); color: var(--c-amber); font-weight: var(--weight-bold); letter-spacing: var(--tracking-label); text-transform: uppercase; cursor: default; }
 .pill.is-open .pill__dot { background: var(--c-green); box-shadow: 0 0 0 0 var(--c-green); animation: pulse var(--motion-pulse) var(--motion-ease) 3; }
 @keyframes pulse { 70% { box-shadow: 0 0 0 var(--space-2) transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
 @media (max-width: 36rem) {
@@ -145,6 +147,22 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 .hero__title { font-size: var(--size-xxl); max-width: var(--measure-title); text-shadow: 0 2px 1.5rem color-mix(in srgb, var(--scrim) 60%, transparent); }
 .hero__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; margin-top: var(--space-6) !important; }
 
+/* event promo: the hero's "Tonight", "Today" or "Tomorrow" sign for one event. A dark
+   glass card with a neon edge; the label glows like the headline's sign and flickers once. */
+.hero__promo { margin-top: var(--space-6) !important; }
+.promo { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-2) var(--space-4); max-width: var(--measure-form); padding: var(--space-3) var(--space-4); border: var(--border-thick) solid var(--c-neon); border-radius: var(--radius-md); background: color-mix(in srgb, var(--c-bg) 80%, transparent); box-shadow: var(--shadow-glow-card) var(--c-neon); backdrop-filter: blur(6px); }
+.promo__when { font: var(--weight-regular) var(--size-lg)/var(--leading-none) var(--font-display); text-transform: uppercase; white-space: nowrap; color: var(--c-neon); text-shadow: 0 0 0.35em var(--c-neon), 0 0 1.1em color-mix(in srgb, var(--c-neon) 65%, transparent); animation: flicker var(--motion-flicker) linear var(--motion-slow) 1 both; }
+.promo__what { min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-3); }
+.promo__name { font: var(--weight-regular) var(--size-lg)/var(--leading-title) var(--font-display); color: var(--c-text); text-decoration: none; }
+.promo__name:hover { color: var(--c-neon); }
+.promo__time { font: var(--weight-bold) var(--size-sm)/var(--leading-label) var(--font-body); letter-spacing: var(--tracking-label); color: var(--c-amber); }
+.promo__more { font-size: var(--size-sm); font-weight: var(--weight-semi); color: var(--c-text); }
+.promo__go.btn { min-height: var(--target-min); padding-block: var(--space-2); }
+@media (max-width: 36rem) {
+  .promo { grid-template-columns: minmax(0, 1fr) auto; }
+  .promo__when { grid-column: 1 / -1; }
+}
+
 /* neon sign: the last sentence of the headline glows and flickers once on load */
 .neon-word { display: block; color: var(--c-neon); text-shadow: 0 0 0.35em var(--c-neon), 0 0 1.1em color-mix(in srgb, var(--c-neon) 65%, transparent); animation: flicker var(--motion-flicker) linear var(--motion-slow) 1 both; }
 @keyframes flicker { 0%, 12%, 16%, 24% { opacity: 0.35; text-shadow: none; } 10%, 14%, 22%, 30%, 100% { opacity: 1; } }
@@ -164,7 +182,8 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 /* events: one row per event: flyer, when and what, ticket button */
 .events { display: grid; gap: var(--space-3); }
 .event { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--space-4); padding: var(--space-3); background: var(--c-surface); border: var(--border-thin) solid var(--c-line); border-radius: var(--radius-md); }
-.event__thumb { width: 6rem; aspect-ratio: 1; border-radius: var(--radius-sm); overflow: hidden; }
+.event__thumb { display: block; width: 6rem; aspect-ratio: 1; border-radius: var(--radius-sm); overflow: hidden; }
+a.event__thumb { cursor: zoom-in; }
 .event__thumb img { width: 100%; height: 100%; object-fit: cover; }
 .event__body { min-width: 0; grid-column: 2; }
 .event:not(:has(.event__thumb)) .event__body { grid-column: 1 / 3; padding-inline-start: var(--space-2); }
@@ -173,16 +192,25 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 .event__title a { color: var(--c-text); text-decoration: none; }
 .event__title a:hover { color: var(--c-neon); }
 .event.is-today { border-color: var(--c-neon); }
-.event__today { display: inline-block; margin-inline-end: var(--space-2); padding: 0 var(--space-2); border-radius: var(--radius-pill); background: var(--c-neon); color: var(--c-on-neon); }
+.event__mark { display: inline-block; margin-inline-end: var(--space-2); padding: 0 var(--space-2); border-radius: var(--radius-pill); background: var(--c-neon); color: var(--c-on-neon); }
+.event__mark--tomorrow { background: transparent; color: var(--c-neon); box-shadow: inset 0 0 0 var(--border-thin) var(--c-neon); }
 .event__meta { color: var(--c-muted); font-size: var(--size-sm); }
 .event__text { font-size: var(--size-sm); line-height: var(--leading-text); margin-bottom: var(--space-1); }
-.event__walkin { color: var(--c-muted); font: var(--weight-bold) var(--size-xs)/var(--leading-label) var(--font-body); letter-spacing: var(--tracking-label); text-transform: uppercase; }
+/* events page: "This week" (filled by site.js), then one block per month */
+.section > .wrap > .events-week, .section > .wrap > .events-month { margin-top: var(--space-12); }
+.events-week > .h-lg, .events-month > .h-lg { margin-top: 0 !important; }
+.events-week > * + *, .events-month > * + * { margin-top: var(--space-8); }
 .menu-part > * + * { margin-top: var(--space-4); }
 .menu-part__note { color: var(--c-muted); font-size: var(--size-sm); }
 .drinks { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: var(--space-4); }
-.drink { background: var(--c-raised); border: var(--border-thin) solid var(--c-line); border-radius: var(--radius-md); overflow: hidden; }
-.drink__art { aspect-ratio: 1; }
-.drink__art img { width: 100%; height: 100%; object-fit: cover; }
+.drink { background: var(--c-raised); border: var(--border-thin) solid var(--c-line); border-radius: var(--radius-md); overflow: hidden; transition: transform var(--motion-fast) var(--motion-ease), box-shadow var(--motion-fast) var(--motion-ease), border-color var(--motion-fast); }
+.drink:has(.drink__link:hover) { transform: translateY(-3px) rotate(-0.4deg); border-color: var(--c-neon); box-shadow: var(--shadow-glow-card) var(--c-neon); }
+.drink__link { display: block; height: 100%; color: inherit; text-decoration: none; }
+.drink__link:hover { color: inherit; }
+.drink__link:focus-visible { outline-offset: calc(var(--border-focus) * -1); border-radius: var(--radius-md); }
+/* The drawing is a glass from rim to foot on its own dark: shown whole, never cut to a square. */
+.drink__art { aspect-ratio: 4 / 5; background: var(--c-ink); }
+.drink__art img { width: 100%; height: 100%; object-fit: contain; }
 .drink__body { padding: var(--space-3) var(--space-4) var(--space-4); }
 .drink__name { font: var(--weight-regular) var(--size-lg)/var(--leading-title) var(--font-display); }
 .drink__text { color: var(--c-muted); font-size: var(--size-sm); line-height: var(--leading-text); margin-top: var(--space-1); }
@@ -190,7 +218,8 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 @media (max-width: 36rem) {
   .event { grid-template-columns: auto 1fr; align-items: start; }
   .event__thumb { width: 4.5rem; }
-  .event__cta { grid-column: 2; justify-self: start; min-height: var(--target-min); padding-block: var(--space-2); }
+  .event__cta { grid-column: 2; justify-self: start; }
+  .event__cta.btn { min-height: var(--target-min); padding-block: var(--space-2); }
 }
 
 /* moments: a feed, newest first, in columns that keep each photo's own shape */
@@ -278,6 +307,58 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
 /* 404: one block per language */
 .notfound__block + .notfound__block { margin-top: var(--space-12); padding-top: var(--space-12); border-top: var(--border-thin) solid var(--c-line); }
 
+
+/* menu page and drink page: dressed like the bar's printed menu cards. The drawing's own
+   dark (ink), cream letters, red stars and rules, a double frame of red and cream. */
+.season, .menu-card { position: relative; background: var(--c-ink); color: var(--c-cream); border: var(--border-thick) solid var(--c-rust); border-radius: var(--radius-sm); outline: var(--border-thin) solid var(--c-cream); outline-offset: calc(var(--space-2) * -1); padding: var(--space-8) var(--space-6); }
+.season::before, .season::after, .menu-card::before, .menu-card::after { content: "★"; content: "★" / ""; position: absolute; top: var(--space-4); color: var(--c-rust); font-size: var(--size-sm); line-height: var(--leading-none); }
+.season::before, .menu-card::before { left: var(--space-4); }
+.season::after, .menu-card::after { right: var(--space-4); }
+.season > * + * { margin-top: var(--space-6); }
+.season + .season, .season + .h-lg { margin-top: var(--space-8); }
+.season__head { text-align: center; }
+.season__state, .menu-card__season { color: var(--c-rust); font: var(--weight-bold) var(--size-xs)/var(--leading-label) var(--font-body); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
+.season__name { font: var(--weight-regular) var(--size-xl)/var(--leading-display) var(--font-display); letter-spacing: var(--tracking-display); margin-top: var(--space-2); text-wrap: balance; }
+h3.season__name { font-size: var(--size-lg); }
+.season__dates { font-size: var(--size-sm); margin-top: var(--space-2); }
+.season__text { font-size: var(--size-lg); line-height: var(--leading-text); max-width: var(--measure-prose); margin-inline: auto; text-align: center; }
+.season .drink, .menu-card .drink { background: var(--c-ink); border-color: var(--c-rust); }
+.season .drink__text { color: var(--c-cream); }
+.season .drink__price { color: var(--c-rust); }
+
+.back { margin-bottom: var(--space-6); }
+.back a { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--target-min); }
+.menu-card { display: grid; gap: var(--space-8); align-items: center; }
+.menu-card__art { width: min(100%, 18rem); margin-inline: auto; }
+.menu-card__body { text-align: center; }
+.menu-card__body > * + * { margin-top: var(--space-3); }
+.menu-card__season::before, .menu-card__season::after { content: " ★ "; content: " ★ " / ""; }
+.menu-card__name { font: var(--weight-regular) var(--size-xxl)/var(--leading-display) var(--font-display); letter-spacing: var(--tracking-display); text-wrap: balance; }
+.menu-card__line { font-size: var(--size-lg); line-height: var(--leading-text); }
+.menu-card__price { color: var(--c-rust); font: var(--weight-bold) var(--size-md)/var(--leading-label) var(--font-body); letter-spacing: var(--tracking-label); }
+/* A heading between two red rules, like the drink's name on the printed card. */
+.menu-card__head { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-8) !important; color: var(--c-rust); font: var(--weight-bold) var(--size-xs)/var(--leading-label) var(--font-body); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
+.menu-card__head::before, .menu-card__head::after { content: ""; flex: 1; border-top: var(--border-thin) solid var(--c-rust); }
+.menu-card__text { line-height: var(--leading-text); max-width: var(--measure-prose); margin-inline: auto; }
+.recipe, .method { max-width: var(--measure-form); margin-inline: auto; text-align: start; }
+.recipe { list-style: none; padding: 0; }
+.recipe li { display: flex; gap: var(--space-3); padding-block: var(--space-2); border-bottom: var(--border-thin) dotted var(--c-cream); }
+.recipe__amount { flex: none; min-width: 6rem; color: var(--c-rust); font-weight: var(--weight-bold); }
+.method { padding-inline-start: var(--space-6); line-height: var(--leading-text); }
+.method li + li { margin-top: var(--space-2); }
+.method li::marker { color: var(--c-rust); font-weight: var(--weight-bold); }
+.drink-seasons { list-style: none; padding: 0; }
+.drink-seasons li + li { margin-top: var(--space-2); }
+.drink-seasons a { display: inline-flex; align-items: center; min-height: var(--target-min); }
+.drink-seasons__dates { color: var(--c-muted); font-size: var(--size-sm); }
+@media (min-width: 48rem) {
+  .menu-card { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); padding: var(--space-12); }
+  .menu-card__art { width: min(100%, 24rem); }
+}
+@media (max-width: 36rem) {
+  .season, .menu-card { padding: var(--space-8) var(--space-4); }
+  .menu-card__art { width: min(100%, 14rem); }
+}
 
 /* style guide */
 .sg-part { margin-top: var(--space-16) !important; }

@@ -90,6 +90,7 @@
 {% render 'components/footer', site: site, t: t, hours_rows: hours_rows %}
 <script type="application/json" id="hours-data">{{ hours | json | raw }}</script>
 <script type="application/json" id="i18n-data">{{ t | json | raw }}</script>
+<script src="{{ '/assets/js/when.js' | asset }}" defer></script>
 <script src="{{ '/assets/js/site.js' | asset }}" defer></script>
 </body>
 </html>

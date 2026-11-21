@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import sharp from "sharp";
 import { join } from "node:path";
 import { parse as parseYaml } from "yaml";
-import { renderSite, sitemapXml, resolveUrl, hoursRows, parseFrontMatter, wallClock, groupGallery, type Files, type Photo } from "../src/render";
+import { renderSite, sitemapXml, resolveUrl, hoursRows, parseFrontMatter, wallClock, groupGallery, SOON_DAYS, type Files, type Photo } from "../src/render";
 import { checkLinks } from "../scripts/check-links";
 import { mkdtemp, mkdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -22,7 +22,9 @@ const tokens = JSON.parse(files["data/tokens.json"]!);
 describe("renderer", () => {
   test("renders home in four languages plus the style guide", async () => {
     const pages = await renderSite(files, { base: "/robins-coffee/", photos });
-    expect(pages.map((p) => p.out).sort()).toEqual(["404.html", "de/events/index.html", "de/gallery/index.html", "de/index.html", "de/studio/index.html", "edit/index.html", "events/index.html", "fr/events/index.html", "fr/gallery/index.html", "fr/index.html", "gallery/index.html", "index.html", "it/events/index.html", "it/gallery/index.html", "it/index.html", "studio/index.html", "styleguide/index.html"]);
+    const drinks: string[] = parseYaml(files["data/menu.yml"]!).drinks.map((d: any) => d.slug);
+    const menuPages = ["", "de/", "fr/", "it/"].flatMap((l) => [`${l}menu/index.html`, ...drinks.map((s) => `${l}menu/${s}/index.html`)]);
+    expect(pages.map((p) => p.out).sort()).toEqual(["404.html", "de/events/index.html", "de/gallery/index.html", "de/index.html", "de/studio/index.html", "edit/index.html", "events/index.html", "fr/events/index.html", "fr/gallery/index.html", "fr/index.html", "gallery/index.html", "index.html", "it/events/index.html", "it/gallery/index.html", "it/index.html", "studio/index.html", "styleguide/index.html", ...menuPages].sort());
     const en = pages.find((p) => p.out === "index.html")!.html;
     const de = pages.find((p) => p.out === "de/index.html")!.html;
     expect(en).toContain('<html lang="en">');
@@ -431,6 +433,62 @@ describe("events", () => {
     expect(await home([])).not.toContain('id="events"');
   });
 
+  // The page is built once a day, so only the visitor's browser knows what "tonight" is.
+  const outsideScripts = (html: string) => html.replace(/<script[\s\S]*?<\/script>/g, "");
+
+  test("the hero carries one hidden promotion per event of the next eight days, and without JavaScript none says tonight", async () => {
+    const soon = upcoming(imported, NOW, 60).filter((e) => Date.parse(e.start) <= NOW.getTime() + SOON_DAYS * 864e5);
+    expect(soon.length).toBeGreaterThan(1);
+    const pages = await renderSite(withEvents(imported), { base: "/", photos, now: NOW });
+    for (const [out, word] of [["index.html", "Tonight"], ["de/index.html", "Heute Abend"], ["fr/index.html", "Ce soir"], ["it/index.html", "Stasera"]] as const) {
+      const html = pages.find((p) => p.out === out)!.html;
+      const promos = [...html.matchAll(/<div class="promo" data-promo data-start="([^"]+)" data-end="[^"]+"[^>]*>/g)];
+      expect(promos.map((m) => m[1])).toEqual(soon.map((e) => e.start));
+      for (const m of promos) expect(m[0]).toEndWith(" hidden>");
+      expect(html).toContain('<div class="hero__promo" data-promos hidden>');
+      expect(html).toContain('<p class="promo__when" data-promo-when></p>');
+      expect(outsideScripts(html)).not.toContain(word);
+      // Every promotion has its way in: the ticket link, or the pill that says people can just come.
+      expect(html.match(/class="btn btn--neon promo__go"/g)?.length ?? 0).toBe(soon.filter((e) => e.ticket_url).length);
+    }
+    const none = (await renderSite(withEvents([]), { base: "/", photos, now: NOW })).find((p) => p.out === "index.html")!.html;
+    expect(none).not.toContain("data-promos");
+    const far = imported.filter((e) => Date.parse(e.start) > NOW.getTime() + SOON_DAYS * 864e5);
+    expect((await renderSite(withEvents(far), { base: "/", photos, now: NOW })).find((p) => p.out === "index.html")!.html).not.toContain("data-promos");
+  });
+
+  test("the events page has an empty, hidden This week box above the months; every card sits in its month", async () => {
+    const pages = await renderSite(withEvents(imported), { base: "/", photos, now: NOW });
+    for (const [out, word] of [["events/index.html", "This week"], ["de/events/index.html", "Diese Woche"], ["fr/events/index.html", "Cette semaine"], ["it/events/index.html", "Questa settimana"]] as const) {
+      const html = pages.find((p) => p.out === out)!.html;
+      expect(html).toMatch(new RegExp(`<div class="events-week" data-week hidden>\\s*<h2 class="h-lg">${word}</h2>\\s*<div class="events" data-week-list></div>`));
+      expect(html.indexOf("data-week")).toBeLessThan(html.indexOf("data-month"));
+      const cards = html.match(/<article class="event"/g)!.length;
+      const inMonths = html.split("data-month").slice(1).reduce((n, part) => n + (part.split("</div>\n    </div>")[0]!.match(/<article class="event"/g)?.length ?? 0), 0);
+      expect(inMonths).toBe(cards);
+    }
+    const empty = (await renderSite(withEvents([]), { base: "/", photos, now: NOW })).find((p) => p.out === "events/index.html")!.html;
+    expect(empty).not.toContain("data-week");
+  });
+
+  test("an event picture links to the whole picture, uncut, for the lightbox; without a ticket link a pill says just come by", async () => {
+    const qg = fromManual(files, { now: NOW, timeZone: "Europe/Zurich" }).filter((e) => e.id.startsWith("manual-queens-gambit"));
+    const full = { width: 1080, height: 1454, jpg: [{ w: 480, path: "photos/qg-480.jpg" }, { w: 1080, path: "photos/qg-1080.jpg" }], webp: [{ w: 480, path: "photos/qg-480.webp" }, { w: 1080, path: "photos/qg-1080.webp" }], sq: { jpg: [{ w: 400, path: "photos/qg-sq400.jpg" }], webp: [{ w: 400, path: "photos/qg-sq400.webp" }] } };
+    const pages = await renderSite(withEvents(qg), { base: "/", photos: { ...photos, "photos/event-queens-gambit.jpg": full }, now: NOW });
+    const en = pages.find((p) => p.out === "events/index.html")!.html;
+    const card = /<article class="event"[^>]*>[\s\S]*?<\/article>/.exec(en)![0];
+    expect(card).toContain("data-all-day data-lightbox-group>");
+    expect(card).toContain('<a class="event__thumb" href="/photos/qg-1080.jpg" data-lightbox data-srcset="/photos/qg-480.webp 480w, /photos/qg-1080.webp 1080w" data-width="1080" data-height="1454" data-alt="Poster for Queen&#39;s Gambit">');
+    expect(card).toContain('src="/photos/qg-sq400.jpg"'); // the card itself keeps the square cut
+    expect(card).toContain('<span class="visually-hidden">View larger: Poster for Queen&#39;s Gambit</span>');
+    expect(card).toContain('<p class="event__cta"><span class="pill pill--walkin">Just come by</span></p>');
+    expect(card).not.toContain("btn");
+    expect(pages.find((p) => p.out === "de/events/index.html")!.html).toContain('data-alt="Plakat für Queen&#39;s Gambit"');
+    // An event whose picture could not be fetched has no picture and no lightbox link.
+    const bare = (await renderSite(withEvents([{ ...qg[0]!, image: "https://example.com/gone.jpg" }]), { base: "/", photos, now: NOW })).find((p) => p.out === "events/index.html")!.html;
+    expect(bare).not.toContain("event__thumb");
+  });
+
   test("the calendar feed has one entry per event with UTC times", () => {
     const ics = toIcs(imported.slice(0, 3), { legal_name: "ROBIN's Bar & Coffee", street: "Zähringerstrasse 33", postal_code: "8001", city: "Zürich" }, NOW);
     expect(ics.match(/BEGIN:VEVENT/g)?.length).toBe(3);
@@ -611,7 +669,10 @@ describe("polish", () => {
   test("the sitemap lists the public pages with full addresses and their language versions", async () => {
     const pages = await renderSite(files, { base: "/robins-coffee/", photos });
     const xml = sitemapXml(pages, "en", (p) => "https://example.org/robins-coffee" + p);
-    expect([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])).toEqual(["/", "/de/", "/de/events/", "/de/gallery/", "/events/", "/fr/", "/fr/events/", "/fr/gallery/", "/gallery/", "/it/", "/it/events/", "/it/gallery/"].map((p) => "https://example.org/robins-coffee" + p));
+    // The menu page and one page per drink, in each language.
+    const drinks = parseYaml(files["data/menu.yml"]!).drinks.map((d: any) => d.slug);
+    const menuPages = ["", "/de", "/fr", "/it"].flatMap((l) => [`${l}/menu/`, ...drinks.map((s: string) => `${l}/menu/${s}/`)]);
+    expect([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])).toEqual(["/", "/de/", "/de/events/", "/de/gallery/", "/events/", "/fr/", "/fr/events/", "/fr/gallery/", "/gallery/", "/it/", "/it/events/", "/it/gallery/", ...menuPages].sort().map((p) => "https://example.org/robins-coffee" + p));
     expect(xml).not.toContain("styleguide");
     expect(xml).not.toContain("404");
     expect(xml.match(/hreflang="x-default" href="https:\/\/example.org\/robins-coffee\/events\/"/g)!.length).toBe(4);
@@ -619,7 +680,8 @@ describe("polish", () => {
 
   test("every page carries link preview data; the picture is absolute and described in the page language", async () => {
     const pages = await renderSite(files, { base: "/robins-coffee/", photos: withOg, origin: "https://example.org" });
-    for (const p of pages) {
+    // A drink's page shows its own drawing (made by the build; see the drink page test below).
+    for (const p of pages.filter((p) => !p.slug.startsWith("menu/"))) {
       expect(p.html).toContain('<meta property="og:title" content="');
       expect(p.html).toContain('<meta property="og:image" content="https://example.org/robins-coffee/og/hero-abc.jpg">');
       expect(p.html).toContain('<meta property="og:image:width" content="1200">');
@@ -634,6 +696,11 @@ describe("polish", () => {
     const en = /og:image:alt" content="([^"]+)"/.exec(pages.find((p) => p.out === "index.html")!.html)![1]!;
     expect(alt.length).toBeGreaterThan(10);
     expect(alt).not.toBe(en);
+    // A drink's page: its drawing, described in the page language by the drawing's own alt text.
+    const drinkOg = { ...withOg, "photos/menu-lazy-monkey.jpg": { ...photos["photos/menu-lazy-monkey.jpg"]!, og: "og/menu-lazy-monkey-abc.jpg" } };
+    const lazy = (await renderSite(files, { base: "/robins-coffee/", photos: drinkOg, origin: "https://example.org" })).find((p) => p.out === "de/menu/lazy-monkey/index.html")!.html;
+    expect(lazy).toContain('<meta property="og:image" content="https://example.org/robins-coffee/og/menu-lazy-monkey-abc.jpg">');
+    expect(lazy).toContain('<meta property="og:image:alt" content="Zeichnung eines schaumigen gelben Drinks');
   });
 
   test("without a preview picture the page says nothing about one", async () => {
@@ -731,28 +798,28 @@ describe("day and night", () => {
 describe("menu", () => {
   const menu = parseFrontMatter("---\n" + files["data/menu.yml"] + "\n---\n").data;
   test("every drink has a name, a text in both languages, a price and, with a picture, alt text in both", () => {
-    expect(menu.sections.length).toBeGreaterThan(0);
-    for (const part of menu.sections) {
-      expect(part.slug).toMatch(/^[a-z0-9-]+$/);
-      for (const lang of ["en", "de"]) expect(part.title[lang]).toBeTruthy();
-      for (const d of part.drinks) {
-        expect(d.name).toBeTruthy();
-        expect(typeof d.price_chf).toBe("number");
-        for (const lang of ["en", "de"]) {
-          expect(d.text[lang]).toBeTruthy();
-          expect(d.text[lang]).not.toContain("ß");
-          if (d.photo) expect(d.alt[lang]).toBeTruthy();
-        }
-        if (d.photo) expect(photos[d.photo]).toBeDefined();
+    expect(menu.seasons.length).toBeGreaterThan(0);
+    for (const s of menu.seasons) {
+      expect(s.slug).toMatch(/^[a-z0-9-]+$/);
+      for (const lang of ["en", "de"]) expect(s.name[lang]).toBeTruthy();
+    }
+    for (const d of menu.drinks) {
+      expect(d.name).toBeTruthy();
+      expect(typeof d.price_chf).toBe("number");
+      for (const lang of ["en", "de"]) {
+        expect(d.text[lang]).toBeTruthy();
+        expect(d.text[lang]).not.toContain("ß");
+        for (const p of d.pictures) expect(p.alt[lang]).toBeTruthy();
       }
+      for (const p of d.pictures) expect(photos[p.photo]).toBeDefined();
     }
   });
-  test("the home page shows every drink with its price in both languages", async () => {
-    const pages = await renderSite(files, { base: "/", photos });
+  test("the home page shows every drink of the season with its price in both languages", async () => {
+    const pages = await renderSite(files, { base: "/", photos, now: new Date("2026-11-21T12:00:00Z") });
     for (const [out, lang] of [["index.html", "en"], ["de/index.html", "de"]] as const) {
       const html = pages.find((p) => p.out === out)!.html;
       expect(html).toContain('id="menu"');
-      for (const d of menu.sections.flatMap((p: any) => p.drinks)) {
+      for (const d of menu.drinks.filter((d: any) => menu.seasons[0].drinks.includes(d.slug))) {
         expect(html).toContain(d.name);
         expect(html).toContain(d.text[lang].replace(/&/g, "&amp;"));
         expect(html).toContain(`CHF ${d.price_chf}`);

@@ -1,0 +1,16 @@
+{% comment %} event-promo: e (an event view), t, events_url, when (optional: the label, for a fixed example such as the style guide's). The hero's "Tonight", "Today" or "Tomorrow" sign for one event: label, name, time and the way in (tickets, or the pill that says people can just come), plus "and N more" for a busy day. The build writes one per event of the next days, hidden; site.js shows the one the Zürich clock picks and fills in the label and the count (when.js). Without JavaScript none shows, so a page never says "tonight" about the wrong night. {% endcomment %}
+<div class="promo" data-promo data-start="{{ e.start }}" data-end="{{ e.end }}"{% if e.all_day %} data-all-day{% endif %}{% unless when %} hidden{% endunless %}>
+  <p class="promo__when" data-promo-when>{{ when }}</p>
+  <p class="promo__what">
+    <a class="promo__name" href="{% if e.more_url %}{{ e.more_url }}{% else %}{{ events_url | url }}{% endif %}"{% if e.more_url %} rel="noopener"{% endif %}>{{ e.name }}</a>
+    {%- if e.time_label != '' %}
+    <span class="promo__time">{{ e.time_label }}</span>
+    {%- endif %}
+    <a class="promo__more" href="{{ events_url | url }}" data-promo-more hidden></a>
+  </p>
+  {%- if e.ticket_url != '' %}
+  <a class="btn btn--neon promo__go" href="{{ e.ticket_url }}" rel="noopener" aria-label="{{ t.tickets }}: {{ e.name }}, {{ e.when_label }}">{{ t.tickets }}</a>
+  {%- else %}
+  <p class="promo__go"><span class="pill pill--walkin">{{ t.event_walk_in }}</span></p>
+  {%- endif %}
+</div>

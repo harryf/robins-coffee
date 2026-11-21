@@ -80,7 +80,7 @@
 
     <h3 class="h-lg">Buttons, links and pills</h3>
     <p class="hero__actions"><a class="btn btn--neon" href="#elements">Primary</a> <a class="btn" href="#elements">Secondary</a> <a class="nav-link" href="#elements">Nav link</a> <a class="lang" href="#elements">Language</a></p>
-    <p class="hero__actions"><span class="pill is-open"><span class="pill__dot"></span>Open now, until late</span> <span class="pill"><span class="pill__dot"></span>Opens 16:00</span></p>
+    <p class="hero__actions"><span class="pill is-open"><span class="pill__dot"></span>Open now, until late</span> <span class="pill"><span class="pill__dot"></span>Opens 16:00</span> <span class="pill pill--walkin">Just come by</span></p>
     <p class="rating"><a href="#elements"><span class="rating__star" aria-hidden="true">★</span> Rating line</a></p>
     <p class="taps"><a href="#elements">Tap list: one link per line</a><a href="#elements">each a full tap target</a></p>
 
@@ -103,7 +103,7 @@
       {%- when 'contact-form' %}
       <div class="sg-narrow">{% render 'components/contact-form', site: site, t: t %}</div>
       {%- when 'drink-card' %}
-      <div class="drinks sg-narrow">{% render 'components/drink-card', d: menu[0].drinks[0] %}</div>
+      <div class="drinks sg-narrow">{% render 'components/drink-card', d: menu.drinks[0] %}</div>
       {%- when 'event-card' %}
       <div class="events">
         {%- for e in events_next limit: 2 %}
@@ -111,12 +111,23 @@
         {%- endfor %}
       </div>
       {%- if events_next.size == 0 %}<p>No event is announced right now, so there is no card to show.</p>{% endif %}
+      {%- when 'event-promo' %}
+      <p>On the home page it sits on the hero photo; here it is shown on the same dark ground, once with each label the clock can give.</p>
+      <div class="on-photo sg-on-photo sg-group">
+        {%- for e in events_next limit: 3 %}
+        {%- case forloop.index %}{% when 1 %}{% assign label = t.tonight %}{% when 2 %}{% assign label = t.tomorrow %}{% else %}{% assign label = t.today %}{% endcase %}
+        {% render 'components/event-promo', e: e, t: t, events_url: events_url, when: label %}
+        {%- endfor %}
+      </div>
+      {%- if events_next.size == 0 %}<p>No event is announced right now, so there is nothing to promote.</p>{% endif %}
       {%- when 'footer' %}
       <p>At the bottom of this page.</p>
       {%- when 'header' %}
       <p>At the top of this page. On the home page it sits on the hero photo. It carries the theme switch and the language menu (English, Deutsch, Français, Italiano; a page offers only the languages it exists in).</p>
       {%- when 'hours' %}
       <div class="card sg-narrow">{% render 'components/hours', hours_rows: hours_rows, t: t %}</div>
+      {%- when 'menu-season' %}
+      {%- if menu_seasons.size > 0 %}{% render 'components/menu-season', s: menu_seasons[0], t: t, heading: 'h3' %}{% else %}<p>The menu has no season yet, so there is nothing to show.</p>{% endif %}
       {%- when 'moment-card' %}
       <div class="sg-narrow moments" data-lightbox-group>{% render 'components/moment-card', m: moments[0], t: t %}</div>
       {%- when 'moments-grid' %}

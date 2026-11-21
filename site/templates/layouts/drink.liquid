@@ -1,0 +1,69 @@
+{% layout 'layouts/base' %}
+{% comment %} drink: one drink of the menu on a page of its own, made by the build for every drink a season names (/menu/<slug>/). Dressed like the bar's menu cards: the drawing whole on its dark, cream and red, a double frame. Name, season, price, the short line, then only the parts that exist: what it is like, what goes in, how to make it, photos (the gallery lightbox), the seasons it was on the menu. Recipe data only when there are ingredients. {% endcomment %}
+{% block content %}
+<section class="section">
+  <div class="wrap">
+    {%- if menu_url %}
+    <p class="back"><a href="{{ menu_url | url }}"><span aria-hidden="true">←</span>{{ t.drink_back }}</a></p>
+    {%- endif %}
+    <article class="menu-card">
+      {%- if drink.img %}
+      <div class="menu-card__art">{% render 'components/photo', img: drink.img, alt: drink.alt, sizes: '(min-width: 48rem) 24rem, 80vw', eager: true %}</div>
+      {%- endif %}
+      <div class="menu-card__body">
+        {%- if drink.season != '' %}
+        <p class="menu-card__season">{{ drink.season }}</p>
+        {%- endif %}
+        <h1 class="menu-card__name">{{ drink.name }}</h1>
+        <p class="menu-card__line">{{ drink.text }}</p>
+        <p class="menu-card__price">{{ drink.price_label }}</p>
+        {%- if drink.experience != '' %}
+        <h2 class="menu-card__head">{{ t.drink_experience }}</h2>
+        <p class="menu-card__text">{{ drink.experience }}</p>
+        {%- endif %}
+        {%- if drink.ingredients.size > 0 %}
+        <h2 class="menu-card__head">{{ t.drink_ingredients }}</h2>
+        <ul class="recipe">
+          {%- for x in drink.ingredients %}
+          <li><span class="recipe__amount">{{ x.amount }}</span> <span class="recipe__item">{{ x.item }}</span></li>
+          {%- endfor %}
+        </ul>
+        {%- endif %}
+        {%- if drink.method.size > 0 %}
+        <h2 class="menu-card__head">{{ t.drink_method }}</h2>
+        <ol class="method">
+          {%- for step in drink.method %}
+          <li>{{ step }}</li>
+          {%- endfor %}
+        </ol>
+        {%- endif %}
+      </div>
+    </article>
+    {%- if drink.photos.size > 0 %}
+    <h2 class="h-lg">{{ t.drink_photos }}</h2>
+    <div class="moments" data-lightbox-group>
+      {%- for p in drink.photos %}
+      <figure class="moment">
+        <a class="moment__link" href="{{ p.img.jpg | largest }}" data-lightbox data-srcset="{{ p.img.webp | srcset }}">
+          {% render 'components/photo', img: p.img, alt: p.alt, sizes: '(min-width: 60rem) 30vw, (min-width: 36rem) 46vw, 92vw' %}
+          <span class="visually-hidden">{{ t.photo_enlarge }}</span>
+        </a>
+        <figcaption><span class="moment__caption">{{ p.alt }}</span></figcaption>
+      </figure>
+      {%- endfor %}
+    </div>
+    {%- endif %}
+    {%- if drink.seasons.size > 0 %}
+    <h2 class="h-lg">{{ t.drink_seasons }}</h2>
+    <ul class="drink-seasons">
+      {%- for s in drink.seasons %}
+      <li><a href="{{ menu_url | url }}#{{ s.slug }}">{{ s.name }}</a> <span class="drink-seasons__dates">{{ s.dates_label }}</span></li>
+      {%- endfor %}
+    </ul>
+    {%- endif %}
+  </div>
+</section>
+{%- if drink.recipe %}
+<script type="application/ld+json">{{ drink.recipe | json | raw }}</script>
+{%- endif %}
+{% endblock %}

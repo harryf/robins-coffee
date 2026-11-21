@@ -1,4 +1,4 @@
-{% comment %} hero: page (kicker, headline, headline_day, visit_title), home (hero_photo, hero_photo_day), photos, site, t, events_next, menu. Full-height photo with the headline; always light on dark (on-photo). By day (coffee) it shows hero_photo_day, headline_day and the way here; by night (cocktails) hero_photo, headline and what's on. Only the photo on show is loaded. The last sentence of a headline becomes the neon sign. {% endcomment %}
+{% comment %} hero: page (kicker, headline, headline_day, visit_title), home (hero_photo, hero_photo_day), photos, site, t, events_next, events_soon, events_url, menu. Under the headline, in both themes, the event-promo that site.js picks for tonight or tomorrow (none without JavaScript). Full-height photo with the headline; always light on dark (on-photo). By day (coffee) it shows hero_photo_day, headline_day and the way here; by night (cocktails) hero_photo, headline and what's on. Only the photo on show is loaded. The last sentence of a headline becomes the neon sign. {% endcomment %}
 <section class="hero on-photo">
   <div class="hero__photo">
     {%- if home.hero_photo_day %}
@@ -17,13 +17,20 @@
     <h1 class="hero__title">{{ page.headline | neon_last | raw }}</h1>
     {%- endif %}
     <p class="hero__status">{% render 'components/open-pill', t: t %}</p>
+    {%- if events_soon.size > 0 %}
+    <div class="hero__promo" data-promos hidden>
+      {%- for e in events_soon %}
+      {% render 'components/event-promo', e: e, t: t, events_url: events_url %}
+      {%- endfor %}
+    </div>
+    {%- endif %}
     <p class="hero__actions" data-theme-only="night">
       {%- if events_next.size > 0 %}
       <a class="btn btn--neon" href="#events">{{ t.hero_whats_on }}</a>
       {%- else %}
       <a class="btn btn--neon" href="#visit">{{ page.visit_title }}</a>
       {%- endif %}
-      {%- if menu.size > 0 %}
+      {%- if menu.drinks.size > 0 %}
       <a class="btn" href="#menu">{{ t.hero_drinks }}</a>
       {%- endif %}
     </p>

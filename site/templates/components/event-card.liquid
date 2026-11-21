@@ -1,7 +1,11 @@
-{% comment %} event-card: e (an event view: name, when_label, start, end, meta_label, text, ticket_url, more_url, img), t. Without a ticket link it says that people can just come. Hidden by site.js once the event has ended; on its own day site.js marks it "Today". {% endcomment %}
-<article class="event" data-start="{{ e.start }}" data-end="{{ e.end }}">
+{% comment %} event-card: e (an event view: name, when_label, start, end, all_day, meta_label, text, ticket_url, more_url, img, full, poster_alt), t. The square picture is a plain link to the whole picture, uncut; with JavaScript, site.js opens it in the lightbox (one card is one lightbox group). Without a ticket link a pill says that people can just come. Hidden by site.js once the event has ended; site.js marks it "Today" or "Tomorrow" by the Zürich clock. {% endcomment %}
+<article class="event" data-start="{{ e.start }}" data-end="{{ e.end }}"{% if e.all_day %} data-all-day{% endif %} data-lightbox-group>
   {%- if e.img %}
+  {%- if e.full %}
+  <a class="event__thumb" href="{{ e.full.jpg | largest }}" data-lightbox data-srcset="{{ e.full.webp | srcset }}" data-width="{{ e.full.width }}" data-height="{{ e.full.height }}" data-alt="{{ e.poster_alt }}">{% render 'components/photo', img: e.img, alt: '', sizes: '6rem' %}<span class="visually-hidden">{{ t.photo_enlarge }}: {{ e.poster_alt }}</span></a>
+  {%- else %}
   <div class="event__thumb">{% render 'components/photo', img: e.img, alt: '', sizes: '6rem' %}</div>
+  {%- endif %}
   {%- endif %}
   <div class="event__body">
     <p class="event__when"><time datetime="{{ e.start }}">{{ e.when_label }}</time></p>
@@ -14,7 +18,7 @@
     {%- endif %}
   </div>
   {%- if e.ticket_url == '' %}
-  <p class="event__walkin event__cta">{{ t.event_walk_in }}</p>
+  <p class="event__cta"><span class="pill pill--walkin">{{ t.event_walk_in }}</span></p>
   {%- endif %}
   {%- if e.ticket_url != '' %}
   <a class="btn btn--neon event__cta" href="{{ e.ticket_url }}" rel="noopener" aria-label="{{ t.tickets }}: {{ e.name }}, {{ e.when_label }}">{{ t.tickets }}</a>
