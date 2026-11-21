@@ -100,13 +100,13 @@ describe("the menu on the site", () => {
     expect(de).toContain("War auf der Karte");
   });
 
-  test("every drink has its own page in four languages: name, season, price, the parts that exist, the drawing whole, a link back", async () => {
+  test("every drink has its own page in four languages: name, season, no price, the parts that exist, the drawing whole, a link back", async () => {
     const pages = await render();
     for (const d of menu.drinks) for (const lang of ["", "de/", "fr/", "it/"]) expect(pages.map((p) => p.out)).toContain(`${lang}menu/${d.slug}/index.html`);
     const d = menu.drinks[0]!;
     const html = pages.find((p) => p.out === `menu/${d.slug}/index.html`)!.html;
     expect(html).toContain(`<h1 class="menu-card__name">${d.name}</h1>`);
-    expect(html).toContain(`CHF ${d.price_chf}`);
+    expect(html).not.toContain(`CHF ${d.price_chf}`);
     expect(html).toContain('href="/menu/"');
     expect(html).toContain('<link rel="alternate" hreflang="de" href="https://example.org/de/menu/' + d.slug + '/">');
     expect(html).toContain(`<meta property="og:title" content="${d.name}, a cocktail at`);

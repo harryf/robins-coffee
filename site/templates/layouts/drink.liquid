@@ -1,5 +1,5 @@
 {% layout 'layouts/base' %}
-{% comment %} drink: one drink of the menu on a page of its own, made by the build for every drink a season names (/menu/<slug>/). Dressed like the bar's menu cards: the drawing whole on its dark, cream and red, a double frame. Name, season, price, the short line, then only the parts that exist: what it is like, what goes in, how to make it, photos (the gallery lightbox), the seasons it was on the menu. Recipe data only when there are ingredients. {% endcomment %}
+{% comment %} drink: one drink of the menu on a page of its own, made by the build for every drink a season names (/menu/<slug>/). Dressed like the bar's menu cards: the drawing whole on its dark, cream and red, a double frame. Name, season, the short line (no price: in Switzerland a price is kept quiet), then only the parts that exist: what it is like, what goes in, how to make it, photos (the gallery lightbox), the seasons it was on the menu. Recipe data only when there are ingredients. {% endcomment %}
 {% block content %}
 <section class="section">
   <div class="wrap">
@@ -16,7 +16,6 @@
         {%- endif %}
         <h1 class="menu-card__name">{{ drink.name }}</h1>
         <p class="menu-card__line">{{ drink.text }}</p>
-        <p class="menu-card__price">{{ drink.price_label }}</p>
         {%- if drink.experience != '' %}
         <h2 class="menu-card__head">{{ t.drink_experience }}</h2>
         <p class="menu-card__text">{{ drink.experience }}</p>

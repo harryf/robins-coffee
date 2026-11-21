@@ -814,7 +814,7 @@ describe("menu", () => {
       for (const p of d.pictures) expect(photos[p.photo]).toBeDefined();
     }
   });
-  test("the home page shows every drink of the season with its price in both languages", async () => {
+  test("the home page shows every drink of the season and no price, in both languages", async () => {
     const pages = await renderSite(files, { base: "/", photos, now: new Date("2026-11-21T12:00:00Z") });
     for (const [out, lang] of [["index.html", "en"], ["de/index.html", "de"]] as const) {
       const html = pages.find((p) => p.out === out)!.html;
@@ -822,7 +822,7 @@ describe("menu", () => {
       for (const d of menu.drinks.filter((d: any) => menu.seasons[0].drinks.includes(d.slug))) {
         expect(html).toContain(d.name);
         expect(html).toContain(d.text[lang].replace(/&/g, "&amp;"));
-        expect(html).toContain(`CHF ${d.price_chf}`);
+        expect(html).not.toContain(`CHF ${d.price_chf}`);
       }
     }
   });

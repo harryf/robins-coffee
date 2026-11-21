@@ -220,7 +220,6 @@ a.event__thumb { cursor: zoom-in; }
 .drink__body { padding: var(--space-3) var(--space-4) var(--space-4); }
 .drink__name { font: var(--weight-regular) var(--size-lg)/var(--leading-title) var(--font-display); }
 .drink__text { color: var(--c-muted); font-size: var(--size-sm); line-height: var(--leading-text); margin-top: var(--space-1); }
-.drink__price { color: var(--c-amber); font: var(--weight-bold) var(--size-xs)/var(--leading-label) var(--font-body); letter-spacing: var(--tracking-label); margin-top: var(--space-2); }
 @media (max-width: 36rem) {
   .event { grid-template-columns: auto 1fr; align-items: start; }
   .event__thumb { width: 4.5rem; }
@@ -333,7 +332,6 @@ h3.season__name { font-size: var(--size-lg); }
 .season__text { font-size: var(--size-lg); line-height: var(--leading-text); max-width: var(--measure-prose); margin-inline: auto; text-align: center; }
 .season .drink, .menu-card .drink { background: var(--c-ink); border-color: var(--c-rust); }
 .season .drink__text { color: var(--c-cream); }
-.season .drink__price { color: var(--c-rust); }
 
 .back { margin-bottom: var(--space-6); }
 .back a { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--target-min); }
@@ -344,7 +342,6 @@ h3.season__name { font-size: var(--size-lg); }
 .menu-card__season::before, .menu-card__season::after { content: " ★ "; content: " ★ " / ""; }
 .menu-card__name { font: var(--weight-regular) var(--size-xxl)/var(--leading-display) var(--font-display); letter-spacing: var(--tracking-display); text-wrap: balance; }
 .menu-card__line { font-size: var(--size-lg); line-height: var(--leading-text); }
-.menu-card__price { color: var(--c-rust); font: var(--weight-bold) var(--size-md)/var(--leading-label) var(--font-body); letter-spacing: var(--tracking-label); }
 /* A heading between two red rules, like the drink's name on the printed card. */
 .menu-card__head { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-8) !important; color: var(--c-rust); font: var(--weight-bold) var(--size-xs)/var(--leading-label) var(--font-body); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
 .menu-card__head::before, .menu-card__head::after { content: ""; flex: 1; border-top: var(--border-thin) solid var(--c-rust); }
