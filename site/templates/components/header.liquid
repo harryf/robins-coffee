@@ -1,13 +1,16 @@
-{% comment %} header: site, t, home_url, langs_menu (this page in each language it exists in: lang, url, name, current), lang (the page language), events_url, gallery_url, on_photo (true when the page starts with the hero photo). The theme switch (coffee cup: day colours, cocktail: night colours) is shown by site.js, so it is absent without JavaScript. The language menu is a disclosure, so it opens without JavaScript; site.js closes it on a click outside and remembers the language picked. {% endcomment %}
+{% comment %} header: site, t, home_url, langs_menu (this page in each language it exists in: lang, url, name, current), lang (the page language), events_url, gallery_url, menu_url, on_photo (true when the page starts with the hero photo). The theme switch (coffee cup: day colours, cocktail: night colours) is shown by site.js, so it is absent without JavaScript. The language menu is a disclosure, so it opens without JavaScript; site.js closes it on a click outside and remembers the language picked. {% endcomment %}
 <header class="site-header{% if on_photo %} on-photo{% endif %}">
   <div class="wrap site-header__row">
     <a class="brand" href="{{ home_url | url }}" aria-label="{{ site.legal_name }}">
       <img class="brand__mark theme-invert" src="{{ '/assets/brand/logo-roundel-white.png' | asset }}" alt="" width="44" height="44">
       <img class="brand__word theme-invert" src="{{ '/assets/brand/wordmark-white.png' | asset }}" alt="{{ site.name }}" width="117" height="40">
     </a>
-    <div class="site-header__side">
+    <nav class="site-nav" aria-label="{{ site.name }}">
       <a class="nav-link" href="{{ events_url | url }}">{{ t.nav_events }}</a>
       <a class="nav-link" href="{{ gallery_url | url }}">{{ t.nav_gallery }}</a>
+      <a class="nav-link" href="{{ menu_url | url }}">{{ t.nav_menu }}</a>
+    </nav>
+    <div class="site-header__side">
       {% render 'components/open-pill', t: t %}
       <button class="theme-switch" type="button" role="switch" aria-checked="true" aria-label="{{ t.theme_switch }}" data-theme-switch hidden><span data-theme-side="day" aria-hidden="true">☕</span><span data-theme-side="night" aria-hidden="true">🍸</span></button>
       {%- if langs_menu.size > 1 %}
