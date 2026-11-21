@@ -14,6 +14,8 @@
       try { sessionStorage.setItem("theme", root.dataset.theme); } catch (e) {}
       var bar = document.querySelector('meta[name="theme-color"]');
       if (bar) bar.content = bar.getAttribute("data-" + root.dataset.theme);
+      // The home page puts its sections in the order of the new theme (home.liquid).
+      if (window.robinsArrange) window.robinsArrange();
       show();
     });
   });
@@ -73,6 +75,18 @@
   // that has ended is taken off the page here.
   document.querySelectorAll(".event[data-end]").forEach(function (el) {
     if (new Date(el.getAttribute("data-end")).getTime() < Date.now()) el.hidden = true;
+  });
+  // An event that starts today (Zürich) and has not ended gets a "Today" mark.
+  var dayOf = function (iso) { var p = {}; new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Zurich", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(iso)).forEach(function (x) { p[x.type] = x.value; }); return p.year + "-" + p.month + "-" + p.day; };
+  var today = zurichNow(0).date;
+  document.querySelectorAll(".event[data-start]").forEach(function (el) {
+    var when = el.querySelector(".event__when");
+    if (el.hidden || !when || dayOf(el.getAttribute("data-start")) !== today) return;
+    var mark = document.createElement("span");
+    mark.className = "event__today";
+    mark.textContent = t.today;
+    when.prepend(mark);
+    el.classList.add("is-today");
   });
 
   // 404 page: when the address names a language, that language's block goes first.
