@@ -22,10 +22,10 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#150a17" data-night="#150a17" data-day="#1b110b">
 <link rel="icon" href="/robins-coffee/favicon.ico" sizes="32x32">
-<link rel="icon" type="image/png" sizes="192x192" href="/robins-coffee/assets/icons/icon-192.png?v=2wnznjpy">
-<link rel="apple-touch-icon" href="/robins-coffee/assets/icons/apple-touch-icon.png?v=2wnznjpy">
+<link rel="icon" type="image/png" sizes="192x192" href="/robins-coffee/assets/icons/icon-192.png?v=1ebyr3vn">
+<link rel="apple-touch-icon" href="/robins-coffee/assets/icons/apple-touch-icon.png?v=1ebyr3vn">
 <link rel="preload" href="/robins-coffee/assets/fonts/alfa-slab-one.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/robins-coffee/assets/site.css?v=2wnznjpy">
+<link rel="stylesheet" href="/robins-coffee/assets/site.css?v=1ebyr3vn">
 <script>
 // Day or night: the page follows the Zürich clock, like the bar does (coffee colours
 // by day, cocktail colours at night). The switch in the header overrules the clock for
@@ -53,13 +53,37 @@
 <header class="site-header">
   <div class="wrap site-header__row">
     <a class="brand" href="/robins-coffee/" aria-label="ROBIN&#39;s Bar &amp; Coffee">
-      <img class="brand__mark theme-invert" src="/robins-coffee/assets/brand/logo-roundel-white.png?v=2wnznjpy" alt="" width="44" height="44">
-      <img class="brand__word theme-invert" src="/robins-coffee/assets/brand/wordmark-white.png?v=2wnznjpy" alt="ROBIN&#39;s" width="117" height="40">
+      <img class="brand__mark theme-invert" src="/robins-coffee/assets/brand/logo-roundel-white.png?v=1ebyr3vn" alt="" width="44" height="44">
+      <img class="brand__word theme-invert" src="/robins-coffee/assets/brand/wordmark-white.png?v=1ebyr3vn" alt="ROBIN&#39;s" width="117" height="40">
     </a>
     <nav class="site-nav" aria-label="ROBIN&#39;s">
-      <a class="nav-link" href="/robins-coffee/events/">What&#39;s on</a>
-      <a class="nav-link" href="/robins-coffee/gallery/">Moments</a>
-      <a class="nav-link" href="/robins-coffee/menu/">Menu</a>
+      <a class="nav-link" href="/robins-coffee/events/">
+<svg class="nav-icon" viewBox="0 0 32 32" width="32" height="32" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="16" cy="16" r="14.6" stroke-width="1.6"/>
+  <circle cx="16" cy="16" r="12.2" stroke-width="1.1" stroke-dasharray="0.1 2.4"/>
+  <rect x="9.6" y="10.6" width="12.8" height="11.4" rx="1.6" stroke-width="1.6"/>
+  <path d="M9.6 14.4h12.8M13 8.8v3.4M19 8.8v3.4" stroke-width="1.6"/>
+  <path d="M12.8 17.6h.01M16 17.6h.01M19.2 17.6h.01M12.8 20h.01M16 20h.01" stroke-width="2"/>
+</svg>
+<span class="nav-link__text">What&#39;s on</span></a>
+      <a class="nav-link" href="/robins-coffee/gallery/">
+<svg class="nav-icon" viewBox="0 0 32 32" width="32" height="32" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="16" cy="16" r="14.6" stroke-width="1.6"/>
+  <circle cx="16" cy="16" r="12.2" stroke-width="1.1" stroke-dasharray="0.1 2.4"/>
+  <path d="M7.8 16c2.2-3.6 5-5.4 8.2-5.4s6 1.8 8.2 5.4c-2.2 3.6-5 5.4-8.2 5.4s-6-1.8-8.2-5.4z" stroke-width="1.6"/>
+  <circle cx="16" cy="16" r="2.9" stroke-width="1.6"/>
+  <circle cx="16" cy="16" r="0.9" fill="currentColor" stroke="none"/>
+</svg>
+<span class="nav-link__text">Moments</span></a>
+      <a class="nav-link" href="/robins-coffee/menu/">
+<svg class="nav-icon" viewBox="0 0 32 32" width="32" height="32" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="16" cy="16" r="14.6" stroke-width="1.6"/>
+  <circle cx="16" cy="16" r="12.2" stroke-width="1.1" stroke-dasharray="0.1 2.4"/>
+  <path d="M9.4 10.4h13.2L16 17.4z" stroke-width="1.6"/>
+  <path d="M16 17.4v4.6M12.8 22.4h6.4M19.6 8.2l-2.4 4.4" stroke-width="1.6"/>
+  <circle cx="20.2" cy="7.6" r="1.1" fill="currentColor" stroke="none"/>
+</svg>
+<span class="nav-link__text">Menu</span></a>
     </nav>
     <div class="site-header__side">
       
@@ -510,7 +534,7 @@
     </article>
     <article class="sg-entry" data-sg="components/drink-card" id="sg-drink-card">
       <h3 class="h-lg"><code>components/drink-card</code></h3>
-      <p class="sg-entry__doc">drink-card: d (a drink view: name, text, price_label, img, alt, url). One drink of the menu; the picture is optional and always shown whole (the drawing of a glass, rim to foot, on its own dark). With a url the whole card is one link to the drink&#39;s page.</p>
+      <p class="sg-entry__doc">drink-card: d (a drink view: name, text, img, alt, url). One drink of the menu, without its price (in Switzerland a price is kept quiet; the bar&#39;s menu has it); the picture is optional and always shown whole (the drawing of a glass, rim to foot, on its own dark). With a url the whole card is one link to the drink&#39;s page.</p>
       <div class="drinks sg-narrow">
 <article class="drink"><a class="drink__link" href="/robins-coffee/menu/pineapple-express/">
   <div class="drink__art">
@@ -522,7 +546,6 @@
   <div class="drink__body">
     <h3 class="drink__name">Pineapple Express</h3>
     <p class="drink__text">Rum, Caribbean pineapple, agave and lime</p>
-    <p class="drink__price">CHF 18</p>
   </div></a>
 </article>
 </div>
@@ -648,7 +671,6 @@
   <div class="drink__body">
     <h3 class="drink__name">Pineapple Express</h3>
     <p class="drink__text">Rum, Caribbean pineapple, agave and lime</p>
-    <p class="drink__price">CHF 18</p>
   </div></a>
 </article>
 
@@ -663,7 +685,6 @@
   <div class="drink__body">
     <h3 class="drink__name">Lazy Monkey</h3>
     <p class="drink__text">Pisco, lychee, orange and passion fruit with cinnamon foam</p>
-    <p class="drink__price">CHF 18</p>
   </div></a>
 </article>
 
@@ -678,7 +699,6 @@
   <div class="drink__body">
     <h3 class="drink__name">Toffee Crush</h3>
     <p class="drink__text">Vodka, coffee liqueur, caramel, vanilla, orange and lemon</p>
-    <p class="drink__price">CHF 18</p>
   </div></a>
 </article>
 
@@ -693,7 +713,6 @@
   <div class="drink__body">
     <h3 class="drink__name">Hanging Garden</h3>
     <p class="drink__text">Mastiha, gin, Aperol, rose and lemon</p>
-    <p class="drink__price">CHF 18</p>
   </div></a>
 </article>
 
@@ -708,7 +727,6 @@
   <div class="drink__body">
     <h3 class="drink__name">Black Boulevard</h3>
     <p class="drink__text">Rye whiskey, Campari, Montenegro and honey syrup</p>
-    <p class="drink__price">CHF 18</p>
   </div></a>
 </article>
 
@@ -785,6 +803,35 @@
 
       <p>Select a photo: the lightbox opens it large in a native <code>dialog</code> built by <code>site.js</code>, night-coloured, with caption and date. Arrow keys and a swipe step inside one grid; Esc or the close button closes and focus returns to the photo. Without JavaScript the link opens the JPEG.</p>
     </article>
+    <article class="sg-entry" data-sg="components/nav-icon" id="sg-nav-icon">
+      <h3 class="h-lg"><code>components/nav-icon</code></h3>
+      <p class="sg-entry__doc">nav-icon: name (&#39;events&#39;, &#39;moments&#39; or &#39;menu&#39;). A small badge in the manner of the ROBIN&#39;s roundel: a ring, a dotted inner ring like the logo&#39;s ornament, and a line drawing in the middle: a calendar for what&#39;s on, an eye for the moments, a cocktail glass for the menu. Drawn in currentColor, so it follows the text colour and the theme; decorative (aria-hidden), the link carries the words.</p>
+      <p>
+<svg class="nav-icon" viewBox="0 0 32 32" width="32" height="32" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="16" cy="16" r="14.6" stroke-width="1.6"/>
+  <circle cx="16" cy="16" r="12.2" stroke-width="1.1" stroke-dasharray="0.1 2.4"/>
+  <rect x="9.6" y="10.6" width="12.8" height="11.4" rx="1.6" stroke-width="1.6"/>
+  <path d="M9.6 14.4h12.8M13 8.8v3.4M19 8.8v3.4" stroke-width="1.6"/>
+  <path d="M12.8 17.6h.01M16 17.6h.01M19.2 17.6h.01M12.8 20h.01M16 20h.01" stroke-width="2"/>
+</svg>
+ 
+<svg class="nav-icon" viewBox="0 0 32 32" width="32" height="32" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="16" cy="16" r="14.6" stroke-width="1.6"/>
+  <circle cx="16" cy="16" r="12.2" stroke-width="1.1" stroke-dasharray="0.1 2.4"/>
+  <path d="M7.8 16c2.2-3.6 5-5.4 8.2-5.4s6 1.8 8.2 5.4c-2.2 3.6-5 5.4-8.2 5.4s-6-1.8-8.2-5.4z" stroke-width="1.6"/>
+  <circle cx="16" cy="16" r="2.9" stroke-width="1.6"/>
+  <circle cx="16" cy="16" r="0.9" fill="currentColor" stroke="none"/>
+</svg>
+ 
+<svg class="nav-icon" viewBox="0 0 32 32" width="32" height="32" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="16" cy="16" r="14.6" stroke-width="1.6"/>
+  <circle cx="16" cy="16" r="12.2" stroke-width="1.1" stroke-dasharray="0.1 2.4"/>
+  <path d="M9.4 10.4h13.2L16 17.4z" stroke-width="1.6"/>
+  <path d="M16 17.4v4.6M12.8 22.4h6.4M19.6 8.2l-2.4 4.4" stroke-width="1.6"/>
+  <circle cx="20.2" cy="7.6" r="1.1" fill="currentColor" stroke="none"/>
+</svg>
+ The header's three places. On a phone the pill shows the icon only; the words stay for screen readers.</p>
+    </article>
     <article class="sg-entry" data-sg="components/open-pill" id="sg-open-pill">
       <h3 class="h-lg"><code>components/open-pill</code></h3>
       <p class="sg-entry__doc">open-pill: t. Empty until site.js fills it from hours.yml; hidden without JavaScript.</p>
@@ -841,7 +888,7 @@
       <thead><tr><th scope="col">Layout</th><th scope="col">What it is</th></tr></thead>
       <tbody>
         <tr><th scope="row"><code>layouts/base</code></th><td>base: the frame of every page: head (meta, link preview, favicons, theme script), header, main, footer, the one script. Every other layout fills its `content` block.</td></tr>
-        <tr><th scope="row"><code>layouts/drink</code></th><td>drink: one drink of the menu on a page of its own, made by the build for every drink a season names (/menu/&lt;slug&gt;/). Dressed like the bar&#39;s menu cards: the drawing whole on its dark, cream and red, a double frame. Name, season, price, the short line, then only the parts that exist: what it is like, what goes in, how to make it, photos (the gallery lightbox), the seasons it was on the menu. Recipe data only when there are ingredients.</td></tr>
+        <tr><th scope="row"><code>layouts/drink</code></th><td>drink: one drink of the menu on a page of its own, made by the build for every drink a season names (/menu/&lt;slug&gt;/). Dressed like the bar&#39;s menu cards: the drawing whole on its dark, cream and red, a double frame. Name, season, the short line (no price: in Switzerland a price is kept quiet), then only the parts that exist: what it is like, what goes in, how to make it, photos (the gallery lightbox), the seasons it was on the menu. Recipe data only when there are ingredients.</td></tr>
         <tr><th scope="row"><code>layouts/events</code></th><td>events: the events of the next 60 days, grouped by month, with the calendar link. With JavaScript, site.js moves the events of today and the next six days (Zürich time) into &#34;This week&#34; at the top, so none is listed twice and an emptied month heading goes; without it the page is the plain month list.</td></tr>
         <tr><th scope="row"><code>layouts/gallery</code></th><td>gallery: every moment, albums first, each grid one lightbox group.</td></tr>
         <tr><th scope="row"><code>layouts/home</code></th><td>home: the sections named in home.yml. The page is written in the night order (`sections`), which is also what a visitor without JavaScript gets; by day the script below puts them in the `sections_day` order before the page is first drawn, and again whenever the theme switch is used. It moves the DOM itself, so reading and tab order follow what is seen. A list marked data-arrange (the guest cards) is put in its data-day order the same way.</td></tr>
@@ -865,7 +912,7 @@
 
 <section class="section section--surface" id="about">
   <div class="wrap about">
-    <img class="about__roundel theme-invert" src="/robins-coffee/assets/brand/logo-roundel-white.png?v=2wnznjpy" alt="" width="173" height="173" loading="lazy">
+    <img class="about__roundel theme-invert" src="/robins-coffee/assets/brand/logo-roundel-white.png?v=1ebyr3vn" alt="" width="173" height="173" loading="lazy">
     <div class="prose">
       <h2 class="h-xl">Stay a while</h2>
       <p>ROBIN&#39;s coffee was established in 2022 by Dennis Cobarrubias and the Sallahi family.</p>
@@ -1113,7 +1160,6 @@
   <div class="drink__body">
     <h3 class="drink__name">Pineapple Express</h3>
     <p class="drink__text">Rum, Caribbean pineapple, agave and lime</p>
-    <p class="drink__price">CHF 18</p>
   </div></a>
 </article>
 
@@ -1128,7 +1174,6 @@
   <div class="drink__body">
     <h3 class="drink__name">Lazy Monkey</h3>
     <p class="drink__text">Pisco, lychee, orange and passion fruit with cinnamon foam</p>
-    <p class="drink__price">CHF 18</p>
   </div></a>
 </article>
 
@@ -1143,7 +1188,6 @@
   <div class="drink__body">
     <h3 class="drink__name">Toffee Crush</h3>
     <p class="drink__text">Vodka, coffee liqueur, caramel, vanilla, orange and lemon</p>
-    <p class="drink__price">CHF 18</p>
   </div></a>
 </article>
 
@@ -1158,7 +1202,6 @@
   <div class="drink__body">
     <h3 class="drink__name">Hanging Garden</h3>
     <p class="drink__text">Mastiha, gin, Aperol, rose and lemon</p>
-    <p class="drink__price">CHF 18</p>
   </div></a>
 </article>
 
@@ -1173,7 +1216,6 @@
   <div class="drink__body">
     <h3 class="drink__name">Black Boulevard</h3>
     <p class="drink__text">Rye whiskey, Campari, Montenegro and honey syrup</p>
-    <p class="drink__price">CHF 18</p>
   </div></a>
 </article>
 
@@ -1384,7 +1426,7 @@
 <footer class="site-footer">
   <div class="wrap site-footer__grid">
     <div>
-      <img class="theme-invert" src="/robins-coffee/assets/brand/wordmark-white.png?v=2wnznjpy" alt="ROBIN&#39;s" width="146" height="50" loading="lazy">
+      <img class="theme-invert" src="/robins-coffee/assets/brand/wordmark-white.png?v=1ebyr3vn" alt="ROBIN&#39;s" width="146" height="50" loading="lazy">
       <p>Zähringerstrasse 33<br>8001 Zürich</p>
     </div>
     <div>
@@ -1407,7 +1449,7 @@
 
 <script type="application/json" id="hours-data">{"regular":[{"days":["mo","tu","we","th"],"open":"16:00","close":"00:00"},{"days":["fr"],"open":"16:00","close":"02:00"},{"days":["sa"],"open":"10:00","close":"02:00"},{"days":["su"],"open":"10:00","close":"00:00"}],"exceptions":[]}</script>
 <script type="application/json" id="i18n-data">{"nav_home":"Home","open_now":"Open now","opens_at":"Opens {time}","until_late":"until late","closed_today":"Closed today","closed":"Closed","og_locale":"en_GB","notfound_title":"This page is not here","notfound_text":"The address may be old or mistyped. The bar is still where it always was.","notfound_home":"To the home page","hours":"Opening hours","address":"Address","contact":"Contact","call":"Call","email":"Email","map":"Open in Google Maps","instagram":"Instagram","skip":"Skip to content","lang_name":"English","lang_menu":"Language","days":{"mo":"Monday","tu":"Tuesday","we":"Wednesday","th":"Thursday","fr":"Friday","sa":"Saturday","su":"Sunday"},"days_short":{"mo":"Mon","tu":"Tue","we":"Wed","th":"Thu","fr":"Fri","sa":"Sat","su":"Sun"},"range_sep":" to ","months":["January","February","March","April","May","June","July","August","September","October","November","December"],"months_short":["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"date_short":"{day} {month} {year}","date_event":"{weekday} {day} {month}","nav_events":"What's on","nav_gallery":"Moments","nav_menu":"Menu","gallery_all":"All photos","gallery_loose":"More from the bar","photo_enlarge":"View larger","lightbox_label":"Photo viewer","lightbox_close":"Close","lightbox_prev":"Previous photo","lightbox_next":"Next photo","events_title":"What's on","events_all":"See everything on","today":"Today","tonight":"Tonight","tomorrow":"Tomorrow","events_week":"This week","promo_more_one":"and one more","promo_more":"and {n} more","event_poster":"Poster for {name}","price_from":"Tickets from CHF {price}.","price_some_free":"Some shows are free.","hero_whats_on":"What's on","hero_drinks":"The cocktails","events_none":"Nothing is announced right now. Come by anyway.","events_subscribe":"Add all events to your calendar","tickets":"Tickets","event_walk_in":"Just come by","menu_title":"On the menu","menu_all":"The whole menu and every season","menu_seasons_other":"Other seasons","season_now":"On the menu now","season_past":"Was on the menu","season_upcoming":"Coming soon","drink_experience":"What it is like","drink_ingredients":"What goes in","drink_method":"How to make it","drink_photos":"Photos","drink_seasons":"On the menu in","drink_back":"Back to the menu","drink_page_title":"{name}, a cocktail at {bar} in {city}","amount_decimal":".","units":{"cl":["cl","cl"],"ml":["ml","ml"],"g":["g","g"],"dash":["dash","dashes"],"drop":["drop","drops"],"barspoon":["bar spoon","bar spoons"],"piece":["piece","pieces"]},"free_entry":"Free entry","event_languages":{"en":"","de":"in German","it":"in Italian","fr":"in French","es":"in Spanish"},"open_until":"Open until {time}","ticker_pause":"Pause the moving text","theme_switch":"Night colours","google_rating":"{value} out of 5 on Google, from {count} reviews","contact_title":"Write to us","form_name":"Name","form_phone":"Phone","form_message":"Message","form_optional":"optional","form_send":"Write the email","form_hint":"This opens your email app with the message ready to send to {email}.","form_subject":"Message from the website","ticker":["Coffee","Cocktails","Comedy","Live Music","Chess","Zähringerstrasse 33","Zürich Old Town"]}</script>
-<script src="/robins-coffee/assets/js/when.js?v=2wnznjpy" defer></script>
-<script src="/robins-coffee/assets/js/site.js?v=2wnznjpy" defer></script>
+<script src="/robins-coffee/assets/js/when.js?v=1ebyr3vn" defer></script>
+<script src="/robins-coffee/assets/js/site.js?v=1ebyr3vn" defer></script>
 </body>
 </html>
