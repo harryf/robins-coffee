@@ -64,13 +64,14 @@ code { font-size: var(--size-code); color: var(--c-amber); }
 .site-header { position: absolute; inset: 0 0 auto 0; z-index: var(--z-header); padding-block: var(--space-4); }
 .site-header__row, .site-header__side { display: flex; align-items: center; gap: var(--space-4); }
 .site-header__row { justify-content: space-between; }
-/* The three places of the site, as pills; on a phone they get a row of their own. */
+/* The three places of the site, as pills with a roundel icon; on a phone the icon alone. */
 .site-nav { display: flex; align-items: center; gap: var(--space-2); margin-inline-start: auto; }
 .brand { display: flex; align-items: center; gap: var(--space-3); min-height: var(--target-min); }
 .brand__mark { width: var(--target-min); height: var(--target-min); }
 .brand__word { width: auto; height: 34px; }
-.nav-link { display: inline-flex; align-items: center; min-height: var(--target-min); padding-inline: var(--space-4); border: var(--border-thin) solid var(--c-line); border-radius: var(--radius-pill); background: var(--c-raised); font-weight: var(--weight-bold); font-size: var(--size-sm); color: var(--c-text); text-decoration: none; white-space: nowrap; transition: border-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease); }
+.nav-link { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--target-min); padding-inline: var(--space-1) var(--space-4); border: var(--border-thin) solid var(--c-line); border-radius: var(--radius-pill); background: var(--c-raised); font-weight: var(--weight-bold); font-size: var(--size-sm); color: var(--c-text); text-decoration: none; white-space: nowrap; transition: border-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease); }
 .nav-link:hover { color: var(--c-neon); border-color: var(--c-neon); }
+.nav-icon { width: 2rem; height: 2rem; flex: none; }
 /* language menu: the current code opens a list of the four languages, each in its own words */
 .langs { position: relative; }
 .langs__now { display: inline-flex; align-items: center; gap: var(--space-1); min-height: var(--target-min); min-width: var(--target-min); justify-content: center; padding-inline: var(--space-2); font-weight: var(--weight-bold); font-size: var(--size-sm); color: var(--c-text); cursor: pointer; list-style: none; }
@@ -108,10 +109,9 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
   .site-header__row, .brand { gap: var(--space-2); }
   .site-header__side { gap: 0; }
   .site-header .langs__now { padding-inline: var(--space-1); }
-  .site-header__row { flex-wrap: wrap; row-gap: var(--space-2); }
-  .site-nav { order: 3; flex-basis: 100%; margin-inline-start: 0; justify-content: center; }
-  .site-header .nav-link { padding-inline: var(--space-3); }
-  main > :first-child:not(.hero) { padding-top: calc(var(--space-24) + var(--target-min) + var(--space-6)); }
+  .site-nav { gap: var(--space-1); }
+  .site-header .nav-link { justify-content: center; width: var(--target-min); padding: 0; }
+  .site-header .nav-link__text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .brand { flex: none; }
   .brand__word { height: 26px; }
 }
@@ -220,7 +220,6 @@ a.event__thumb { cursor: zoom-in; }
 .drink__body { padding: var(--space-3) var(--space-4) var(--space-4); }
 .drink__name { font: var(--weight-regular) var(--size-lg)/var(--leading-title) var(--font-display); }
 .drink__text { color: var(--c-muted); font-size: var(--size-sm); line-height: var(--leading-text); margin-top: var(--space-1); }
-.drink__price { color: var(--c-amber); font: var(--weight-bold) var(--size-xs)/var(--leading-label) var(--font-body); letter-spacing: var(--tracking-label); margin-top: var(--space-2); }
 @media (max-width: 36rem) {
   .event { grid-template-columns: auto 1fr; align-items: start; }
   .event__thumb { width: 4.5rem; }
@@ -333,7 +332,6 @@ h3.season__name { font-size: var(--size-lg); }
 .season__text { font-size: var(--size-lg); line-height: var(--leading-text); max-width: var(--measure-prose); margin-inline: auto; text-align: center; }
 .season .drink, .menu-card .drink { background: var(--c-ink); border-color: var(--c-rust); }
 .season .drink__text { color: var(--c-cream); }
-.season .drink__price { color: var(--c-rust); }
 
 .back { margin-bottom: var(--space-6); }
 .back a { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--target-min); }
@@ -344,7 +342,6 @@ h3.season__name { font-size: var(--size-lg); }
 .menu-card__season::before, .menu-card__season::after { content: " ★ "; content: " ★ " / ""; }
 .menu-card__name { font: var(--weight-regular) var(--size-xxl)/var(--leading-display) var(--font-display); letter-spacing: var(--tracking-display); text-wrap: balance; }
 .menu-card__line { font-size: var(--size-lg); line-height: var(--leading-text); }
-.menu-card__price { color: var(--c-rust); font: var(--weight-bold) var(--size-md)/var(--leading-label) var(--font-body); letter-spacing: var(--tracking-label); }
 /* A heading between two red rules, like the drink's name on the printed card. */
 .menu-card__head { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-8) !important; color: var(--c-rust); font: var(--weight-bold) var(--size-xs)/var(--leading-label) var(--font-body); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
 .menu-card__head::before, .menu-card__head::after { content: ""; flex: 1; border-top: var(--border-thin) solid var(--c-rust); }

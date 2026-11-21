@@ -1,4 +1,4 @@
-{% comment %} drink-card: d (a drink view: name, text, price_label, img, alt, url). One drink of the menu; the picture is optional and always shown whole (the drawing of a glass, rim to foot, on its own dark). With a url the whole card is one link to the drink's page. {% endcomment %}
+{% comment %} drink-card: d (a drink view: name, text, img, alt, url). One drink of the menu, without its price (in Switzerland a price is kept quiet; the bar's menu has it); the picture is optional and always shown whole (the drawing of a glass, rim to foot, on its own dark). With a url the whole card is one link to the drink's page. {% endcomment %}
 <article class="drink">
   {%- if d.url %}<a class="drink__link" href="{{ d.url | url }}">{% endif %}
   {%- if d.img %}
@@ -8,9 +8,6 @@
     <h3 class="drink__name">{{ d.name }}</h3>
     {%- if d.text != '' %}
     <p class="drink__text">{{ d.text }}</p>
-    {%- endif %}
-    {%- if d.price_label != '' %}
-    <p class="drink__price">{{ d.price_label }}</p>
     {%- endif %}
   </div>
   {%- if d.url %}</a>{% endif %}

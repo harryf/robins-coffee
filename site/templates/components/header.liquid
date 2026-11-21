@@ -6,9 +6,9 @@
       <img class="brand__word theme-invert" src="{{ '/assets/brand/wordmark-white.png' | asset }}" alt="{{ site.name }}" width="117" height="40">
     </a>
     <nav class="site-nav" aria-label="{{ site.name }}">
-      <a class="nav-link" href="{{ events_url | url }}">{{ t.nav_events }}</a>
-      <a class="nav-link" href="{{ gallery_url | url }}">{{ t.nav_gallery }}</a>
-      <a class="nav-link" href="{{ menu_url | url }}">{{ t.nav_menu }}</a>
+      <a class="nav-link" href="{{ events_url | url }}">{% render 'components/nav-icon', name: 'events' %}<span class="nav-link__text">{{ t.nav_events }}</span></a>
+      <a class="nav-link" href="{{ gallery_url | url }}">{% render 'components/nav-icon', name: 'moments' %}<span class="nav-link__text">{{ t.nav_gallery }}</span></a>
+      <a class="nav-link" href="{{ menu_url | url }}">{% render 'components/nav-icon', name: 'menu' %}<span class="nav-link__text">{{ t.nav_menu }}</span></a>
     </nav>
     <div class="site-header__side">
       {% render 'components/open-pill', t: t %}

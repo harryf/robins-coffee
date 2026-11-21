@@ -257,7 +257,7 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
     for (const d of listed) {
       const dir = `${menuPage.url.replace(/^\//, "")}${d.slug}/`;
       const title = String(t.drink_page_title).replace("{name}", d.name).replace("{bar}", site.name).replace("{city}", site.city);
-      const description = [words(d.experience, menuPage.lang) || words(d.text, menuPage.lang), `CHF ${d.price_chf}.`].join(" ");
+      const description = words(d.experience, menuPage.lang) || words(d.text, menuPage.lang);
       pages.push({ lang: menuPage.lang, slug: `menu/${d.slug}`, url: "/" + dir, out: dir + "index.html", depth: dir.split("/").length - 1, html: "",
         data: { layout: "drink", title, description, drink: d.slug, ...(d.pictures[0] ? { og_photo: d.pictures[0].photo, og_alt: words(d.pictures[0].alt, menuPage.lang) } : {}) } });
     }
@@ -287,7 +287,7 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
     const monthLabel = (day: string) => capital(t.months[Number(day.slice(5, 7)) - 1]);
     const dayLabel = (day: string) => fillDate(t.date_short, wallClock(new Date(day + "T12:00:00Z"), "UTC"), t);
     const drinkView = (d: Drink) => ({
-      slug: d.slug, name: d.name, text: say(d.text), price_label: `CHF ${d.price_chf}`, url: menuUrl ? `${menuUrl}${d.slug}/` : null,
+      slug: d.slug, name: d.name, text: say(d.text), url: menuUrl ? `${menuUrl}${d.slug}/` : null,
       // The drawing whole, never a square cut: it is a picture of a glass from rim to foot.
       img: d.pictures[0] ? opts.photos[d.pictures[0].photo] : null, alt: d.pictures[0] ? say(d.pictures[0].alt) : "",
     });
