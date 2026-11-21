@@ -1,4 +1,4 @@
-// The only script on the public site. No framework. It fills the "open now" pill
+// The public site's script (with when.js, its date logic). No framework. It fills the "open now" pill
 // from the hours data the build embedded in the page.
 
 // Theme switch: coffee colours or cocktail colours, kept for this visit only, so the
@@ -92,17 +92,51 @@
   document.querySelectorAll(".event[data-end]").forEach(function (el) {
     if (new Date(el.getAttribute("data-end")).getTime() < Date.now()) el.hidden = true;
   });
-  // An event that starts today (Zürich) and has not ended gets a "Today" mark.
-  var dayOf = function (iso) { var p = {}; new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Zurich", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(iso)).forEach(function (x) { p[x.type] = x.value; }); return p.year + "-" + p.month + "-" + p.day; };
-  var today = zurichNow(0).date;
+  // Which day each event is on, by the Zürich clock, comes from when.js (tested there).
+  var W = window.robinsWhen, clock = Date.now();
+  var times = function (el) { return { start: el.getAttribute("data-start"), end: el.getAttribute("data-end"), allDay: el.hasAttribute("data-all-day") }; };
+
+  // Events page: today and the next six days move up into "This week", in their order,
+  // so no event is listed twice; a month left with nothing goes. Without JavaScript the
+  // page stays the plain month list.
+  document.querySelectorAll("[data-week]").forEach(function (week) {
+    if (!W) return;
+    var list = week.querySelector("[data-week-list]");
+    document.querySelectorAll("[data-month] .event[data-start]").forEach(function (el) {
+      var day = el.hidden ? "over" : W.eventDay(times(el), clock);
+      if (day === "today" || day === "tomorrow" || day === "week") list.appendChild(el);
+    });
+    week.hidden = !list.children.length;
+    document.querySelectorAll("[data-month]").forEach(function (month) { month.hidden = !month.querySelector(".event:not([hidden])"); });
+  });
+
+  // An event of today (or on right now) gets a "Today" mark, one of tomorrow "Tomorrow".
   document.querySelectorAll(".event[data-start]").forEach(function (el) {
     var when = el.querySelector(".event__when");
-    if (el.hidden || !when || dayOf(el.getAttribute("data-start")) !== today) return;
+    var day = W && !el.hidden && when ? W.eventDay(times(el), clock) : "";
+    if (day !== "today" && day !== "tomorrow") return;
     var mark = document.createElement("span");
-    mark.className = "event__today";
-    mark.textContent = t.today;
+    mark.className = "event__mark event__mark--" + day;
+    mark.textContent = t[day];
     when.prepend(mark);
-    el.classList.add("is-today");
+    el.classList.add("is-" + day);
+  });
+
+  // Home page hero: "Tonight", "Today" or "Tomorrow" for the event when.js picks, with
+  // "and N more" on a busy day. The build wrote every candidate hidden; nothing today
+  // or tomorrow leaves them all hidden.
+  document.querySelectorAll("[data-promos]").forEach(function (box) {
+    var items = Array.prototype.slice.call(box.querySelectorAll("[data-promo]"));
+    var pick = W ? W.promo(items.map(times), clock) : null;
+    if (!pick) return;
+    var promo = items[pick.index];
+    promo.querySelector("[data-promo-when]").textContent = t[pick.when];
+    if (pick.more) {
+      var more = promo.querySelector("[data-promo-more]");
+      more.textContent = pick.more === 1 ? t.promo_more_one : t.promo_more.replace("{n}", pick.more);
+      more.hidden = false;
+    }
+    promo.hidden = box.hidden = false;
   });
 
   // 404 page: when the address names a language, that language's block goes first.
@@ -155,7 +189,7 @@
     setInterval(report, 1000);
   });
 
-  // Lightbox. Every moment photo is a plain link to its largest JPEG; here a click
+  // Lightbox. Every moment photo and event picture is a plain link to its largest JPEG; here a click
   // opens it in a native <dialog> instead (which traps focus, closes on Esc and makes
   // the page behind inert). Previous and next stay inside the photo's own grid.
   // A browser without <dialog> keeps the plain links.
@@ -181,20 +215,23 @@
 
     var show = function (i) {
       at = (i + group.length) % group.length;
-      var link = group[at], thumb = link.querySelector("img"), card = link.closest("figure");
+      // A moment's link shows the photo it holds; an event's link holds a square cut, so
+      // it names the whole picture's size and its own alt text (data-width, data-alt).
+      var link = group[at], thumb = link.querySelector("img"), card = link.closest("figure, .event");
+      var w = link.getAttribute("data-width") || thumb.getAttribute("width"), h = link.getAttribute("data-height") || thumb.getAttribute("height");
       var box = stage.getBoundingClientRect();
       var img = new Image();
-      img.alt = thumb.alt;
-      img.width = thumb.getAttribute("width");
-      img.height = thumb.getAttribute("height");
+      img.alt = link.getAttribute("data-alt") || thumb.alt;
+      img.width = w;
+      img.height = h;
       // The width the photo will really take on this screen, so the browser picks the
       // smallest file that is sharp enough (a phone never loads the widest one).
-      img.sizes = Math.max(1, Math.round(Math.min(box.width, box.height * thumb.getAttribute("width") / thumb.getAttribute("height")))) + "px";
+      img.sizes = Math.max(1, Math.round(Math.min(box.width, box.height * w / h))) + "px";
       img.srcset = link.getAttribute("data-srcset");
       img.src = link.href;
       stage.replaceChildren(img);
       var time = card.querySelector("time");
-      caption.replaceChildren(card.querySelector(".moment__caption").textContent, " ", time.cloneNode(true));
+      caption.replaceChildren(card.querySelector(".moment__caption, .event__title").textContent, " ", time.cloneNode(true));
     };
     var step = function (by) { if (group.length > 1) show(at + by); };
 

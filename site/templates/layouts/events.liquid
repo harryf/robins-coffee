@@ -1,5 +1,5 @@
 {% layout 'layouts/base' %}
-{% comment %} events: the events of the next 60 days, grouped by month, with the calendar link. {% endcomment %}
+{% comment %} events: the events of the next 60 days, grouped by month, with the calendar link. With JavaScript, site.js moves the events of today and the next six days (Zürich time) into "This week" at the top, so none is listed twice and an emptied month heading goes; without it the page is the plain month list. {% endcomment %}
 {% block content %}
 <section class="section">
   <div class="wrap">
@@ -7,13 +7,20 @@
     <div class="prose">{{ page.content | raw }}</div>
     {%- if events_months.size == 0 %}
     <p class="lead">{{ t.events_none }}</p>
+    {%- else %}
+    <div class="events-week" data-week hidden>
+      <h2 class="h-lg">{{ t.events_week }}</h2>
+      <div class="events" data-week-list></div>
+    </div>
     {%- endif %}
     {%- for month in events_months %}
-    <h2 class="h-lg">{{ month.label }}</h2>
-    <div class="events">
-      {%- for e in month.events %}
-      {% render 'components/event-card', e: e, t: t %}
-      {%- endfor %}
+    <div class="events-month" data-month>
+      <h2 class="h-lg">{{ month.label }}</h2>
+      <div class="events">
+        {%- for e in month.events %}
+        {% render 'components/event-card', e: e, t: t %}
+        {%- endfor %}
+      </div>
     </div>
     {%- endfor %}
     <p><a class="btn" href="{{ '/events.ics' | url }}">{{ t.events_subscribe }}</a></p>

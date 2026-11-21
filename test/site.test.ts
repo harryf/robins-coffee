@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import sharp from "sharp";
 import { join } from "node:path";
 import { parse as parseYaml } from "yaml";
-import { renderSite, sitemapXml, resolveUrl, hoursRows, parseFrontMatter, wallClock, groupGallery, type Files, type Photo } from "../src/render";
+import { renderSite, sitemapXml, resolveUrl, hoursRows, parseFrontMatter, wallClock, groupGallery, SOON_DAYS, type Files, type Photo } from "../src/render";
 import { checkLinks } from "../scripts/check-links";
 import { mkdtemp, mkdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -429,6 +429,62 @@ describe("events", () => {
     const home = async (events: SiteEvent[]) => (await renderSite(withEvents(events), { base: "/", photos, now: NOW })).find((p) => p.out === "index.html")!.html;
     expect((await home(imported)).match(/class="event"/g)?.length).toBe(4);
     expect(await home([])).not.toContain('id="events"');
+  });
+
+  // The page is built once a day, so only the visitor's browser knows what "tonight" is.
+  const outsideScripts = (html: string) => html.replace(/<script[\s\S]*?<\/script>/g, "");
+
+  test("the hero carries one hidden promotion per event of the next eight days, and without JavaScript none says tonight", async () => {
+    const soon = upcoming(imported, NOW, 60).filter((e) => Date.parse(e.start) <= NOW.getTime() + SOON_DAYS * 864e5);
+    expect(soon.length).toBeGreaterThan(1);
+    const pages = await renderSite(withEvents(imported), { base: "/", photos, now: NOW });
+    for (const [out, word] of [["index.html", "Tonight"], ["de/index.html", "Heute Abend"], ["fr/index.html", "Ce soir"], ["it/index.html", "Stasera"]] as const) {
+      const html = pages.find((p) => p.out === out)!.html;
+      const promos = [...html.matchAll(/<div class="promo" data-promo data-start="([^"]+)" data-end="[^"]+"[^>]*>/g)];
+      expect(promos.map((m) => m[1])).toEqual(soon.map((e) => e.start));
+      for (const m of promos) expect(m[0]).toEndWith(" hidden>");
+      expect(html).toContain('<div class="hero__promo" data-promos hidden>');
+      expect(html).toContain('<p class="promo__when" data-promo-when></p>');
+      expect(outsideScripts(html)).not.toContain(word);
+      // Every promotion has its way in: the ticket link, or the pill that says people can just come.
+      expect(html.match(/class="btn btn--neon promo__go"/g)?.length ?? 0).toBe(soon.filter((e) => e.ticket_url).length);
+    }
+    const none = (await renderSite(withEvents([]), { base: "/", photos, now: NOW })).find((p) => p.out === "index.html")!.html;
+    expect(none).not.toContain("data-promos");
+    const far = imported.filter((e) => Date.parse(e.start) > NOW.getTime() + SOON_DAYS * 864e5);
+    expect((await renderSite(withEvents(far), { base: "/", photos, now: NOW })).find((p) => p.out === "index.html")!.html).not.toContain("data-promos");
+  });
+
+  test("the events page has an empty, hidden This week box above the months; every card sits in its month", async () => {
+    const pages = await renderSite(withEvents(imported), { base: "/", photos, now: NOW });
+    for (const [out, word] of [["events/index.html", "This week"], ["de/events/index.html", "Diese Woche"], ["fr/events/index.html", "Cette semaine"], ["it/events/index.html", "Questa settimana"]] as const) {
+      const html = pages.find((p) => p.out === out)!.html;
+      expect(html).toMatch(new RegExp(`<div class="events-week" data-week hidden>\\s*<h2 class="h-lg">${word}</h2>\\s*<div class="events" data-week-list></div>`));
+      expect(html.indexOf("data-week")).toBeLessThan(html.indexOf("data-month"));
+      const cards = html.match(/<article class="event"/g)!.length;
+      const inMonths = html.split("data-month").slice(1).reduce((n, part) => n + (part.split("</div>\n    </div>")[0]!.match(/<article class="event"/g)?.length ?? 0), 0);
+      expect(inMonths).toBe(cards);
+    }
+    const empty = (await renderSite(withEvents([]), { base: "/", photos, now: NOW })).find((p) => p.out === "events/index.html")!.html;
+    expect(empty).not.toContain("data-week");
+  });
+
+  test("an event picture links to the whole picture, uncut, for the lightbox; without a ticket link a pill says just come by", async () => {
+    const qg = fromManual(files, { now: NOW, timeZone: "Europe/Zurich" }).filter((e) => e.id.startsWith("manual-queens-gambit"));
+    const full = { width: 1080, height: 1454, jpg: [{ w: 480, path: "photos/qg-480.jpg" }, { w: 1080, path: "photos/qg-1080.jpg" }], webp: [{ w: 480, path: "photos/qg-480.webp" }, { w: 1080, path: "photos/qg-1080.webp" }], sq: { jpg: [{ w: 400, path: "photos/qg-sq400.jpg" }], webp: [{ w: 400, path: "photos/qg-sq400.webp" }] } };
+    const pages = await renderSite(withEvents(qg), { base: "/", photos: { ...photos, "photos/event-queens-gambit.jpg": full }, now: NOW });
+    const en = pages.find((p) => p.out === "events/index.html")!.html;
+    const card = /<article class="event"[^>]*>[\s\S]*?<\/article>/.exec(en)![0];
+    expect(card).toContain("data-all-day data-lightbox-group>");
+    expect(card).toContain('<a class="event__thumb" href="/photos/qg-1080.jpg" data-lightbox data-srcset="/photos/qg-480.webp 480w, /photos/qg-1080.webp 1080w" data-width="1080" data-height="1454" data-alt="Poster for Queen&#39;s Gambit">');
+    expect(card).toContain('src="/photos/qg-sq400.jpg"'); // the card itself keeps the square cut
+    expect(card).toContain('<span class="visually-hidden">View larger: Poster for Queen&#39;s Gambit</span>');
+    expect(card).toContain('<p class="event__cta"><span class="pill pill--walkin">Just come by</span></p>');
+    expect(card).not.toContain("btn");
+    expect(pages.find((p) => p.out === "de/events/index.html")!.html).toContain('data-alt="Plakat für Queen&#39;s Gambit"');
+    // An event whose picture could not be fetched has no picture and no lightbox link.
+    const bare = (await renderSite(withEvents([{ ...qg[0]!, image: "https://example.com/gone.jpg" }]), { base: "/", photos, now: NOW })).find((p) => p.out === "events/index.html")!.html;
+    expect(bare).not.toContain("event__thumb");
   });
 
   test("the calendar feed has one entry per event with UTC times", () => {

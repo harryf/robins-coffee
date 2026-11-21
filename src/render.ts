@@ -31,6 +31,8 @@ export type RenderOptions = {
 export type Page = { lang: string; slug: string; url: string; out: string; depth: number; data: Record<string, any>; html: string };
 
 const DAYS = ["mo", "tu", "we", "th", "fr", "sa", "su"] as const;
+/** How far ahead the home page carries hidden "tonight" and "tomorrow" promotions. */
+export const SOON_DAYS = 8;
 
 export function parseFrontMatter(text: string): { data: Record<string, any>; body: string } {
   const m = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/.exec(text);
@@ -215,6 +217,10 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
       ...e, when_label: e.all_day ? fillDate(t.date_event, p, t) : `${fillDate(t.date_event, p, t)}, ${p.time}`, text: e.text?.[lang] ?? e.text?.[defaultLang] ?? "", month_label: `${capital(t.months[p.month - 1])} ${p.year}`,
       price_label: e.price_chf === null ? "" : e.price_chf === 0 ? t.free_entry : `CHF ${e.price_chf}`,
       language_label: t.event_languages?.[e.language] ?? "", img: e.image ? squareOf(opts.photos[e.image]) : null,
+      // The whole picture, uncut, for the lightbox (a flyer full of text must be readable).
+      full: e.image ? (opts.photos[e.image] ?? null) : null,
+      time_label: e.all_day ? "" : p.time, all_day: !!e.all_day,
+      poster_alt: t.event_poster.replace("{name}", e.name),
     };
   };
 
@@ -279,6 +285,10 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
       gallery_url: page.lang === defaultLang ? "/gallery/" : `/${page.lang}/gallery/`,
       events_url: page.lang === defaultLang ? "/events/" : `/${page.lang}/events/`,
       events_next: views.slice(0, data.home?.events_count ?? 4),
+      // What the hero may promote as tonight's or tomorrow's: everything that starts in the
+      // next eight days, because the page lives for a day or more after the build and only
+      // the visitor's browser knows what today is (site.js, when.js).
+      events_soon: views.filter((v) => new Date(v.start).getTime() <= now.getTime() + SOON_DAYS * 864e5),
       price_note: priceNote(t),
       events_months: months,
       // The drinks menu in the page language; a drink without a picture is a card with words only.

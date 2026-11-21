@@ -176,7 +176,11 @@ async function loadEvents(files: Files): Promise<SiteEvent[]> {
   }
 }
 
-/** Flyer thumbnails of the events shown on the site, fetched and resized; a failed one is just left out. */
+/**
+ * Flyers of the events shown on the site, fetched and resized; a failed one is just left out.
+ * Two kinds: square cuts for the card, and the whole flyer, uncut, up to its own width or
+ * 1800 px, for the lightbox, where its small print must be readable.
+ */
 async function buildEventImages(events: SiteEvent[], photos: Record<string, Photo>) {
   // A hand event names a photo of the site ("photos/x.jpg"), which is built already; only addresses are fetched.
   for (const src of new Set(events.map((e) => e.image).filter((s): s is string => !!s && /^https?:/.test(s)))) {
@@ -185,11 +189,18 @@ async function buildEventImages(events: SiteEvent[], photos: Record<string, Phot
       const original = join(CACHE, `event-${key}.orig`);
       if (!existsSync(original)) await Bun.write(original, await (await fetch(src, { signal: AbortSignal.timeout(20_000) })).arrayBuffer());
       const bytes = new Uint8Array(await Bun.file(original).arrayBuffer());
-      const photo: Photo = { width: 400, height: 400, jpg: [], webp: [] };
+      const meta = await sharp(bytes).rotate().metadata();
+      const [width, height] = (meta.orientation ?? 1) >= 5 ? [meta.height!, meta.width!] : [meta.width!, meta.height!];
+      const photo: Photo = { width, height, jpg: [], webp: [], sq: { jpg: [], webp: [] } };
+      const encode = (img: sharp.Sharp, ext: "jpg" | "webp", file: string) => (ext === "jpg" ? img.jpeg({ quality: 78, mozjpeg: true }) : img.webp({ quality: 74 })).toFile(join(OUT, "photos", file));
       for (const w of [200, 400]) for (const ext of ["jpg", "webp"] as const) {
         const file = `event-${key}-${w}.${ext}`;
-        const img = sharp(bytes).resize({ width: w, height: w, fit: "cover" }).flatten({ background: "#000000" });
-        await (ext === "jpg" ? img.jpeg({ quality: 78, mozjpeg: true }) : img.webp({ quality: 74 })).toFile(join(OUT, "photos", file));
+        await encode(sharp(bytes).rotate().resize({ width: w, height: w, fit: "cover" }).flatten({ background: "#000000" }), ext, file);
+        photo.sq![ext].push({ w, path: `photos/${file}` });
+      }
+      for (const w of WIDTHS.filter((w) => w < width).concat(width <= WIDTHS.at(-1)! ? [width] : [])) for (const ext of ["jpg", "webp"] as const) {
+        const file = `event-${key}-full${w}.${ext}`;
+        await encode(sharp(bytes).rotate().resize({ width: w }).flatten({ background: "#000000" }), ext, file);
         photo[ext].push({ w, path: `photos/${file}` });
       }
       photos[src] = photo;

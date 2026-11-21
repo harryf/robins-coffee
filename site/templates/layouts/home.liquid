@@ -3,7 +3,7 @@
 {% block content %}
 {%- for name in home.sections %}
 {% assign tpl = 'sections/' | append: name %}
-{% render tpl, site: site, t: t, page: page, home: home, photos: photos, moments: moments, hours_rows: hours_rows, events_next: events_next, events_url: events_url, gallery_url: gallery_url, menu: menu, price_note: price_note %}
+{% render tpl, site: site, t: t, page: page, home: home, photos: photos, moments: moments, hours_rows: hours_rows, events_next: events_next, events_soon: events_soon, events_url: events_url, gallery_url: gallery_url, menu: menu, price_note: price_note %}
 {%- endfor %}
 <template data-sections-end></template>
 <script>
