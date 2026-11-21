@@ -86,9 +86,10 @@ code { font-size: var(--size-code); color: var(--c-amber); }
 .langs__code { min-width: 1.6rem; font-weight: var(--weight-bold); color: var(--c-muted); }
 .langs__item[aria-current] .langs__code { color: inherit; }
 /* theme switch: coffee cup for the day colours, cocktail for the night colours; the side that is on is lit. */
-.theme-switch { display: inline-flex; align-items: center; min-height: var(--target-min); padding: var(--space-1); border: var(--border-thin) solid var(--c-line); border-radius: var(--radius-pill); background: var(--c-raised); font: inherit; font-size: var(--size-sm); line-height: var(--leading-none); cursor: pointer; }
+.theme-switch { display: inline-flex; align-items: center; color: var(--c-text); min-height: var(--target-min); padding: var(--space-1); border: var(--border-thin) solid var(--c-line); border-radius: var(--radius-pill); background: var(--c-raised); font: inherit; font-size: var(--size-sm); line-height: var(--leading-none); cursor: pointer; }
 .theme-switch span { display: grid; place-items: center; width: 2.1rem; height: 2.1rem; border-radius: 50%; opacity: 0.5; filter: grayscale(1); transition: opacity var(--motion-fast) var(--motion-ease), background-color var(--motion-fast) var(--motion-ease); }
-:root[data-theme="day"] .theme-switch [data-theme-side="day"], :root:not([data-theme="day"]) .theme-switch [data-theme-side="night"] { background: var(--c-neon); opacity: 1; filter: none; }
+:root[data-theme="day"] .theme-switch [data-theme-side="day"], :root:not([data-theme="day"]) .theme-switch [data-theme-side="night"] { background: var(--c-neon); color: var(--c-on-neon); opacity: 1; filter: none; }
+.theme-switch .nav-icon { width: 1.9rem; height: 1.9rem; }
 :root[data-theme="day"] [data-theme-only="night"], :root:not([data-theme="day"]) [data-theme-only="day"] { display: none; }
 main > :first-child:not(.hero) { padding-top: var(--space-24); }
 
