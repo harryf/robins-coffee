@@ -134,6 +134,11 @@ code { font-size: var(--size-code); color: var(--c-amber); }
 .lead { font-size: var(--size-lg); line-height: var(--leading-text); }
 .prose > * + * { margin-top: var(--space-4); }
 .prose p { font-size: var(--size-lg); line-height: var(--leading-text); max-width: var(--measure-prose); }
+.prose ol, .prose ul { max-width: var(--measure-prose); padding-inline-start: var(--space-6); font-size: var(--size-lg); line-height: var(--leading-text); }
+.prose li + li { margin-top: var(--space-2); }
+.prose h2 { font: var(--weight-regular) var(--size-lg)/var(--leading-title) var(--font-display); margin-top: var(--space-8); }
+.prose pre { max-width: var(--measure-prose); padding: var(--space-3) var(--space-4); background: var(--c-surface); border: var(--border-thin) solid var(--c-line); border-radius: var(--radius-sm); overflow-x: auto; user-select: all; }
+.prose pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
 
 
 /* header */
