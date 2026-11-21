@@ -138,8 +138,8 @@ describe("gallery", () => {
   test("the header and the home feed link to the gallery in both languages", async () => {
     const en = await page("index.html");
     const de = await page("de/index.html");
-    expect(en).toContain('<a class="nav-link" href="/robins-coffee/gallery/">Moments</a>');
-    expect(de).toContain('<a class="nav-link" href="/robins-coffee/de/gallery/">Momente</a>');
+    expect(en).toMatch(/<a class="nav-link" href="\/robins-coffee\/gallery\/">\s*<svg class="nav-icon"[\s\S]*?<\/svg>\s*<span class="nav-link__text">Moments<\/span><\/a>/);
+    expect(de).toMatch(/<a class="nav-link" href="\/robins-coffee\/de\/gallery\/">\s*<svg class="nav-icon"[\s\S]*?<\/svg>\s*<span class="nav-link__text">Momente<\/span><\/a>/);
     expect(en.split('id="moments"')[1]!.split("</section>")[0]).toContain('href="/robins-coffee/gallery/"');
     expect(de.split('id="moments"')[1]!.split("</section>")[0]).toContain('href="/robins-coffee/de/gallery/"');
   });
@@ -891,7 +891,7 @@ describe("home page: day and night, and the guests it speaks to", () => {
   });
 
   test("the menu says What's on, not Events", async () => {
-    expect(await home(files)).toMatch(/class="nav-link" href="[^"]*">What&#39;s on</);
-    expect(await home(files, "de")).toMatch(/class="nav-link" href="[^"]*">Programm</);
+    expect(await home(files)).toMatch(/class="nav-link__text">What&#39;s on</);
+    expect(await home(files, "de")).toMatch(/class="nav-link__text">Programm</);
   });
 });
