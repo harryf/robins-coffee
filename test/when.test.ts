@@ -3,7 +3,8 @@ import { fromManual } from "../src/events";
 
 // site/assets/js/when.js is a plain browser script (no build step on the public site);
 // it hangs its functions on the global object, which here is Bun's.
-await import("../site/assets/js/when.js");
+const whenScript: string = "../site/assets/js/when.js";
+await import(whenScript);
 const W = (globalThis as any).robinsWhen as {
   dayOf(ms: number, zone?: string): string;
   eventDay(e: { start: string; end: string }, now: number, zone?: string): "over" | "today" | "tomorrow" | "week" | "later";

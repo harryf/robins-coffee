@@ -196,7 +196,7 @@ async function buildEventImages(events: SiteEvent[], photos: Record<string, Phot
       const meta = await sharp(bytes).rotate().metadata();
       const [width, height] = (meta.orientation ?? 1) >= 5 ? [meta.height!, meta.width!] : [meta.width!, meta.height!];
       const photo: Photo = { width, height, jpg: [], webp: [], sq: { jpg: [], webp: [] } };
-      const encode = (img: sharp.Sharp, ext: "jpg" | "webp", file: string) => (ext === "jpg" ? img.jpeg({ quality: 78, mozjpeg: true }) : img.webp({ quality: 74 })).toFile(join(OUT, "photos", file));
+      const encode = (img: ReturnType<typeof sharp>, ext: "jpg" | "webp", file: string) => (ext === "jpg" ? img.jpeg({ quality: 78, mozjpeg: true }) : img.webp({ quality: 74 })).toFile(join(OUT, "photos", file));
       for (const w of [200, 400]) for (const ext of ["jpg", "webp"] as const) {
         const file = `event-${key}-${w}.${ext}`;
         await encode(sharp(bytes).rotate().resize({ width: w, height: w, fit: "cover" }).flatten({ background: "#000000" }), ext, file);
