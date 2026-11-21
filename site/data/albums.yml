@@ -4,10 +4,10 @@
 # photo first in its album; without it the newest photo leads.
 albums:
   - slug: drinks
-    title: { en: "Drinks", de: "Drinks" }
+    title: { en: "Drinks", de: "Drinks", fr: "Drinks", it: "Drinks" }
   - slug: halloween-2026
-    title: { en: "Halloween 2026", de: "Halloween 2026" }
+    title: { en: "Halloween 2026", de: "Halloween 2026", fr: "Halloween 2026", it: "Halloween 2026" }
   - slug: behind-the-bar
-    title: { en: "Behind the bar", de: "Hinter der Bar" }
+    title: { en: "Behind the bar", de: "Hinter der Bar", fr: "Derrière le bar", it: "Dietro il bancone" }
   - slug: comedy
-    title: { en: "Comedy", de: "Komödie" }
+    title: { en: "Comedy", de: "Komödie", fr: "Comedy", it: "Comedy" }

@@ -10,5 +10,7 @@ image: "photos/event-queens-gambit.jpg"
 text:
   en: "A place for women to play chess."
   de: "Ein Ort für Frauen zum Schachspielen."
+  fr: "Un endroit où les femmes jouent aux échecs."
+  it: "Un posto per le donne per giocare a scacchi."
 ticket_url: ""
 ---

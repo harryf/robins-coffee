@@ -4,30 +4,30 @@
 # Names are the bar's own and are not translated.
 sections:
   - slug: signatures
-    title: { en: "Signatures", de: "Signatures" }
+    title: { en: "Signatures", de: "Signatures", fr: "Signatures", it: "Signatures" }
     drinks:
       - name: "Pineapple Express"
-        text: { en: "Rum, Caribbean pineapple, agave and lime", de: "Rum, karibische Ananas, Agave und Limette" }
+        text: { en: "Rum, Caribbean pineapple, agave and lime", de: "Rum, karibische Ananas, Agave und Limette", fr: "Rhum, ananas des Caraïbes, agave et citron vert", it: "Rum, ananas caraibico, agave e lime" }
         price_chf: 18
         photo: "photos/menu-pineapple-express.jpg"
-        alt: { en: "Drawing of an amber drink in a martini glass with a slice of dried citrus.", de: "Zeichnung eines bernsteinfarbenen Drinks im Martiniglas mit einer getrockneten Zitrusscheibe." }
+        alt: { en: "Drawing of an amber drink in a martini glass with a slice of dried citrus.", de: "Zeichnung eines bernsteinfarbenen Drinks im Martiniglas mit einer getrockneten Zitrusscheibe.", fr: "Dessin d'une boisson ambrée dans un verre à martini avec une tranche d'agrumes séchés.", it: "Disegno di una bevanda ambrata in un bicchiere da martini con una fetta di agrumi secchi." }
       - name: "Lazy Monkey"
-        text: { en: "Pisco, lychee, orange and passion fruit with cinnamon foam", de: "Pisco, Litschi, Orange und Passionsfrucht mit Zimtschaum" }
+        text: { en: "Pisco, lychee, orange and passion fruit with cinnamon foam", de: "Pisco, Litschi, Orange und Passionsfrucht mit Zimtschaum", fr: "Pisco, litchi, orange et fruit de la passion avec mousse de cannelle", it: "Pisco, litchi, arancia e frutto della passione con schiuma alla cannella" }
         price_chf: 18
         photo: "photos/menu-lazy-monkey.jpg"
-        alt: { en: "Drawing of a foamy yellow drink in a stemmed glass, topped with rose petals.", de: "Zeichnung eines schaumigen gelben Drinks im Stielglas, mit Rosenblättern bestreut." }
+        alt: { en: "Drawing of a foamy yellow drink in a stemmed glass, topped with rose petals.", de: "Zeichnung eines schaumigen gelben Drinks im Stielglas, mit Rosenblättern bestreut.", fr: "Dessin d'une boisson jaune mousseuse dans un verre à tige, surmonté de pétales de rose.", it: "Disegno di una bevanda gialla schiumosa in un bicchiere a stelo, sormontato da petali di rosa." }
       - name: "Toffee Crush"
-        text: { en: "Vodka, coffee liqueur, caramel, vanilla, orange and lemon", de: "Wodka, Kaffeelikör, Karamell, Vanille, Orange und Zitrone" }
+        text: { en: "Vodka, coffee liqueur, caramel, vanilla, orange and lemon", de: "Wodka, Kaffeelikör, Karamell, Vanille, Orange und Zitrone", fr: "Vodka, liqueur de café, caramel, vanille, orange et citron", it: "Vodka, liquore al caffè, caramello, vaniglia, arancia e limone" }
         price_chf: 18
         photo: "photos/menu-toffee-crush.jpg"
-        alt: { en: "Drawing of a creamy drink in a cut tumbler with a slice of dried orange on the foam.", de: "Zeichnung eines cremigen Drinks im geschliffenen Tumbler mit einer getrockneten Orangenscheibe auf dem Schaum." }
+        alt: { en: "Drawing of a creamy drink in a cut tumbler with a slice of dried orange on the foam.", de: "Zeichnung eines cremigen Drinks im geschliffenen Tumbler mit einer getrockneten Orangenscheibe auf dem Schaum.", fr: "Dessin d'une boisson crémeuse dans un gobelet coupé avec une tranche d'orange séchée sur la mousse.", it: "Disegno di una bevanda cremosa in un bicchiere tagliato con una fetta di arancia secca sulla schiuma." }
       - name: "Hanging Garden"
-        text: { en: "Mastiha, gin, Aperol, rose and lemon", de: "Mastiha, Gin, Aperol, Rose und Zitrone" }
+        text: { en: "Mastiha, gin, Aperol, rose and lemon", de: "Mastiha, Gin, Aperol, Rose und Zitrone", fr: "Mastiha, gin, Aperol, rose et citron", it: "Mastiha, gin, Aperol, rosa e limone" }
         price_chf: 18
         photo: "photos/menu-hanging-garden.jpg"
-        alt: { en: "Drawing of an orange drink with a thick foam top in a tumbler, with a rosebud on the rim.", de: "Zeichnung eines orangen Drinks mit dicker Schaumkrone im Tumbler, mit einer Rosenknospe am Rand." }
+        alt: { en: "Drawing of an orange drink with a thick foam top in a tumbler, with a rosebud on the rim.", de: "Zeichnung eines orangen Drinks mit dicker Schaumkrone im Tumbler, mit einer Rosenknospe am Rand.", fr: "Dessin d'une boisson orange avec un dessus en mousse épaisse dans un gobelet, avec un bourgeon de rose sur le bord.", it: "Disegno di una bevanda all'arancia con una spessa cima in schiuma in un bicchiere, con un bocciolo di rosa sul bordo." }
       - name: "Black Boulevard"
-        text: { en: "Rye whiskey, Campari, Montenegro and honey syrup", de: "Rye Whiskey, Campari, Montenegro und Honigsirup" }
+        text: { en: "Rye whiskey, Campari, Montenegro and honey syrup", de: "Rye Whiskey, Campari, Montenegro und Honigsirup", fr: "Whisky de seigle, Campari, Monténégro et sirop de miel", it: "Whisky di segale, Campari, Montenegro e sciroppo di miele" }
         price_chf: 18
         photo: "photos/menu-black-boulevard.jpg"
-        alt: { en: "Drawing of a dark red drink over a large ice cube in a cut tumbler, with orange peel.", de: "Zeichnung eines dunkelroten Drinks auf einem grossen Eiswürfel im geschliffenen Tumbler, mit Orangenzeste." }
+        alt: { en: "Drawing of a dark red drink over a large ice cube in a cut tumbler, with orange peel.", de: "Zeichnung eines dunkelroten Drinks auf einem grossen Eiswürfel im geschliffenen Tumbler, mit Orangenzeste.", fr: "Dessin d'une boisson rouge foncé sur un grand glaçon dans un gobelet coupé, avec une peau d'orange.", it: "Disegno di una bevanda rosso scuro su un grande cubetto di ghiaccio in un bicchiere tagliato, con buccia d'arancia." }
