@@ -1,21 +1,19 @@
-{% comment %} Home: the drinks menu from menu.yml, one block per part of the menu. Left out when the menu is empty. {% endcomment %}
-{%- if menu.size > 0 %}
+{% comment %} Home: the drinks of the season shown today (menu.yml; between seasons the one that ended last), each card a link to the drink's page, then a link to the menu page with every season. Left out when the menu has no drink. {% endcomment %}
+{%- if menu.drinks.size > 0 %}
 <section class="section section--surface" id="menu">
   <div class="wrap">
     <h2 class="h-xl">{{ t.menu_title }}</h2>
-    {%- for part in menu %}
     <div class="menu-part">
-      <h3 class="eyebrow">{{ part.title }}</h3>
-      {%- if part.note != '' %}
-      <p class="menu-part__note">{{ part.note }}</p>
-      {%- endif %}
+      <h3 class="eyebrow">{{ menu.name }}</h3>
       <div class="drinks">
-        {%- for d in part.drinks %}
+        {%- for d in menu.drinks %}
         {% render 'components/drink-card', d: d %}
         {%- endfor %}
       </div>
     </div>
-    {%- endfor %}
+    {%- if menu.url %}
+    <p><a class="btn" href="{{ menu.url | url }}">{{ t.menu_all }}</a></p>
+    {%- endif %}
   </div>
 </section>
 {%- endif %}

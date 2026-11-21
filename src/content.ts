@@ -2,6 +2,7 @@
 // Pure and browser-safe: text in, text out. The Studio and the scripts share them, so a
 // form and a hand edit produce the same file.
 import { parse as parseYaml, parseDocument } from "yaml";
+import { readMenu, dayOf, UNITS } from "./menu";
 
 const q = (s: string) => JSON.stringify(String(s));
 export const slugify = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/ß/g, "ss").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "event";
@@ -162,91 +163,167 @@ export function renameAlbum(yamlText: string, slug: string, title: Texts): strin
   return doc.toString({ lineWidth: 0 });
 }
 
-export type DrinkInput = { name: string; text: Texts; price_chf: number; photo?: string; alt?: Texts };
+// --- the drinks menu: seasons, and drinks that seasons name by slug (src/menu.ts reads the file) ---
 
+/** One line of a recipe as a form sends it: an amount, a unit from UNITS (or none), what it is. */
+export type IngredientInput = { amount?: number | null; unit?: string | null; item: Partial<Texts> };
+/** A picture of a drink as it is written: a photo of the site and its alt text. */
+export type PictureInput = { photo: string; alt: Partial<Texts> };
+export type DrinkInput = {
+  name: string; price_chf: number; text: Partial<Texts>; experience?: Partial<Texts> | null;
+  ingredients?: IngredientInput[]; method?: Partial<Texts>[]; pictures?: PictureInput[];
+};
+export type SeasonInput = { name: Partial<Texts>; start: string; end: string; description?: Partial<Texts> | null };
+
+const hasWords = (v: unknown) => textsShape(v) && Object.values(v as object).some((x) => typeof x === "string" && x.trim());
+
+/** What is wrong with a drink, as message keys the screen translates; empty when it is fine. */
 export function drinkProblems(d: DrinkInput): string[] {
-  const out: string[] = [];
   if (!d || typeof d !== "object") return ["drink_name_missing"];
-  for (const v of [d.name, d.photo]) if (v != null && typeof v !== "string") return ["english_needed"];
-  if ((d.text != null && !textsShape(d.text)) || (d.alt != null && !textsShape(d.alt))) return ["english_needed"];
+  if (d.name != null && typeof d.name !== "string") return ["drink_name_missing"];
+  for (const v of [d.text, d.experience]) if (v != null && !textsShape(v)) return ["english_needed"];
+  for (const k of ["ingredients", "method", "pictures"] as const) if (d[k] != null && !Array.isArray(d[k])) return ["drink_shape_wrong"];
+  const out: string[] = [];
   if (!d.name?.trim()) out.push("drink_name_missing");
+  if (!(typeof d.price_chf === "number" && Number.isFinite(d.price_chf) && d.price_chf >= 0)) out.push("drink_price_wrong");
   if (!hasEnglish(d.text)) out.push("english_needed");
-  if (!(typeof d.price_chf === "number" && d.price_chf >= 0)) out.push("drink_price_wrong");
-  if (d.photo && !/^photos\/[a-z0-9-]+\.jpg$/.test(d.photo)) out.push("event_image_wrong");
-  if (d.photo && !hasEnglish(d.alt)) out.push("alt_missing");
+  if (d.experience != null && hasWords(d.experience) && !hasEnglish(d.experience)) out.push("english_needed");
+  for (const x of d.ingredients ?? []) {
+    if (!x || typeof x !== "object" || !textsShape(x.item)) { out.push("drink_shape_wrong"); continue; }
+    if (!hasEnglish(x.item)) out.push("ingredient_item_missing");
+    if (x.amount != null && !(typeof x.amount === "number" && Number.isFinite(x.amount) && x.amount > 0)) out.push("ingredient_amount_wrong");
+    if (x.unit != null && x.unit !== "" && !(UNITS as readonly string[]).includes(String(x.unit))) out.push("ingredient_unit_wrong");
+    if (x.unit && x.amount == null) out.push("ingredient_amount_wrong");
+  }
+  for (const s of d.method ?? []) if (!textsShape(s) || !hasEnglish(s)) out.push("english_needed");
+  for (const p of d.pictures ?? []) {
+    if (!p || typeof p.photo !== "string" || !/^photos\/[a-z0-9-]+\.jpg$/.test(p.photo)) out.push("event_image_wrong");
+    else if (!hasEnglish(p.alt)) out.push("alt_missing");
+  }
+  return [...new Set(out)];
+}
+
+/** What is wrong with a season, as message keys; empty when it is fine. */
+export function seasonProblems(s: SeasonInput): string[] {
+  if (!s || typeof s !== "object") return ["english_needed"];
+  if (s.name != null && !textsShape(s.name)) return ["english_needed"];
+  if (s.description != null && !textsShape(s.description)) return ["english_needed"];
+  const out: string[] = [];
+  if (!hasEnglish(s.name)) out.push("season_name_missing");
+  if (s.description != null && hasWords(s.description) && !hasEnglish(s.description)) out.push("english_needed");
+  const start = dayOf(s.start), end = dayOf(s.end);
+  if (!start || !end) out.push("season_date_wrong");
+  else if (end < start) out.push("season_dates_order");
   return out;
 }
 
+const menuDoc = (yamlText: string) => parseDocument(yamlText?.trim() ? yamlText : "seasons: []\ndrinks: []\n");
+const seqOf = (doc: any, key: "seasons" | "drinks") => { if (!doc.has(key)) doc.set(key, []); return doc.get(key) as any; };
+const findAt = (seq: any, slug: string): number => seq.items.findIndex((x: any) => x.get?.("slug") === slug);
+/** A slug from a name that no entry of the list has yet: the name, or with -2, -3 behind it. */
+const freeSlug = (seq: any, name: string) => {
+  const base = slugify(name);
+  let slug = base;
+  for (let n = 2; findAt(seq, slug) >= 0; n++) slug = `${base}-${n}`;
+  return slug;
+};
+/** The file as text, refused when the result would not build (src/menu.ts says why). */
+const menuText = (doc: any): string => {
+  const text = doc.toString({ lineWidth: 0 });
+  readMenu(parseYaml(text));
+  return text;
+};
+const flowTexts = (doc: any, v: Partial<Texts>) => { const n = doc.createNode(cleanTexts(v)); n.flow = true; return n; };
+const flowList = (doc: any, list: string[]) => { const n = doc.createNode(list); n.flow = true; return n; };
+
 /**
- * menu.yml with a drink added to a part of the menu, or replaced when the part already
- * has one of that name. A part that does not exist yet is created from `partTitle`.
+ * menu.yml with a drink added (no `was`) or changed (`was` is its slug). Its slug is made
+ * once from its first name and stays, so its page keeps its address under a new name.
+ * `seasons` lists every season it is in after the save: it is added at the end of a season
+ * it joins and taken out of one it leaves. A save is a person's own check of every text on
+ * the form, so the drafted mark goes. Returns the file and the drink's slug.
  */
-export function setDrink(yamlText: string, part: string, d: DrinkInput, partTitle?: Texts): string {
+export function saveDrink(yamlText: string, d: DrinkInput, opts: { was?: string | null; seasons: string[] }): { text: string; slug: string } {
   const problems = drinkProblems(d);
   if (problems.length) throw new Error(problems.join(", "));
-  if (!/^[a-z0-9-]+$/.test(part)) throw new Error("menu_part_wrong");
-  const doc = parseDocument(yamlText || "sections: []\n");
-  if (!doc.has("sections")) doc.set("sections", []);
-  const sections = doc.get("sections") as any;
-  let section = sections.items.find((s: any) => s.get("slug") === part);
-  if (!section) {
-    if (!partTitle || !hasEnglish(partTitle)) throw new Error("english_needed");
-    section = doc.createNode({ slug: part, title: cleanTexts(partTitle), drinks: [] });
-    (section.get("title", true) as any).flow = true;
-    sections.add(section);
-  }
-  const entry: any = { name: d.name.trim(), text: cleanTexts(d.text), price_chf: d.price_chf };
-  if (d.photo) { entry.photo = d.photo; entry.alt = cleanTexts(d.alt!); }
-  const node = doc.createNode(entry) as any;
-  for (const k of ["text", "alt"]) if (node.has(k)) node.get(k, true).flow = true;
-  if (!section.has("drinks")) section.set("drinks", []);
-  const drinks = section.get("drinks") as any;
-  const at = drinks.items.findIndex((x: any) => x.get("name") === entry.name);
+  const doc = menuDoc(yamlText);
+  const drinks = seqOf(doc, "drinks"), seasons = seqOf(doc, "seasons");
+  const known = new Set<string>(seasons.items.map((s: any) => String(s.get("slug"))));
+  if (!Array.isArray(opts.seasons) || opts.seasons.some((s) => !known.has(s))) throw new Error("season_unknown");
+  const name = d.name.trim();
+  const at = opts.was ? findAt(drinks, opts.was) : -1;
+  if (opts.was && at < 0) throw new Error("drink_not_found");
+  if (drinks.items.some((x: any, i: number) => i !== at && String(x.get("name") ?? "").trim().toLowerCase() === name.toLowerCase())) throw new Error("drink_exists");
+  const slug = at >= 0 ? opts.was! : freeSlug(drinks, name);
+  const node = doc.createNode({ slug, name, price_chf: d.price_chf }) as any;
+  node.set("text", flowTexts(doc, d.text));
+  if (d.experience && hasEnglish(d.experience)) node.set("experience", flowTexts(doc, d.experience));
+  const rows = (d.ingredients ?? []).map((x) => {
+    const row = doc.createNode({ ...(x.amount != null ? { amount: x.amount } : {}), ...(x.unit ? { unit: x.unit } : {}) }) as any;
+    row.set("item", flowTexts(doc, x.item));
+    row.flow = true;
+    return row;
+  });
+  node.set("ingredients", doc.createNode(rows));
+  node.set("method", doc.createNode((d.method ?? []).map((s) => flowTexts(doc, s))));
+  node.set("pictures", doc.createNode((d.pictures ?? []).map((p) => { const n = doc.createNode({ photo: p.photo }) as any; n.set("alt", flowTexts(doc, p.alt)); return n; })));
   if (at >= 0) drinks.items[at] = node; else drinks.add(node);
-  return doc.toString({ lineWidth: 0 });
+  for (const s of seasons.items) {
+    const list: string[] = (s.get("drinks")?.toJSON?.() ?? []).map(String);
+    const wanted = opts.seasons.includes(String(s.get("slug")));
+    const next = wanted ? (list.includes(slug) ? list : [...list, slug]) : list.filter((x) => x !== slug);
+    if (next.join() !== list.join()) s.set("drinks", flowList(doc, next));
+  }
+  return { text: menuText(doc), slug };
 }
 
-/** menu.yml without one drink; an emptied part stays, so its title is not lost. */
-export function removeDrink(yamlText: string, part: string, name: string): string {
-  const doc = parseDocument(yamlText);
-  const section = (doc.get("sections") as any)?.items.find((s: any) => s.get("slug") === part);
-  const drinks = section?.get("drinks") as any;
-  const at = drinks?.items.findIndex((x: any) => x.get("name") === name) ?? -1;
+/** menu.yml without a drink: it leaves the drinks and every season that named it. */
+export function removeDrink(yamlText: string, slug: string): string {
+  const doc = menuDoc(yamlText);
+  const drinks = seqOf(doc, "drinks");
+  const at = findAt(drinks, slug);
   if (at < 0) throw new Error("drink_not_found");
   drinks.items.splice(at, 1);
-  return doc.toString({ lineWidth: 0 });
-}
-
-/** Where a drink of that name sits in that part; `at` is -1 when it is not there. */
-const findDrink = (doc: any, part: string, name: string) => {
-  const section = (doc.get("sections") as any)?.items.find((s: any) => s.get("slug") === part);
-  const drinks = section?.get("drinks") as any;
-  const at: number = drinks?.items?.findIndex((x: any) => x.get("name") === name) ?? -1;
-  return { drinks, at };
-};
-
-/** True when a part of the menu has a drink of that name. */
-export function hasDrink(yamlText: string, part: string, name: string): boolean {
-  return findDrink(parseDocument(yamlText || "sections: []\n"), part, name.trim()).at >= 0;
+  for (const s of seqOf(doc, "seasons").items) {
+    const list: string[] = (s.get("drinks")?.toJSON?.() ?? []).map(String);
+    if (list.includes(slug)) s.set("drinks", flowList(doc, list.filter((x) => x !== slug)));
+  }
+  return menuText(doc);
 }
 
 /**
- * menu.yml with a drink changed: `was` says which one it was before the form was opened.
- * It keeps its place in the list, also under a new name. Moved to another part it goes
- * to the end of that part. A new name that another drink of the part already has is refused.
+ * menu.yml with a season added (no `was`) or changed (`was` is its slug): name, first and
+ * last day, description. Its drinks stay; its slug is made once and stays, so a link to it
+ * keeps working. Saving drops the drafted mark. Returns the file and the season's slug.
  */
-export function changeDrink(yamlText: string, was: { part: string; name: string }, part: string, d: DrinkInput, partTitle?: Texts): string {
-  const problems = drinkProblems(d);
+export function saveSeason(yamlText: string, s: SeasonInput, was?: string | null): { text: string; slug: string } {
+  const problems = seasonProblems(s);
   if (problems.length) throw new Error(problems.join(", "));
-  const doc = parseDocument(yamlText);
-  const old = findDrink(doc, was.part, was.name);
-  if (old.at < 0) throw new Error("drink_not_found");
-  const name = d.name.trim();
-  if ((part !== was.part || name !== was.name) && findDrink(doc, part, name).at >= 0) throw new Error("drink_exists");
-  if (part !== was.part) return setDrink(removeDrink(yamlText, was.part, was.name), part, d, partTitle);
-  // Same part: setDrink replaces by name, so the old entry takes the new name first and keeps its place.
-  old.drinks.items[old.at].set("name", name);
-  return setDrink(doc.toString({ lineWidth: 0 }), part, d);
+  const doc = menuDoc(yamlText);
+  const seasons = seqOf(doc, "seasons");
+  const at = was ? findAt(seasons, was) : -1;
+  if (was && at < 0) throw new Error("season_not_found");
+  const slug = at >= 0 ? was! : freeSlug(seasons, cleanTexts(s.name).en!);
+  const kept: string[] = at >= 0 ? (seasons.items[at].get("drinks")?.toJSON?.() ?? []).map(String) : [];
+  const node = doc.createNode({ slug }) as any;
+  node.set("name", flowTexts(doc, s.name));
+  // Quoted, so the day stays a plain text and never turns into a timestamp.
+  for (const [k, v] of [["start", dayOf(s.start)], ["end", dayOf(s.end)]] as const) { const day = doc.createNode(v) as any; day.type = "QUOTE_DOUBLE"; node.set(k, day); }
+  if (s.description && hasEnglish(s.description)) node.set("description", flowTexts(doc, s.description));
+  node.set("drinks", flowList(doc, kept));
+  if (at >= 0) seasons.items[at] = node; else seasons.add(node);
+  return { text: menuText(doc), slug };
+}
+
+/** menu.yml without a season. Only an empty season goes: its drinks would otherwise vanish from the menu unasked. */
+export function removeSeason(yamlText: string, slug: string): string {
+  const doc = menuDoc(yamlText);
+  const seasons = seqOf(doc, "seasons");
+  const at = findAt(seasons, slug);
+  if (at < 0) throw new Error("season_not_found");
+  if ((seasons.items[at].get("drinks")?.toJSON?.() ?? []).length) throw new Error("season_not_empty");
+  seasons.items.splice(at, 1);
+  return menuText(doc);
 }
 
 export type MomentEdit = { caption: Texts; alt: Texts; album?: string | null; feed?: boolean };

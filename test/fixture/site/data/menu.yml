@@ -1,33 +1,77 @@
-# The drinks menu, shown on the home page. One block per part of the menu; a drink is
-# name, a line of text in EN and DE, a price in CHF and an optional picture (added with
-# `bun scripts/add-photo.ts <file> --plain --slug menu-<name>`, then its alt text here).
-# Names are the bar's own and are not translated.
-sections:
-  - slug: signatures
-    title: { en: "Signatures", de: "Signatures" }
-    drinks:
-      - name: "Pineapple Express"
-        text: { en: "Rum, Caribbean pineapple, agave and lime", de: "Rum, karibische Ananas, Agave und Limette" }
-        price_chf: 18
-        photo: "photos/menu-pineapple-express.jpg"
+# The drinks menu: seasons and drinks. Edited in ROBIN's Studio (Menu); by hand it goes like this.
+#
+# A drink is written once under `drinks:` and a season names its drinks by slug, so a drink
+# that comes back in a later season keeps one recipe and one page (/menu/<slug>/).
+# The home page shows the season running today (Zurich date); between seasons, the one that
+# ended last. Dates are first and last day, both included.
+#
+# A drink: slug, name (the bar's own, not translated), price_chf, text (the short line on
+# the card), experience (what drinking it is like), ingredients (amount, unit, item; unit is
+# one of cl, ml, g, dash, drop, barspoon, piece, or left out), method (short steps), pictures
+# (the first is the drawing; add more with `bun scripts/add-photo.ts <file> --plain --slug
+# menu-<name>`, each with alt text). Texts need English; de, fr and it are optional.
+# `draft:` names texts Claude drafted for Elias to check; the Studio drops the mark on save.
+seasons:
+  - slug: autumn-winter-2026
+    name: { en: "Autumn/Winter 2026", de: "Herbst/Winter 2026" }
+    start: "2026-09-01"
+    end: "2027-02-28"
+    description: { en: "Our cocktails for the cold half of the year: rye whiskey and bitter orange, caramel and coffee, and some tropical fruit for grey evenings.", de: "Unsere Cocktails für die kalte Hälfte des Jahres: Roggenwhisky und Bitterorange, Karamell und Kaffee und einige tropische Früchte für graue Abende." }
+    draft: [ description ]
+    drinks: [ pineapple-express, lazy-monkey, toffee-crush, hanging-garden, black-boulevard ]
+drinks:
+  - slug: pineapple-express
+    name: "Pineapple Express"
+    price_chf: 18
+    text: { en: "Rum, Caribbean pineapple, agave and lime", de: "Rum, karibische Ananas, Agave und Limette" }
+    experience: { en: "Ripe pineapple first, then lime to wake things up, with rum and agave rounding it off. A small holiday in a glass, even on a grey Tuesday.", de: "Zuerst reife Ananas, dann Limette, um die Dinge aufzuwecken, mit Rum und Agave, die es abrunden. Ein kleiner Urlaub im Glas, auch an einem grauen Dienstag." }
+    draft: [ experience ]
+    ingredients: []
+    method: []
+    pictures:
+      - photo: "photos/menu-pineapple-express.jpg"
         alt: { en: "Drawing of an amber drink in a martini glass with a slice of dried citrus.", de: "Zeichnung eines bernsteinfarbenen Drinks im Martiniglas mit einer getrockneten Zitrusscheibe." }
-      - name: "Lazy Monkey"
-        text: { en: "Pisco, lychee, orange and passion fruit with cinnamon foam", de: "Pisco, Litschi, Orange und Passionsfrucht mit Zimtschaum" }
-        price_chf: 18
-        photo: "photos/menu-lazy-monkey.jpg"
+  - slug: lazy-monkey
+    name: "Lazy Monkey"
+    price_chf: 18
+    text: { en: "Pisco, lychee, orange and passion fruit with cinnamon foam", de: "Pisco, Litschi, Orange und Passionsfrucht mit Zimtschaum" }
+    experience: { en: "Soft cinnamon foam on top, then lychee, passion fruit and pisco. Fruity and gentle, a drink to sip slowly. The name fits.", de: "Weicher Zimtschaum oben, dann Litschi, Passionsfrucht und Pisco. Fruchtig und sanft, ein Getränk, das man langsam geniessen kann. Der Name passt." }
+    draft: [ experience ]
+    ingredients: []
+    method: []
+    pictures:
+      - photo: "photos/menu-lazy-monkey.jpg"
         alt: { en: "Drawing of a foamy yellow drink in a stemmed glass, topped with rose petals.", de: "Zeichnung eines schaumigen gelben Drinks im Stielglas, mit Rosenblättern bestreut." }
-      - name: "Toffee Crush"
-        text: { en: "Vodka, coffee liqueur, caramel, vanilla, orange and lemon", de: "Wodka, Kaffeelikör, Karamell, Vanille, Orange und Zitrone" }
-        price_chf: 18
-        photo: "photos/menu-toffee-crush.jpg"
+  - slug: toffee-crush
+    name: "Toffee Crush"
+    price_chf: 18
+    text: { en: "Vodka, coffee liqueur, caramel, vanilla, orange and lemon", de: "Wodka, Kaffeelikör, Karamell, Vanille, Orange und Zitrone" }
+    experience: { en: "Caramel and vanilla like a dessert, coffee liqueur to keep things awake, and orange and lemon so it never gets heavy. Half cocktail, half dessert.", de: "Karamell und Vanille wie ein Dessert, Kaffeelikör, um die Dinge wach zu halten, und Orange und Zitrone, damit es nie schwer wird. Halb Cocktail, halb Dessert." }
+    draft: [ experience ]
+    ingredients: []
+    method: []
+    pictures:
+      - photo: "photos/menu-toffee-crush.jpg"
         alt: { en: "Drawing of a creamy drink in a cut tumbler with a slice of dried orange on the foam.", de: "Zeichnung eines cremigen Drinks im geschliffenen Tumbler mit einer getrockneten Orangenscheibe auf dem Schaum." }
-      - name: "Hanging Garden"
-        text: { en: "Mastiha, gin, Aperol, rose and lemon", de: "Mastiha, Gin, Aperol, Rose und Zitrone" }
-        price_chf: 18
-        photo: "photos/menu-hanging-garden.jpg"
+  - slug: hanging-garden
+    name: "Hanging Garden"
+    price_chf: 18
+    text: { en: "Mastiha, gin, Aperol, rose and lemon", de: "Mastiha, Gin, Aperol, Rose und Zitrone" }
+    experience: { en: "Bitter orange from the Aperol, a scent of rose, and mastiha, a Greek liqueur with a light pine note. Floral but dry, and gone faster than planned.", de: "Bitterorange aus dem Aperol, ein Duft von Rose, und Mastiha, ein griechischer Likör mit einer leichten Kiefernnote. Blumig, aber trocken, und schneller weg als geplant." }
+    draft: [ experience ]
+    ingredients: []
+    method: []
+    pictures:
+      - photo: "photos/menu-hanging-garden.jpg"
         alt: { en: "Drawing of an orange drink with a thick foam top in a tumbler, with a rosebud on the rim.", de: "Zeichnung eines orangen Drinks mit dicker Schaumkrone im Tumbler, mit einer Rosenknospe am Rand." }
-      - name: "Black Boulevard"
-        text: { en: "Rye whiskey, Campari, Montenegro and honey syrup", de: "Rye Whiskey, Campari, Montenegro und Honigsirup" }
-        price_chf: 18
-        photo: "photos/menu-black-boulevard.jpg"
+  - slug: black-boulevard
+    name: "Black Boulevard"
+    price_chf: 18
+    text: { en: "Rye whiskey, Campari, Montenegro and honey syrup", de: "Rye Whiskey, Campari, Montenegro und Honigsirup" }
+    experience: { en: "Dark, bitter and warm: rye whiskey and Campari up front, Montenegro and a little honey to soften it. A slow drink over one big ice cube, for the end of a long day.", de: "Dunkel, bitter und warm: Roggenwhisky und Campari vorne, Montenegro und ein wenig Honig, um es weicher zu machen. Ein langsamer Drink über einem grossen Eiswürfel, für das Ende eines langen Tages." }
+    draft: [ experience ]
+    ingredients: []
+    method: []
+    pictures:
+      - photo: "photos/menu-black-boulevard.jpg"
         alt: { en: "Drawing of a dark red drink over a large ice cube in a cut tumbler, with orange peel.", de: "Zeichnung eines dunkelroten Drinks auf einem grossen Eiswürfel im geschliffenen Tumbler, mit Orangenzeste." }

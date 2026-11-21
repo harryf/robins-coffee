@@ -6,10 +6,11 @@
 // src/content.ts and in src/studio/calendar.ts. Every word comes from strings.ts.
 // A text for the site is typed in English; its other languages are made on this Mac and
 // shown in a closed fold under it, where they can be changed by hand.
-import { dayShort, dayWords, whenWords, WEEK, type CalendarDay, type CalendarMonth } from "../calendar";
+import { dayShort, dayWords, whenWords, zonedDay, WEEK, type CalendarDay, type CalendarMonth } from "../calendar";
 import type { StudioState } from "../server";
 import type { Strings } from "../strings";
 import { h, type Ctx, type Kid, type Section } from "./dom";
+import { UNITS } from "../../menu";
 
 type Res = { status: number; data: any };
 type Texts = { en: string; [lang: string]: string | undefined };
@@ -328,60 +329,161 @@ const photos = screen("photos", (t) => t.sec_photos, (ctx, ui) => {
   };
 });
 
+/** The mark on a text Claude drafted for a person to check; it goes when the form is saved. */
+const draftTag = (t: Strings) => h("span", { class: "tag" }, t.draft_mark);
+/** Puts the draft mark next to a field's label. */
+const markDraft = (t: Strings, el: HTMLElement, on: boolean) => { if (on) el.querySelector(".field__label")?.append(" ", draftTag(t)); return el; };
+
 const menu = screen("menu", (t) => t.sec_menu, (ctx, ui) => {
   const { t, api } = ctx;
   const loc = (v: Partial<Texts> | null | undefined) => v?.en || "";
   const others = (): string[] => (ui.content?.languages ?? []).filter((l: string) => l !== "en");
-  const NEW = "+";
+  const today = () => zonedDay(new Date());
+  const stateOf = (s: any) => (today() < s.start ? t.season_upcoming : today() > s.end ? t.season_past : t.season_now);
 
-  const drinkForm = (was: { part: string; drink: any } | null) => {
-    const d = was?.drink;
-    const part = h("select", {}, ...options([...ui.content.menu.map((s: any): [string, string] => [s.slug, loc(s.title)]), [NEW, t.menu_part_new]], was?.part ?? ""));
-    const partTitle = english(ctx, others(), t.menu_part_title);
+  const seasonForm = (s: any | null) => {
+    const name = english(ctx, others(), t.season_name, text, s?.name);
+    const start = h("input", { type: "date", value: s?.start ?? "" });
+    const end = h("input", { type: "date", value: s?.end ?? "" });
+    const about = english(ctx, others(), t.season_description, area, s?.description);
+    markDraft(t, about.el, !!s?.draft?.includes("description"));
+    return card(ctx, ui, {
+      title: s ? t.season_edit_title(loc(s.name)) : t.season_add, done: t.season_saved,
+      kids: [name.el, h("div", { class: "field__pair" }, field(t.season_start, start), field(t.season_end, end)), about.el],
+      submit: () => api("POST", "season", { ...(s ? { was: s.slug } : {}), season: { name: name.value(), start: start.value, end: end.value, description: about.value() } }),
+    });
+  };
+
+  /** One ingredient row: amount, measure, what it is (English; the Mac translates it on save). */
+  const ingredientRow = (x: any | null, rows: HTMLElement) => {
+    const amount = h("input", { type: "number", min: "0", step: "0.25", class: "amount", "aria-label": t.drink_amount, value: x?.amount == null ? "" : String(x.amount) });
+    const unit = h("select", { "aria-label": t.drink_unit }, ...options([["", t.drink_unit_none], ...UNITS.map((u): [string, string] => [u, u])], x?.unit ?? ""));
+    const item = text({ "aria-label": t.drink_item, value: loc(x?.item) });
+    const row = h("li", { class: "recipe-row" }, amount, unit, item,
+      h("button", { class: "button button--quiet", type: "button", "aria-label": t.drink_row_remove, title: t.drink_row_remove, onclick: () => row.remove() }, "×"));
+    (row as any).value = () => ({ amount: amount.value === "" ? null : Number(amount.value), unit: unit.value || null, item: { en: item.value.trim() } });
+    rows.append(row);
+    return row;
+  };
+
+  /**
+   * The pictures of a drink, in order: those it has, and new ones looked at by this Mac.
+   * Each has its alt text; the first is the one on the menu card.
+   */
+  const pictureList = (start: any[]) => {
+    const list = h("ol", { class: "pictures" });
+    const add = (p: { photo?: string; shot?: any; src: string; alt?: any; draft?: string }) => {
+      const alt = english(ctx, others(), t.photo_alt, area, p.alt ?? (p.draft ? { en: p.draft } : null));
+      const row = h("li", { class: "pictures__row" },
+        h("img", { class: "thumb", src: p.src, alt: "" }),
+        h("div", { class: "pictures__main" }, alt.el,
+          h("div", { class: "form__actions" },
+            h("button", { class: "button button--quiet", type: "button", onclick: () => { const before = row.previousElementSibling; if (before) list.insertBefore(row, before); } }, t.drink_picture_up),
+            h("button", { class: "button button--quiet", type: "button", onclick: () => { const after = row.nextElementSibling; if (after) list.insertBefore(after, row); } }, t.drink_picture_down),
+            h("button", { class: "button button--quiet", type: "button", onclick: () => row.remove() }, t.drink_picture_remove))));
+      (row as any).value = () => ({ ...(p.shot ? { picture: p.shot } : { photo: p.photo }), alt: alt.value() });
+      list.append(row);
+    };
+    for (const p of start) add({ photo: p.photo, src: photoSrc(p.photo), alt: p.alt });
+    // A new picture: this Mac looks at it first (cut and alt text draft); it is written on save.
+    const input = h("input", { type: "file", accept: "image/*" });
+    const note = h("div", { role: "status" });
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      note.replaceChildren(h("p", { class: "muted" }, t.photo_looking));
+      const data = await base64(file);
+      const res = await api("POST", "look", { base64: data, modified: file.lastModified });
+      input.value = "";
+      if (res.status !== 200) return note.replaceChildren(problem(t, res));
+      note.replaceChildren(...[res.data.note ? h("p", { class: "problem" }, t.photo_no_vision(res.data.note)) : null, res.data.faces ? h("p", { class: "problem" }, t.photo_faces(res.data.faces)) : null].filter((kid): kid is HTMLParagraphElement => !!kid));
+      add({ shot: { base64: data, focus: res.data.focus }, src: URL.createObjectURL(file), draft: res.data.draft?.en ?? "" });
+    };
+    return {
+      el: h("div", { class: "field" }, h("span", { class: "field__label" }, t.drink_pictures), h("p", { class: "muted" }, t.drink_pictures_help), list, note,
+        h("label", { class: "field" }, h("span", { class: "field__label" }, t.drink_picture_add), input)),
+      value: () => [...list.children].map((row) => (row as any).value()),
+    };
+  };
+
+  const drinkForm = (d: any | null) => {
+    const seasons: any[] = ui.content.menu.seasons;
     const name = text({ value: d?.name ?? "" });
-    const what = english(ctx, others(), t.drink_text, text, d?.text);
     const price = h("input", { type: "number", min: "0", step: "0.5", value: d ? String(d.price_chf) : "" });
-    const alt = english(ctx, others(), t.photo_alt, area, d?.alt);
-    const picture = picker(ctx, { label: t.drink_photo, current: d?.photo, removable: true, onLooked(seen) {
-      // A draft for a new picture; the words of the old picture would describe the wrong one.
-      alt.en.value = seen.draft.en;
-      alt.clear();
-    }, onChange: () => sync() });
-    const sync = () => { partTitle.el.hidden = part.value !== NEW; alt.el.hidden = !picture.has(); };
-    part.onchange = sync;
-    sync();
+    const line = english(ctx, others(), t.drink_text, text, d?.text);
+    const experience = english(ctx, others(), t.drink_experience, area, d?.experience);
+    markDraft(t, experience.el, !!d?.draft?.includes("experience"));
+    const rows = h("ul", { class: "recipe-rows" });
+    for (const x of d?.ingredients ?? []) ingredientRow(x, rows);
+    const method = h("textarea", { rows: 4 });
+    method.value = (d?.method ?? []).map((s: any) => loc(s)).join("\n");
+    const pictures = pictureList(d?.pictures ?? []);
+    const boxes = seasons.map((s) => ({ slug: s.slug, box: h("input", { type: "checkbox", checked: d ? s.drinks.includes(d.slug) : seasons.length === 1 }) }));
     return card(ctx, ui, {
       title: d ? t.drink_edit_title(d.name) : t.drink_add, done: t.drink_saved,
-      kids: [field(t.drink_name, name), what.el, field(t.drink_price, price), field(t.menu_part, part), partTitle.el, picture.el, alt.el],
+      kids: [
+        field(t.drink_name, name), field(t.drink_price, price), line.el, experience.el,
+        h("div", { class: "field" }, h("span", { class: "field__label" }, t.drink_ingredients), h("p", { class: "muted" }, t.drink_ingredients_help), rows,
+          h("div", { class: "form__actions" }, h("button", { class: "button", type: "button", onclick: () => ingredientRow(null, rows).querySelector("input")?.focus() }, t.drink_row_add))),
+        field(t.drink_method, h("span", { class: "muted" }, t.drink_method_help), method),
+        pictures.el,
+        h("fieldset", { class: "field" }, h("legend", { class: "field__label" }, t.drink_seasons),
+          ...(boxes.length ? boxes.map((b, i) => h("label", { class: "row__check" }, b.box, `${loc(seasons[i].name)} (${t.season_dates(dayShort(seasons[i].start, t), dayShort(seasons[i].end, t))})`)) : [h("p", { class: "muted" }, t.drink_seasons_none)])),
+      ],
       submit: () => {
-        const shot = picture.value(), kept = picture.current();
-        const drink = { name: name.value, text: what.value(), price_chf: price.value === "" ? null : Number(price.value), ...(kept ? { photo: kept } : {}), ...(shot || kept ? { alt: alt.value() } : {}) };
-        return api("POST", "drink", { ...(part.value === NEW ? { partTitle: partTitle.value() } : { part: part.value }), drink, ...(was ? { was: { part: was.part, name: d.name } } : {}), ...(shot ? { picture: shot } : {}) });
+        const ingredients = [...rows.children].map((row) => (row as any).value()).filter((x: any) => x.item.en || x.amount != null || x.unit);
+        const steps = method.value.split("\n").map((s) => s.trim()).filter(Boolean).map((en) => ({ en }));
+        const drink = { name: name.value, price_chf: price.value === "" ? null : Number(price.value), text: line.value(), experience: experience.value(), ingredients, method: steps };
+        return api("POST", "drink", { ...(d ? { was: d.slug } : {}), drink, pictures: pictures.value(), seasons: boxes.filter((b) => b.box.checked).map((b) => b.slug) });
       },
     });
   };
 
+  const drinkRow = (d: any) => h("li", { class: "row item" },
+    thumb(d.pictures[0]?.photo),
+    h("span", { class: "row__main" }, h("strong", {}, d.name), h("span", { class: "muted" }, loc(d.text)), d.draft.length ? draftTag(t) : null),
+    h("span", { class: "item__price" }, t.price(d.price_chf)),
+    h("span", { class: "item__actions" },
+      h("button", { class: "button", type: "button", onclick: () => ui.open(drinkForm(d)) }, t.edit),
+      askFirst(t, t.remove, t.drink_remove_sure(d.name), t.remove_yes, async () => {
+        const res = await api("DELETE", "drink", { slug: d.slug });
+        ui.say(res.status === 200 ? okay(t.drink_removed) : problem(t, res));
+        await ui.reload();
+      }),
+    ),
+  );
+
   return {
-    top: [h("button", { class: "button button--primary", type: "button", onclick: () => ui.open(drinkForm(null)) }, t.drink_add)],
-    list: (content) => [
-      h("p", { class: "muted" }, `${t.menu_help} ${t.texts_hint}`),
-      ...content.menu.map((s: any) => h("section", { class: "group" },
-        h("h3", { class: "group__title" }, loc(s.title)),
-        s.drinks.length ? h("ul", { class: "rows" }, ...s.drinks.map((d: any) => h("li", { class: "row item" },
-          thumb(d.photo),
-          h("span", { class: "row__main" }, h("strong", {}, d.name), h("span", { class: "muted" }, loc(d.text))),
-          h("span", { class: "item__price" }, t.price(d.price_chf)),
-          h("span", { class: "item__actions" },
-            h("button", { class: "button", type: "button", onclick: () => ui.open(drinkForm({ part: s.slug, drink: d })) }, t.edit),
-            askFirst(t, t.remove, t.drink_remove_sure(d.name), t.remove_yes, async () => {
-              const res = await api("DELETE", "drink", { part: s.slug, name: d.name });
-              ui.say(res.status === 200 ? okay(t.drink_removed) : problem(t, res));
-              await ui.reload();
-            }),
-          ),
-        ))) : h("p", { class: "muted" }, t.none_yet),
-      )),
+    top: [
+      h("button", { class: "button button--primary", type: "button", onclick: () => ui.open(drinkForm(null)) }, t.drink_add),
+      h("button", { class: "button", type: "button", onclick: () => ui.open(seasonForm(null)) }, t.season_add),
     ],
+    list: (content) => {
+      const m = content.menu;
+      const bySlug = new Map<string, any>(m.drinks.map((d: any) => [d.slug, d]));
+      const loose = m.drinks.filter((d: any) => !m.seasons.some((s: any) => s.drinks.includes(d.slug)));
+      const drafts = m.drinks.some((d: any) => d.draft.length) || m.seasons.some((s: any) => s.draft.length);
+      return [
+        m.error ? h("p", { class: "problem" }, t.menu_broken(m.error)) : null,
+        h("p", { class: "muted" }, `${t.menu_help} ${t.texts_hint}`),
+        drafts ? h("p", { class: "muted" }, t.draft_help) : null,
+        ...[...m.seasons].sort((a: any, b: any) => b.start.localeCompare(a.start)).map((s: any) => h("section", { class: "group" },
+          h("h3", { class: "group__title" }, loc(s.name),
+            h("span", { class: "muted" }, t.season_dates(dayShort(s.start, t), dayShort(s.end, t))),
+            h("span", { class: "tag" }, stateOf(s)),
+            s.draft.length ? draftTag(t) : null,
+            h("button", { class: "button button--quiet", type: "button", onclick: () => ui.open(seasonForm(s)) }, t.season_edit),
+            s.drinks.length ? null : askFirst(t, t.remove, t.season_remove_sure(loc(s.name)), t.remove_yes, async () => {
+              const res = await api("DELETE", "season", { slug: s.slug });
+              ui.say(res.status === 200 ? okay(t.season_removed) : problem(t, res));
+              await ui.reload();
+            })),
+          s.description ? h("p", { class: "muted" }, loc(s.description)) : null,
+          s.drinks.length ? h("ul", { class: "rows" }, ...s.drinks.map((slug: string) => bySlug.get(slug)).filter(Boolean).map(drinkRow)) : h("p", { class: "muted" }, t.season_empty),
+        )),
+        loose.length ? h("section", { class: "group" }, h("h3", { class: "group__title" }, t.menu_loose), h("ul", { class: "rows" }, ...loose.map(drinkRow))) : null,
+      ];
+    },
   };
 });
 

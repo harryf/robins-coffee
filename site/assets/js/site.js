@@ -230,8 +230,9 @@
       img.srcset = link.getAttribute("data-srcset");
       img.src = link.href;
       stage.replaceChildren(img);
+      // A drink's photo has a caption but no day.
       var time = card.querySelector("time");
-      caption.replaceChildren(card.querySelector(".moment__caption, .event__title").textContent, " ", time.cloneNode(true));
+      caption.replaceChildren(card.querySelector(".moment__caption, .event__title").textContent, " ", time ? time.cloneNode(true) : "");
     };
     var step = function (by) { if (group.length > 1) show(at + by); };
 

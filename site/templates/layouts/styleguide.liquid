@@ -103,7 +103,7 @@
       {%- when 'contact-form' %}
       <div class="sg-narrow">{% render 'components/contact-form', site: site, t: t %}</div>
       {%- when 'drink-card' %}
-      <div class="drinks sg-narrow">{% render 'components/drink-card', d: menu[0].drinks[0] %}</div>
+      <div class="drinks sg-narrow">{% render 'components/drink-card', d: menu.drinks[0] %}</div>
       {%- when 'event-card' %}
       <div class="events">
         {%- for e in events_next limit: 2 %}
@@ -126,6 +126,8 @@
       <p>At the top of this page. On the home page it sits on the hero photo. It carries the theme switch and the language menu (English, Deutsch, Français, Italiano; a page offers only the languages it exists in).</p>
       {%- when 'hours' %}
       <div class="card sg-narrow">{% render 'components/hours', hours_rows: hours_rows, t: t %}</div>
+      {%- when 'menu-season' %}
+      {%- if menu_seasons.size > 0 %}{% render 'components/menu-season', s: menu_seasons[0], t: t, heading: 'h3' %}{% else %}<p>The menu has no season yet, so there is nothing to show.</p>{% endif %}
       {%- when 'moment-card' %}
       <div class="sg-narrow moments" data-lightbox-group>{% render 'components/moment-card', m: moments[0], t: t %}</div>
       {%- when 'moments-grid' %}

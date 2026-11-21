@@ -58,39 +58,42 @@ describe("studio: an album can be renamed", () => {
 });
 
 describe("studio: a picture nothing uses any more is deleted", () => {
+  const drinkOf = (s: ReturnType<typeof studio>, slug: string) => parseYaml(s.read("data/menu.yml")).drinks.find((d: any) => d.slug === slug);
+  const seasonsOf = (s: ReturnType<typeof studio>, slug: string) => parseYaml(s.read("data/menu.yml")).seasons.filter((x: any) => x.drinks.includes(slug)).map((x: any) => x.slug);
   test("a drink's old picture goes when a new one replaces it, and its focus line with it", async () => {
     const s = studio();
     writeFileSync(join(s.root, "site", "data", "focus.yml"), s.read("data/focus.yml") + '"photos/menu-lazy-monkey.jpg": [0.4, 0.6]\n');
-    const drink = parseYaml(s.read("data/menu.yml")).sections[0].drinks.find((d: any) => d.name === "Lazy Monkey");
-    const res = (await s.call("POST drink", { was: { part: "signatures", name: "Lazy Monkey" }, part: "signatures", drink, picture: await s.picture() }))!;
+    const drink = drinkOf(s, "lazy-monkey");
+    const res = (await s.call("POST drink", { was: "lazy-monkey", drink, pictures: [{ picture: await s.picture(), alt: drink.pictures[0].alt }], seasons: seasonsOf(s, "lazy-monkey") }))!;
     expect(res.status).toBe(200);
-    expect(res.data.photo).not.toBe("photos/menu-lazy-monkey.jpg");
-    expect(s.has(res.data.photo)).toBe(true);
+    const photo = res.data.photos[0];
+    expect(photo).not.toBe("photos/menu-lazy-monkey.jpg");
+    expect(s.has(photo)).toBe(true);
     expect(s.has("photos/menu-lazy-monkey.jpg")).toBe(false);
     expect(parseYaml(s.read("data/focus.yml"))["photos/menu-lazy-monkey.jpg"]).toBeUndefined();
-    expect(parseYaml(s.read("data/focus.yml"))[res.data.photo]).toEqual([0.5, 0.5]);
+    expect(parseYaml(s.read("data/focus.yml"))[photo]).toEqual([0.5, 0.5]);
     for (const p of s.written) expect([p, inEditScope(p)]).toEqual([p, true]);
   });
   test("removing a drink removes its picture; an edit that keeps the picture keeps it", async () => {
     const s = studio();
-    const drink = parseYaml(s.read("data/menu.yml")).sections[0].drinks.find((d: any) => d.name === "Toffee Crush");
-    expect((await s.call("POST drink", { was: { part: "signatures", name: "Toffee Crush" }, part: "signatures", drink: { ...drink, price_chf: 19 } }))!.status).toBe(200);
+    const drink = drinkOf(s, "toffee-crush");
+    expect((await s.call("POST drink", { was: "toffee-crush", drink: { ...drink, price_chf: 19 }, pictures: drink.pictures, seasons: seasonsOf(s, "toffee-crush") }))!.status).toBe(200);
     expect(s.has("photos/menu-toffee-crush.jpg")).toBe(true);
-    expect((await s.call("DELETE drink", { part: "signatures", name: "Toffee Crush" }))!.status).toBe(200);
+    expect((await s.call("DELETE drink", { slug: "toffee-crush" }))!.status).toBe(200);
     expect(s.has("photos/menu-toffee-crush.jpg")).toBe(false);
   });
   test("ANTI: a picture that something else still names stays, and so does any picture the Studio did not make", async () => {
     const s = studio();
     // A second drink uses the same picture.
-    const menu = parseYaml(s.read("data/menu.yml"));
-    const twin = { ...menu.sections[0].drinks.find((d: any) => d.name === "Lazy Monkey"), name: "Lazy Monkey Twin" };
-    expect((await s.call("POST drink", { part: "signatures", drink: twin }))!.status).toBe(200);
-    expect((await s.call("DELETE drink", { part: "signatures", name: "Lazy Monkey" }))!.status).toBe(200);
+    const lazy = drinkOf(s, "lazy-monkey");
+    expect((await s.call("POST drink", { drink: { ...lazy, name: "Lazy Monkey Twin" }, pictures: lazy.pictures, seasons: [] }))!.status).toBe(200);
+    expect((await s.call("DELETE drink", { slug: "lazy-monkey" }))!.status).toBe(200);
     expect(s.has("photos/menu-lazy-monkey.jpg")).toBe(true);
     // A page photo put there by hand, given to a drink and taken away again: it is not the Studio's to delete.
-    expect((await s.call("POST drink", { part: "signatures", drink: { name: "House Latte", text: { en: "Milk", de: "Milch" }, price_chf: 6, photo: "photos/latte-art-pour.jpg", alt: { en: "A", de: "B" } } }))!.status).toBe(200);
+    const made = (await s.call("POST drink", { drink: { name: "House Latte", text: { en: "Milk", de: "Milch" }, price_chf: 6 }, pictures: [{ photo: "photos/latte-art-pour.jpg", alt: { en: "A", de: "B" } }], seasons: [] }))!;
+    expect(made.status).toBe(200);
     writeFileSync(join(s.root, "site", "data", "home.yml"), "sections: [hero]\n");
-    expect((await s.call("DELETE drink", { part: "signatures", name: "House Latte" }))!.status).toBe(200);
+    expect((await s.call("DELETE drink", { slug: made.data.slug }))!.status).toBe(200);
     expect(s.has("photos/latte-art-pour.jpg")).toBe(true);
   });
   test("an event's picture goes with the event, and when an edit puts a new one in its place", async () => {

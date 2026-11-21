@@ -1038,12 +1038,12 @@ describe("studio: the lines under a publish", () => {
   });
 
   test("hours, events, drinks and venue details are named; anything else keeps its path", () => {
-    const menu = (price: number, extra = "") => `sections:\n  - slug: s\n    title: { en: S, de: S }\n    drinks:\n      - name: "Lazy Monkey"\n        price_chf: ${price}\n${extra}`;
+    const menu = (price: number, extra = "") => `seasons:\n  - slug: s\n    name: { en: S }\n    drinks: [lazy-monkey]\ndrinks:\n  - slug: lazy-monkey\n    name: "Lazy Monkey"\n    price_chf: ${price}\n${extra}`;
     expect(detailLines([
       { path: "site/data/hours.yml", status: "modified", before: null, after: 'regular:\n  - days: [mo, tu]\n    open: "16:00"\n    close: null\n  - days: [su]\n    closed: true\nexceptions:\n  - date: 2026-12-25\n    closed: true\n' },
       { path: "site/events/quiz.md", status: "added", before: null, after: '---\ntitle: "Quiz at ROBIN\'s"\nname: "Quiz"\ndate: 2026-12-03\nfrom: "19:30"\nticket_url: "https://example.org/t"\n---\n' },
       { path: "site/events/pong.md", status: "removed", before: '---\ntitle: "Beer Pong"\nevery: we\n---\n', after: null },
-      { path: "site/data/menu.yml", status: "modified", before: menu(18), after: menu(19, '      - name: "New One"\n        price_chf: 16\n') },
+      { path: "site/data/menu.yml", status: "modified", before: menu(18), after: menu(19, '  - slug: new-one\n    name: "New One"\n    price_chf: 16\n') },
       { path: "site/data/site.yml", status: "modified", before: "phone: a\ncity: z\n", after: "phone: b\ncity: z\n" },
       { path: "site/photos/menu-new-one.jpg", status: "added", before: null, after: null },
       { path: "site/data/i18n.yml", status: "modified", before: null, after: null },

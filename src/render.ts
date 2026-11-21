@@ -9,6 +9,7 @@ import { marked } from "marked";
 import { parse as parseYaml } from "yaml";
 import { upcoming, type SiteEvent } from "./events";
 import { contrast } from "./tokens";
+import { readMenu, currentSeason, seasonOrder, seasonState, amountWords, type Drink, type Season } from "./menu";
 
 /** Text files keyed by path relative to site/, for example "content/en/index.md". */
 export type Files = Record<string, string>;
@@ -200,7 +201,14 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
   const allEvents: SiteEvent[] = data.events?.events ?? [];
   const ahead = upcoming(allEvents, now, 60);
   for (const e of ahead) if (e.image && !/^https?:/.test(e.image) && !opts.photos[e.image]) throw new Error(`event ${e.id}: photo ${e.image} is missing`);
-  for (const s of data.menu?.sections ?? []) for (const d of s.drinks ?? []) if (d.photo && !opts.photos[d.photo]) throw new Error(`menu.yml: photo ${d.photo} of "${d.name}" is missing`);
+  // The menu: checked here, so a bad file stops the build with a sentence that names the entry.
+  const menu = readMenu(data.menu);
+  for (const d of menu.drinks) for (const p of d.pictures) if (!opts.photos[p.photo]) throw new Error(`menu.yml: photo ${p.photo} of "${d.name}" is missing`);
+  const zurich = wallClock(now, site.timezone);
+  const today = `${zurich.year}-${String(zurich.month).padStart(2, "0")}-${String(zurich.day).padStart(2, "0")}`;
+  const shownSeason = currentSeason(menu.seasons, today);
+  /** Every drink some season names has its own page; one in no season is kept in the file only. */
+  const listed = menu.drinks.filter((d) => menu.seasons.some((s) => s.drinks.includes(d.slug)));
   /** What the shows ahead cost, in words: "Tickets from CHF 5. Some shows are free." Empty when no event says. */
   const priceNote = (t: any) => {
     const prices = ahead.map((e) => e.price_chf).filter((p): p is number => typeof p === "number");
@@ -242,6 +250,19 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
     pages.push({ lang: lang!, slug, url: fm.permalink ? "/" + out : "/" + dir, out, depth: out.split("/").length - 1, data: fm, html: marked.parse(body, { async: false }) as string });
   }
 
+  // A page for every drink on the menu (/menu/<slug>/), in each language that has the menu page it links back to.
+  const words = (v: Record<string, string | undefined> | undefined, lang: string) => v?.[lang] ?? v?.[defaultLang] ?? "";
+  for (const menuPage of pages.filter((p) => p.slug === "menu")) {
+    const t = data.i18n[menuPage.lang];
+    for (const d of listed) {
+      const dir = `${menuPage.url.replace(/^\//, "")}${d.slug}/`;
+      const title = String(t.drink_page_title).replace("{name}", d.name).replace("{bar}", site.name).replace("{city}", site.city);
+      const description = [words(d.experience, menuPage.lang) || words(d.text, menuPage.lang), `CHF ${d.price_chf}.`].join(" ");
+      pages.push({ lang: menuPage.lang, slug: `menu/${d.slug}`, url: "/" + dir, out: dir + "index.html", depth: dir.split("/").length - 1, html: "",
+        data: { layout: "drink", title, description, drink: d.slug, ...(d.pictures[0] ? { og_photo: d.pictures[0].photo, og_alt: words(d.pictures[0].alt, menuPage.lang) } : {}) } });
+    }
+  }
+
   for (const page of pages.filter((p) => p.slug === "" && Array.isArray(p.data.guests))) {
     const keys = page.data.guests.map((g: any) => g.key);
     if (data.home?.guests_day && [...keys].sort().join() !== [...data.home.guests_day].sort().join()) throw new Error(`content/${page.lang}/index.md: guests must have the keys of home.yml guests_day`);
@@ -257,8 +278,44 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
     // The link preview picture: the page's own `og_photo`, or the hero photo. Its alt text is the moment's.
     const ogKey: string | undefined = page.data.og_photo ?? data.home?.hero_photo;
     const ogMoment = moments.find((m) => m.photo === ogKey);
-    const og = ogKey && opts.photos[ogKey]?.og ? { path: "/" + opts.photos[ogKey]!.og, ...OG_SIZE, alt: ogMoment?.alt?.[page.lang] ?? ogMoment?.alt?.[defaultLang] ?? site.legal_name } : null;
+    const og = ogKey && opts.photos[ogKey]?.og ? { path: "/" + opts.photos[ogKey]!.og, ...OG_SIZE, alt: page.data.og_alt ?? ogMoment?.alt?.[page.lang] ?? ogMoment?.alt?.[defaultLang] ?? site.legal_name } : null;
     const langUrl = (l: string, path: string) => (l === defaultLang ? "" : `/${l}`) + path;
+    // The menu in the page language. A drink links to its page when this language has the menu page.
+    const say = (v: Record<string, string | undefined> | undefined) => words(v, page.lang);
+    const menuUrl = pages.some((p) => p.slug === "menu" && p.lang === page.lang) ? langUrl(page.lang, "/menu/") : null;
+    const dayLabel = (day: string) => fillDate(t.date_short, wallClock(new Date(day + "T12:00:00Z"), "UTC"), t);
+    const drinkView = (d: Drink) => ({
+      slug: d.slug, name: d.name, text: say(d.text), price_label: `CHF ${d.price_chf}`, url: menuUrl ? `${menuUrl}${d.slug}/` : null,
+      // The drawing whole, never a square cut: it is a picture of a glass from rim to foot.
+      img: d.pictures[0] ? opts.photos[d.pictures[0].photo] : null, alt: d.pictures[0] ? say(d.pictures[0].alt) : "",
+    });
+    const seasonView = (s: Season) => {
+      const state = seasonState(s, today);
+      return { slug: s.slug, name: say(s.name), description: say(s.description), dates_label: `${dayLabel(s.start)}${t.range_sep}${dayLabel(s.end)}`, state, state_label: t[`season_${state}`], drinks: s.drinks.map((slug) => drinkView(menu.drinks.find((d) => d.slug === slug)!)) };
+    };
+    const drinkPage = (() => {
+      const d = page.data.drink ? menu.drinks.find((x) => x.slug === page.data.drink) : undefined;
+      if (!d) return null;
+      const amount = (n: number | undefined, unit: string | undefined) => (n == null ? "" : `${amountWords(n, t.amount_decimal)}${unit ? ` ${t.units[unit][n === 1 ? 0 : 1]}` : ""}`);
+      const ingredients = d.ingredients.map((x) => ({ amount: amount(x.amount, x.unit), item: say(x.item) }));
+      const method = d.method.map(say);
+      const seasons = seasonOrder(menu.seasons, today).filter((s) => s.drinks.includes(d.slug)).map((s) => ({ slug: s.slug, name: say(s.name), dates_label: seasonView(s).dates_label }));
+      const abs = (p: string) => (opts.base === "relative" ? url(p) : origin + url(p));
+      // Recipe data only for a recipe that is really there: no ingredients, no Recipe.
+      const recipe = ingredients.length ? {
+        "@context": "https://schema.org", "@type": "Recipe", name: d.name, recipeCategory: "Cocktail", inLanguage: page.lang,
+        description: say(d.experience) || say(d.text),
+        ...(d.pictures.length ? { image: d.pictures.map((p) => abs("/" + opts.photos[p.photo]!.jpg.at(-1)!.path)) } : {}),
+        recipeIngredient: ingredients.map((x) => [x.amount, x.item].filter(Boolean).join(" ")),
+        ...(method.length ? { recipeInstructions: method.map((text) => ({ "@type": "HowToStep", text })) } : {}),
+        author: { "@type": "Organization", name: site.legal_name },
+      } : null;
+      return {
+        ...drinkView(d), experience: say(d.experience), ingredients, method, seasons, recipe,
+        season: seasons[0]?.name ?? "",
+        photos: d.pictures.slice(1).map((p) => ({ img: opts.photos[p.photo], alt: say(p.alt) })),
+      };
+    })();
     const views = ahead.map((e) => eventView(e, page.lang, t));
     const months: { label: string; events: typeof views }[] = [];
     for (const v of views) (months.at(-1)?.label === v.month_label ? months.at(-1)! : months[months.push({ label: v.month_label, events: [] }) - 1]!).events.push(v);
@@ -291,14 +348,12 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
       events_soon: views.filter((v) => new Date(v.start).getTime() <= now.getTime() + SOON_DAYS * 864e5),
       price_note: priceNote(t),
       events_months: months,
-      // The drinks menu in the page language; a drink without a picture is a card with words only.
-      menu: (data.menu?.sections ?? []).map((s: any) => ({
-        slug: s.slug, title: s.title?.[page.lang] ?? s.title?.[defaultLang], note: s.note?.[page.lang] ?? s.note?.[defaultLang] ?? "",
-        drinks: (s.drinks ?? []).map((d: any) => ({
-          name: d.name, text: d.text?.[page.lang] ?? d.text?.[defaultLang] ?? "", price_label: typeof d.price_chf === "number" ? `CHF ${d.price_chf}` : "",
-          img: d.photo ? squareOf(opts.photos[d.photo]) : null, alt: d.alt?.[page.lang] ?? d.alt?.[defaultLang] ?? "",
-        })),
-      })),
+      // The home page's menu: the season shown today with its drinks; a drink without a picture is a card with words only.
+      menu: shownSeason ? { ...seasonView(shownSeason), url: menuUrl } : null,
+      // The menu page: the season shown today first, then those to come, then those that are over.
+      menu_seasons: seasonOrder(menu.seasons, today).map(seasonView),
+      menu_url: menuUrl,
+      drink: drinkPage,
       events_json_ld: { "@context": "https://schema.org", "@graph": ahead.map((e) => eventLd(e, site)) },
       noindex: site.preview || page.data.noindex,
       guide: { components: parts("components"), sections: parts("sections"), layouts: parts("layouts"), contrast: contrastRows, sample: (() => { const h = pages.find((p) => p.lang === page.lang && p.slug === ""); return h ? { ...h.data, lang: h.lang, content: h.html } : null; })() },

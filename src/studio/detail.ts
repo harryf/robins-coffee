@@ -41,19 +41,23 @@ function albums(before: string | null, after: string | null): string[] {
 }
 
 function menu(before: string | null, after: string | null): string[] {
-  const read = (text: string | null) => new Map<string, string>((yaml(text).sections ?? []).flatMap((p: any) => (p.drinks ?? []).map((d: any) => [String(d.name), JSON.stringify(d)] as [string, string])));
-  const price = (json: string) => {
-    const chf = JSON.parse(json).price_chf;
-    return chf == null ? "" : `, CHF ${clean(chf)}`;
+  // Seasons and drinks, each known by its slug (a renamed one is the same entry).
+  const read = (text: string | null, key: "seasons" | "drinks") => {
+    const list = yaml(text)[key];
+    return new Map<string, any>((Array.isArray(list) ? list : []).filter((x: any) => x && x.slug != null).map((x: any) => [String(x.slug), x]));
   };
-  const was = read(before);
-  const now = read(after);
   const lines: string[] = [];
-  for (const [name, d] of now) {
-    if (!was.has(name)) lines.push(`Drink added: ${quote(name)}${price(d)}`);
-    else if (was.get(name) !== d) lines.push(`Drink updated: ${quote(name)}${price(d)}`);
-  }
-  for (const [name] of was) if (!now.has(name)) lines.push(`Drink removed: ${quote(name)}`);
+  const compare = (key: "seasons" | "drinks", label: string, more: (x: any) => string) => {
+    const was = read(before, key), now = read(after, key);
+    for (const [slug, x] of now) {
+      const name = en(x.name) || slug;
+      if (!was.has(slug)) lines.push(`${label} added: ${quote(name)}${more(x)}`);
+      else if (JSON.stringify(was.get(slug)) !== JSON.stringify(x)) lines.push(`${label} updated: ${quote(name)}${more(x)}`);
+    }
+    for (const [slug, x] of was) if (!now.has(slug)) lines.push(`${label} removed: ${quote(en(x.name) || slug)}`);
+  };
+  compare("seasons", "Season", (s) => (s.start && s.end ? `, ${day(s.start)} to ${day(s.end)}` : ""));
+  compare("drinks", "Drink", (d) => (d.price_chf == null ? "" : `, CHF ${clean(d.price_chf)}`));
   return lines.length ? lines : ["Menu updated"];
 }
 

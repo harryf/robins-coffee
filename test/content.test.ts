@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { parse as parseYaml } from "yaml";
-import { eventFile, eventProblems, addAlbum, setDrink, removeDrink, drinkProblems, slugify, planTexts, cleanTexts } from "../src/content";
+import { eventFile, eventProblems, addAlbum, saveDrink, removeDrink, drinkProblems, slugify, planTexts, cleanTexts } from "../src/content";
 import { parseEventfrogPage, importFromPage, eventfrogUrl, eventfrogImage, plainText, shortText, fromApiEvent, listOrganiserEvents } from "../src/eventfrog";
 import { fromManual, fromIyfFeed, mergeEvents } from "../src/events";
 import { inEditScope } from "../src/scope";
@@ -106,30 +106,29 @@ describe("albums and menu", () => {
     expect(parseYaml(addAlbum(before, { title: { en: "Only English", de: "" } }).text).albums.at(-1)).toEqual({ slug: "only-english", title: { en: "Only English" } });
     expect(() => addAlbum(before, { title: { en: "", de: "Nur Deutsch" } })).toThrow("english_needed");
   });
-  test("a drink is added to a part of the real menu, replaced by name, and removed again", async () => {
+  test("a drink is added to the real menu and a season, changed by slug, and removed again: the file is as it was", async () => {
     const before = await Bun.file(join(SITE, "data/menu.yml")).text();
+    const season = parseYaml(before).seasons[0].slug;
     const drink = { name: "Hot Toddy", text: { en: "Whisky, honey and lemon", de: "Whisky, Honig und Zitrone" }, price_chf: 14 };
-    const added = setDrink(before, "signatures", drink);
-    expect(added.startsWith("# The drinks menu")).toBe(true);
-    const names = (t: string) => parseYaml(t).sections[0].drinks.map((d: any) => d.name);
-    expect(names(added)).toEqual([...names(before), "Hot Toddy"]);
-    const changed = setDrink(added, "signatures", { ...drink, price_chf: 15 });
-    expect(names(changed)).toEqual(names(added));
-    expect(parseYaml(changed).sections[0].drinks.at(-1).price_chf).toBe(15);
-    expect(parseYaml(removeDrink(changed, "signatures", "Hot Toddy"))).toEqual(parseYaml(before));
-    expect(() => removeDrink(before, "signatures", "Nope")).toThrow("drink_not_found");
+    const added = saveDrink(before, drink, { seasons: [season] });
+    expect(added.text.startsWith("# The drinks menu")).toBe(true);
+    const names = (t: string) => parseYaml(t).drinks.map((d: any) => d.name);
+    expect(names(added.text)).toEqual([...names(before), "Hot Toddy"]);
+    const changed = saveDrink(added.text, { ...drink, price_chf: 15 }, { was: added.slug, seasons: [season] }).text;
+    expect(names(changed)).toEqual(names(added.text));
+    expect(parseYaml(changed).drinks.at(-1).price_chf).toBe(15);
+    expect(parseYaml(removeDrink(changed, added.slug))).toEqual(parseYaml(before));
+    expect(() => removeDrink(before, "nope")).toThrow("drink_not_found");
   });
-  test("a new part of the menu needs a title in English; a picture needs alt text in English; other languages are optional", () => {
+  test("a drink needs a name, a price and its short line in English; a picture needs alt text in English; other languages are optional", () => {
     const drink = { name: "Flat White", text: { en: "Double shot, steamed milk", de: "Doppelter Shot, geschäumte Milch" }, price_chf: 6 };
-    expect(() => setDrink("sections: []\n", "coffee", drink)).toThrow("english_needed");
-    expect(() => setDrink("sections: []\n", "coffee", drink, { en: "", de: "Kaffee" })).toThrow("english_needed");
-    expect(parseYaml(setDrink("sections: []\n", "coffee", { ...drink, text: { en: "Only English" } }, { en: "Coffee" })).sections[0]).toMatchObject({ title: { en: "Coffee" }, drinks: [{ text: { en: "Only English" } }] });
     expect(drinkProblems({ ...drink, text: { en: "", de: "Nur Deutsch" } })).toEqual(["english_needed"]);
-    expect(drinkProblems({ ...drink, photo: "photos/menu-flat-white.jpg", alt: { en: "A cup." } })).toEqual([]);
-    const made = parseYaml(setDrink("sections: []\n", "coffee", drink, { en: "Coffee", de: "Kaffee" }));
-    expect(made.sections[0]).toMatchObject({ slug: "coffee", title: { en: "Coffee", de: "Kaffee" }, drinks: [drink] });
-    expect(drinkProblems({ ...drink, photo: "photos/menu-flat-white.jpg" })).toEqual(["alt_missing"]);
+    expect(drinkProblems({ ...drink, pictures: [{ photo: "photos/menu-flat-white.jpg", alt: { en: "A cup." } }] })).toEqual([]);
+    expect(drinkProblems({ ...drink, pictures: [{ photo: "photos/menu-flat-white.jpg", alt: { en: "" } }] })).toEqual(["alt_missing"]);
     expect(drinkProblems({ ...drink, price_chf: -1 })).toEqual(["drink_price_wrong"]);
+    expect(drinkProblems({ ...drink, name: " " })).toEqual(["drink_name_missing"]);
+    const made = parseYaml(saveDrink("", { ...drink, text: { en: "Only English" } }, { seasons: [] }).text);
+    expect(made.drinks[0]).toMatchObject({ slug: "flat-white", text: { en: "Only English" }, ingredients: [], method: [], pictures: [] });
   });
 });
 
@@ -309,12 +308,12 @@ describe("studio: content routes", () => {
   });
   test("a drink and an event take a picture that is on the site, and an event is listed with its fields", async () => {
     const shot = { base64: await picture(), focus: [0.5, 0.5] };
-    expect((await call("POST drink", { part: "signatures", drink: { name: "Hot Toddy", text: { en: "Whisky", de: "Whisky" }, price_chf: 14, alt: { en: "A", de: "B" } }, picture: shot }))!.data).toEqual({ ok: true, photo: "photos/menu-hot-toddy.jpg" });
-    expect((await call("POST drink", { part: "signatures", drink: { name: "X", text: { en: "a", de: "b" }, price_chf: 1, photo: "photos/nope.jpg", alt: { en: "A", de: "B" } } }))!.data.error).toBe("event_image_wrong");
+    expect((await call("POST drink", { drink: { name: "Hot Toddy", text: { en: "Whisky", de: "Whisky" }, price_chf: 14 }, pictures: [{ picture: shot, alt: { en: "A", de: "B" } }], seasons: [] }))!.data).toEqual({ ok: true, slug: "hot-toddy", photos: ["photos/menu-hot-toddy.jpg"] });
+    expect((await call("POST drink", { drink: { name: "X", text: { en: "a", de: "b" }, price_chf: 1 }, pictures: [{ photo: "photos/nope.jpg", alt: { en: "A", de: "B" } }], seasons: [] }))!.data.error).toBe("event_image_wrong");
     const made = (await call("POST event", { event: { title: "Board Games", date: "2026-12-03", from: "19:00", image: "photos/menu-hot-toddy.jpg" } }))!;
     expect(made.data.path).toBe("site/events/2026-12-03-board-games.md");
     // The drink goes, its picture stays: the event still uses it.
-    expect((await call("DELETE drink", { part: "signatures", name: "Hot Toddy" }))!.status).toBe(200);
+    expect((await call("DELETE drink", { slug: "hot-toddy" }))!.status).toBe(200);
     expect(exists2(join(root, "site/photos/menu-hot-toddy.jpg"))).toBe(true);
     expect((await call("POST event", { event: { title: "Board Games", date: "2026-12-03" } }))!.data.error).toBe("event_exists");
     expect((await call("POST event", { event: { title: "", date: "x" } }))!.data.problems).toEqual(expect.arrayContaining(["event_title_missing", "event_date_wrong"]));

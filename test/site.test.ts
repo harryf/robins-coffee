@@ -22,7 +22,9 @@ const tokens = JSON.parse(files["data/tokens.json"]!);
 describe("renderer", () => {
   test("renders home in four languages plus the style guide", async () => {
     const pages = await renderSite(files, { base: "/robins-coffee/", photos });
-    expect(pages.map((p) => p.out).sort()).toEqual(["404.html", "de/events/index.html", "de/gallery/index.html", "de/index.html", "de/studio/index.html", "edit/index.html", "events/index.html", "fr/events/index.html", "fr/gallery/index.html", "fr/index.html", "gallery/index.html", "index.html", "it/events/index.html", "it/gallery/index.html", "it/index.html", "studio/index.html", "styleguide/index.html"]);
+    const drinks: string[] = parseYaml(files["data/menu.yml"]!).drinks.map((d: any) => d.slug);
+    const menuPages = ["", "de/", "fr/", "it/"].flatMap((l) => [`${l}menu/index.html`, ...drinks.map((s) => `${l}menu/${s}/index.html`)]);
+    expect(pages.map((p) => p.out).sort()).toEqual(["404.html", "de/events/index.html", "de/gallery/index.html", "de/index.html", "de/studio/index.html", "edit/index.html", "events/index.html", "fr/events/index.html", "fr/gallery/index.html", "fr/index.html", "gallery/index.html", "index.html", "it/events/index.html", "it/gallery/index.html", "it/index.html", "studio/index.html", "styleguide/index.html", ...menuPages].sort());
     const en = pages.find((p) => p.out === "index.html")!.html;
     const de = pages.find((p) => p.out === "de/index.html")!.html;
     expect(en).toContain('<html lang="en">');
@@ -667,7 +669,10 @@ describe("polish", () => {
   test("the sitemap lists the public pages with full addresses and their language versions", async () => {
     const pages = await renderSite(files, { base: "/robins-coffee/", photos });
     const xml = sitemapXml(pages, "en", (p) => "https://example.org/robins-coffee" + p);
-    expect([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])).toEqual(["/", "/de/", "/de/events/", "/de/gallery/", "/events/", "/fr/", "/fr/events/", "/fr/gallery/", "/gallery/", "/it/", "/it/events/", "/it/gallery/"].map((p) => "https://example.org/robins-coffee" + p));
+    // The menu page and one page per drink, in each language.
+    const drinks = parseYaml(files["data/menu.yml"]!).drinks.map((d: any) => d.slug);
+    const menuPages = ["", "/de", "/fr", "/it"].flatMap((l) => [`${l}/menu/`, ...drinks.map((s: string) => `${l}/menu/${s}/`)]);
+    expect([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])).toEqual(["/", "/de/", "/de/events/", "/de/gallery/", "/events/", "/fr/", "/fr/events/", "/fr/gallery/", "/gallery/", "/it/", "/it/events/", "/it/gallery/", ...menuPages].sort().map((p) => "https://example.org/robins-coffee" + p));
     expect(xml).not.toContain("styleguide");
     expect(xml).not.toContain("404");
     expect(xml.match(/hreflang="x-default" href="https:\/\/example.org\/robins-coffee\/events\/"/g)!.length).toBe(4);
@@ -675,7 +680,8 @@ describe("polish", () => {
 
   test("every page carries link preview data; the picture is absolute and described in the page language", async () => {
     const pages = await renderSite(files, { base: "/robins-coffee/", photos: withOg, origin: "https://example.org" });
-    for (const p of pages) {
+    // A drink's page shows its own drawing (made by the build; see the drink page test below).
+    for (const p of pages.filter((p) => !p.slug.startsWith("menu/"))) {
       expect(p.html).toContain('<meta property="og:title" content="');
       expect(p.html).toContain('<meta property="og:image" content="https://example.org/robins-coffee/og/hero-abc.jpg">');
       expect(p.html).toContain('<meta property="og:image:width" content="1200">');
@@ -690,6 +696,11 @@ describe("polish", () => {
     const en = /og:image:alt" content="([^"]+)"/.exec(pages.find((p) => p.out === "index.html")!.html)![1]!;
     expect(alt.length).toBeGreaterThan(10);
     expect(alt).not.toBe(en);
+    // A drink's page: its drawing, described in the page language by the drawing's own alt text.
+    const drinkOg = { ...withOg, "photos/menu-lazy-monkey.jpg": { ...photos["photos/menu-lazy-monkey.jpg"]!, og: "og/menu-lazy-monkey-abc.jpg" } };
+    const lazy = (await renderSite(files, { base: "/robins-coffee/", photos: drinkOg, origin: "https://example.org" })).find((p) => p.out === "de/menu/lazy-monkey/index.html")!.html;
+    expect(lazy).toContain('<meta property="og:image" content="https://example.org/robins-coffee/og/menu-lazy-monkey-abc.jpg">');
+    expect(lazy).toContain('<meta property="og:image:alt" content="Zeichnung eines schaumigen gelben Drinks');
   });
 
   test("without a preview picture the page says nothing about one", async () => {
@@ -787,28 +798,28 @@ describe("day and night", () => {
 describe("menu", () => {
   const menu = parseFrontMatter("---\n" + files["data/menu.yml"] + "\n---\n").data;
   test("every drink has a name, a text in both languages, a price and, with a picture, alt text in both", () => {
-    expect(menu.sections.length).toBeGreaterThan(0);
-    for (const part of menu.sections) {
-      expect(part.slug).toMatch(/^[a-z0-9-]+$/);
-      for (const lang of ["en", "de"]) expect(part.title[lang]).toBeTruthy();
-      for (const d of part.drinks) {
-        expect(d.name).toBeTruthy();
-        expect(typeof d.price_chf).toBe("number");
-        for (const lang of ["en", "de"]) {
-          expect(d.text[lang]).toBeTruthy();
-          expect(d.text[lang]).not.toContain("ß");
-          if (d.photo) expect(d.alt[lang]).toBeTruthy();
-        }
-        if (d.photo) expect(photos[d.photo]).toBeDefined();
+    expect(menu.seasons.length).toBeGreaterThan(0);
+    for (const s of menu.seasons) {
+      expect(s.slug).toMatch(/^[a-z0-9-]+$/);
+      for (const lang of ["en", "de"]) expect(s.name[lang]).toBeTruthy();
+    }
+    for (const d of menu.drinks) {
+      expect(d.name).toBeTruthy();
+      expect(typeof d.price_chf).toBe("number");
+      for (const lang of ["en", "de"]) {
+        expect(d.text[lang]).toBeTruthy();
+        expect(d.text[lang]).not.toContain("ß");
+        for (const p of d.pictures) expect(p.alt[lang]).toBeTruthy();
       }
+      for (const p of d.pictures) expect(photos[p.photo]).toBeDefined();
     }
   });
-  test("the home page shows every drink with its price in both languages", async () => {
-    const pages = await renderSite(files, { base: "/", photos });
+  test("the home page shows every drink of the season with its price in both languages", async () => {
+    const pages = await renderSite(files, { base: "/", photos, now: new Date("2026-11-21T12:00:00Z") });
     for (const [out, lang] of [["index.html", "en"], ["de/index.html", "de"]] as const) {
       const html = pages.find((p) => p.out === out)!.html;
       expect(html).toContain('id="menu"');
-      for (const d of menu.sections.flatMap((p: any) => p.drinks)) {
+      for (const d of menu.drinks.filter((d: any) => menu.seasons[0].drinks.includes(d.slug))) {
         expect(html).toContain(d.name);
         expect(html).toContain(d.text[lang].replace(/&/g, "&amp;"));
         expect(html).toContain(`CHF ${d.price_chf}`);

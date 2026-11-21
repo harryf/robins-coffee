@@ -1,0 +1,22 @@
+{% comment %} menu-season: s (a season view: slug, name, description, dates_label, state_label, drinks), t, heading ('h2' for the season shown now, 'h3' for the others). One season of the menu page: a marked block with its name, its days, its words and its drinks. Its id is the season's slug, so a drink page can link to it. {% endcomment %}
+<section class="season" id="{{ s.slug }}" aria-labelledby="{{ s.slug }}-name">
+  <header class="season__head">
+    <p class="season__state">{{ s.state_label }}</p>
+    {%- if heading == 'h2' %}
+    <h2 class="season__name" id="{{ s.slug }}-name">{{ s.name }}</h2>
+    {%- else %}
+    <h3 class="season__name" id="{{ s.slug }}-name">{{ s.name }}</h3>
+    {%- endif %}
+    <p class="season__dates">{{ s.dates_label }}</p>
+  </header>
+  {%- if s.description != '' %}
+  <p class="season__text">{{ s.description }}</p>
+  {%- endif %}
+  {%- if s.drinks.size > 0 %}
+  <div class="drinks">
+    {%- for d in s.drinks %}
+    {% render 'components/drink-card', d: d %}
+    {%- endfor %}
+  </div>
+  {%- endif %}
+</section>
