@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-21T11:22:35.013Z",
+ "generated_at": "2026-11-21T12:12:23.552Z",
  "events": [
   {
    "id": "iyf-gratis-zum-mitnehmen-2026-11-22",
@@ -46,7 +46,9 @@
    "language": "",
    "text": {
     "en": "Every Wednesday. Beer for CHF 5 for students.",
-    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
+    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende.",
+    "fr": "Tous les mercredis. Bière pour CHF 5 pour les étudiants.",
+    "it": "Ogni mercoledì. Birra per CHF 5 per gli studenti."
    },
    "ref": null,
    "id": "manual-beer-pong-2026-11-25",
@@ -99,7 +101,9 @@
    "language": "",
    "text": {
     "en": "A place for women to play chess.",
-    "de": "Ein Ort für Frauen zum Schachspielen."
+    "de": "Ein Ort für Frauen zum Schachspielen.",
+    "fr": "Un endroit où les femmes jouent aux échecs.",
+    "it": "Un posto per le donne per giocare a scacchi."
    },
    "ref": null,
    "id": "manual-queens-gambit-2026-11-29",
@@ -136,7 +140,9 @@
    "language": "",
    "text": {
     "en": "Every Wednesday. Beer for CHF 5 for students.",
-    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
+    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende.",
+    "fr": "Tous les mercredis. Bière pour CHF 5 pour les étudiants.",
+    "it": "Ogni mercoledì. Birra per CHF 5 per gli studenti."
    },
    "ref": null,
    "id": "manual-beer-pong-2026-12-02",
@@ -221,7 +227,9 @@
    "language": "",
    "text": {
     "en": "Every Wednesday. Beer for CHF 5 for students.",
-    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
+    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende.",
+    "fr": "Tous les mercredis. Bière pour CHF 5 pour les étudiants.",
+    "it": "Ogni mercoledì. Birra per CHF 5 per gli studenti."
    },
    "ref": null,
    "id": "manual-beer-pong-2026-12-09",
@@ -258,7 +266,9 @@
    "language": "",
    "text": {
     "en": "A place for women to play chess.",
-    "de": "Ein Ort für Frauen zum Schachspielen."
+    "de": "Ein Ort für Frauen zum Schachspielen.",
+    "fr": "Un endroit où les femmes jouent aux échecs.",
+    "it": "Un posto per le donne per giocare a scacchi."
    },
    "ref": null,
    "id": "manual-queens-gambit-2026-12-11",
@@ -295,7 +305,9 @@
    "language": "",
    "text": {
     "en": "Every Wednesday. Beer for CHF 5 for students.",
-    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
+    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende.",
+    "fr": "Tous les mercredis. Bière pour CHF 5 pour les étudiants.",
+    "it": "Ogni mercoledì. Birra per CHF 5 per gli studenti."
    },
    "ref": null,
    "id": "manual-beer-pong-2026-12-16",
@@ -364,7 +376,9 @@
    "language": "",
    "text": {
     "en": "Every Wednesday. Beer for CHF 5 for students.",
-    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
+    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende.",
+    "fr": "Tous les mercredis. Bière pour CHF 5 pour les étudiants.",
+    "it": "Ogni mercoledì. Birra per CHF 5 per gli studenti."
    },
    "ref": null,
    "id": "manual-beer-pong-2026-12-23",
@@ -417,7 +431,9 @@
    "language": "",
    "text": {
     "en": "A place for women to play chess.",
-    "de": "Ein Ort für Frauen zum Schachspielen."
+    "de": "Ein Ort für Frauen zum Schachspielen.",
+    "fr": "Un endroit où les femmes jouent aux échecs.",
+    "it": "Un posto per le donne per giocare a scacchi."
    },
    "ref": null,
    "id": "manual-queens-gambit-2026-12-27",
@@ -438,7 +454,9 @@
    "language": "",
    "text": {
     "en": "Every Wednesday. Beer for CHF 5 for students.",
-    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
+    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende.",
+    "fr": "Tous les mercredis. Bière pour CHF 5 pour les étudiants.",
+    "it": "Ogni mercoledì. Birra per CHF 5 per gli studenti."
    },
    "ref": null,
    "id": "manual-beer-pong-2026-12-30",
@@ -475,7 +493,9 @@
    "language": "",
    "text": {
     "en": "Every Wednesday. Beer for CHF 5 for students.",
-    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
+    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende.",
+    "fr": "Tous les mercredis. Bière pour CHF 5 pour les étudiants.",
+    "it": "Ogni mercoledì. Birra per CHF 5 per gli studenti."
    },
    "ref": null,
    "id": "manual-beer-pong-2027-01-06",
@@ -512,7 +532,9 @@
    "language": "",
    "text": {
     "en": "A place for women to play chess.",
-    "de": "Ein Ort für Frauen zum Schachspielen."
+    "de": "Ein Ort für Frauen zum Schachspielen.",
+    "fr": "Un endroit où les femmes jouent aux échecs.",
+    "it": "Un posto per le donne per giocare a scacchi."
    },
    "ref": null,
    "id": "manual-queens-gambit-2027-01-08",
@@ -533,7 +555,9 @@
    "language": "",
    "text": {
     "en": "Every Wednesday. Beer for CHF 5 for students.",
-    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
+    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende.",
+    "fr": "Tous les mercredis. Bière pour CHF 5 pour les étudiants.",
+    "it": "Ogni mercoledì. Birra per CHF 5 per gli studenti."
    },
    "ref": null,
    "id": "manual-beer-pong-2027-01-13",
@@ -570,7 +594,9 @@
    "language": "",
    "text": {
     "en": "Every Wednesday. Beer for CHF 5 for students.",
-    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
+    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende.",
+    "fr": "Tous les mercredis. Bière pour CHF 5 pour les étudiants.",
+    "it": "Ogni mercoledì. Birra per CHF 5 per gli studenti."
    },
    "ref": null,
    "id": "manual-beer-pong-2027-01-20",
@@ -623,7 +649,9 @@
    "language": "",
    "text": {
     "en": "Every Wednesday. Beer for CHF 5 for students.",
-    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende."
+    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende.",
+    "fr": "Tous les mercredis. Bière pour CHF 5 pour les étudiants.",
+    "it": "Ogni mercoledì. Birra per CHF 5 per gli studenti."
    },
    "ref": null,
    "id": "manual-beer-pong-2027-01-27",
@@ -692,7 +720,9 @@
    "language": "",
    "text": {
     "en": "A place for women to play chess.",
-    "de": "Ein Ort für Frauen zum Schachspielen."
+    "de": "Ein Ort für Frauen zum Schachspielen.",
+    "fr": "Un endroit où les femmes jouent aux échecs.",
+    "it": "Un posto per le donne per giocare a scacchi."
    },
    "ref": null,
    "id": "manual-queens-gambit-2027-01-31",
@@ -745,7 +775,9 @@
    "language": "",
    "text": {
     "en": "A place for women to play chess.",
-    "de": "Ein Ort für Frauen zum Schachspielen."
+    "de": "Ein Ort für Frauen zum Schachspielen.",
+    "fr": "Un endroit où les femmes jouent aux échecs.",
+    "it": "Un posto per le donne per giocare a scacchi."
    },
    "ref": null,
    "id": "manual-queens-gambit-2027-02-12",
@@ -814,7 +846,9 @@
    "language": "",
    "text": {
     "en": "A place for women to play chess.",
-    "de": "Ein Ort für Frauen zum Schachspielen."
+    "de": "Ein Ort für Frauen zum Schachspielen.",
+    "fr": "Un endroit où les femmes jouent aux échecs.",
+    "it": "Un posto per le donne per giocare a scacchi."
    },
    "ref": null,
    "id": "manual-queens-gambit-2027-02-28",
@@ -867,7 +901,9 @@
    "language": "",
    "text": {
     "en": "A place for women to play chess.",
-    "de": "Ein Ort für Frauen zum Schachspielen."
+    "de": "Ein Ort für Frauen zum Schachspielen.",
+    "fr": "Un endroit où les femmes jouent aux échecs.",
+    "it": "Un posto per le donne per giocare a scacchi."
    },
    "ref": null,
    "id": "manual-queens-gambit-2027-03-12",
@@ -952,7 +988,9 @@
    "language": "",
    "text": {
     "en": "A place for women to play chess.",
-    "de": "Ein Ort für Frauen zum Schachspielen."
+    "de": "Ein Ort für Frauen zum Schachspielen.",
+    "fr": "Un endroit où les femmes jouent aux échecs.",
+    "it": "Un posto per le donne per giocare a scacchi."
    },
    "ref": null,
    "id": "manual-queens-gambit-2027-03-28",
@@ -1021,7 +1059,9 @@
    "language": "",
    "text": {
     "en": "A place for women to play chess.",
-    "de": "Ein Ort für Frauen zum Schachspielen."
+    "de": "Ein Ort für Frauen zum Schachspielen.",
+    "fr": "Un endroit où les femmes jouent aux échecs.",
+    "it": "Un posto per le donne per giocare a scacchi."
    },
    "ref": null,
    "id": "manual-queens-gambit-2027-04-09",
@@ -1090,7 +1130,9 @@
    "language": "",
    "text": {
     "en": "A place for women to play chess.",
-    "de": "Ein Ort für Frauen zum Schachspielen."
+    "de": "Ein Ort für Frauen zum Schachspielen.",
+    "fr": "Un endroit où les femmes jouent aux échecs.",
+    "it": "Un posto per le donne per giocare a scacchi."
    },
    "ref": null,
    "id": "manual-queens-gambit-2027-04-25",

@@ -22,10 +22,10 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#150a17" data-night="#150a17" data-day="#1b110b">
 <link rel="icon" href="/robins-coffee/favicon.ico" sizes="32x32">
-<link rel="icon" type="image/png" sizes="192x192" href="/robins-coffee/assets/icons/icon-192.png?v=2oqoktcy">
-<link rel="apple-touch-icon" href="/robins-coffee/assets/icons/apple-touch-icon.png?v=2oqoktcy">
+<link rel="icon" type="image/png" sizes="192x192" href="/robins-coffee/assets/icons/icon-192.png?v=3t18netn">
+<link rel="apple-touch-icon" href="/robins-coffee/assets/icons/apple-touch-icon.png?v=3t18netn">
 <link rel="preload" href="/robins-coffee/assets/fonts/alfa-slab-one.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/robins-coffee/assets/site.css?v=2oqoktcy">
+<link rel="stylesheet" href="/robins-coffee/assets/site.css?v=3t18netn">
 <script>
 // Day or night: the page follows the Zürich clock, like the bar does (coffee colours
 // by day, cocktail colours at night). The switch in the header overrules the clock for
@@ -53,8 +53,8 @@
 <header class="site-header">
   <div class="wrap site-header__row">
     <a class="brand" href="/robins-coffee/" aria-label="ROBIN&#39;s Bar &amp; Coffee">
-      <img class="brand__mark theme-invert" src="/robins-coffee/assets/brand/logo-roundel-white.png?v=2oqoktcy" alt="" width="44" height="44">
-      <img class="brand__word theme-invert" src="/robins-coffee/assets/brand/wordmark-white.png?v=2oqoktcy" alt="ROBIN&#39;s" width="117" height="40">
+      <img class="brand__mark theme-invert" src="/robins-coffee/assets/brand/logo-roundel-white.png?v=3t18netn" alt="" width="44" height="44">
+      <img class="brand__word theme-invert" src="/robins-coffee/assets/brand/wordmark-white.png?v=3t18netn" alt="ROBIN&#39;s" width="117" height="40">
     </a>
     <div class="site-header__side">
       <a class="nav-link" href="/robins-coffee/events/">What&#39;s on</a>
@@ -557,8 +557,8 @@
     </article>
     <article class="sg-entry" data-sg="components/header" id="sg-header">
       <h3 class="h-lg"><code>components/header</code></h3>
-      <p class="sg-entry__doc">header: site, t, home_url, other (the same page in the other language, may be nil), events_url, gallery_url, on_photo (true when the page starts with the hero photo). The theme switch (coffee cup: day colours, cocktail: night colours) is shown by site.js, so it is absent without JavaScript.</p>
-      <p>At the top of this page. On the home page it sits on the hero photo. It carries the theme switch.</p>
+      <p class="sg-entry__doc">header: site, t, home_url, langs_menu (this page in each language it exists in: lang, url, name, current), lang (the page language), events_url, gallery_url, on_photo (true when the page starts with the hero photo). The theme switch (coffee cup: day colours, cocktail: night colours) is shown by site.js, so it is absent without JavaScript. The language menu is a disclosure, so it opens without JavaScript; site.js closes it on a click outside and remembers the language picked.</p>
+      <p>At the top of this page. On the home page it sits on the hero photo. It carries the theme switch and the language menu (English, Deutsch, Français, Italiano; a page offers only the languages it exists in).</p>
     </article>
     <article class="sg-entry" data-sg="components/hours" id="sg-hours">
       <h3 class="h-lg"><code>components/hours</code></h3>
@@ -666,26 +666,26 @@
 <div class="photo-strip">
   
 <picture>
-  <source type="image/webp" srcset="/robins-coffee/photos/barista-at-the-machine-480-2p9cwke3.webp 480w, /robins-coffee/photos/barista-at-the-machine-640-2p9cwke3.webp 640w, /robins-coffee/photos/barista-at-the-machine-800-2p9cwke3.webp 800w, /robins-coffee/photos/barista-at-the-machine-1200-2p9cwke3.webp 1200w, /robins-coffee/photos/barista-at-the-machine-1284-2p9cwke3.webp 1284w" sizes="(min-width: 48rem) 22vw, 46vw">
-  <img src="/robins-coffee/photos/barista-at-the-machine-1284-2p9cwke3.jpg" srcset="/robins-coffee/photos/barista-at-the-machine-480-2p9cwke3.jpg 480w, /robins-coffee/photos/barista-at-the-machine-640-2p9cwke3.jpg 640w, /robins-coffee/photos/barista-at-the-machine-800-2p9cwke3.jpg 800w, /robins-coffee/photos/barista-at-the-machine-1200-2p9cwke3.jpg 1200w, /robins-coffee/photos/barista-at-the-machine-1284-2p9cwke3.jpg 1284w" sizes="(min-width: 48rem) 22vw, 46vw" width="1284" height="1605" alt="A barista at the espresso machine holds a paper cup up to the light." loading="lazy" decoding="async">
+  <source type="image/webp" srcset="/robins-coffee/photos/barista-at-the-machine-480-2p9cwke3.webp 480w, /robins-coffee/photos/barista-at-the-machine-640-2p9cwke3.webp 640w, /robins-coffee/photos/barista-at-the-machine-800-2p9cwke3.webp 800w, /robins-coffee/photos/barista-at-the-machine-1200-2p9cwke3.webp 1200w, /robins-coffee/photos/barista-at-the-machine-1284-2p9cwke3.webp 1284w" sizes="">
+  <img src="/robins-coffee/photos/barista-at-the-machine-1284-2p9cwke3.jpg" srcset="/robins-coffee/photos/barista-at-the-machine-480-2p9cwke3.jpg 480w, /robins-coffee/photos/barista-at-the-machine-640-2p9cwke3.jpg 640w, /robins-coffee/photos/barista-at-the-machine-800-2p9cwke3.jpg 800w, /robins-coffee/photos/barista-at-the-machine-1200-2p9cwke3.jpg 1200w, /robins-coffee/photos/barista-at-the-machine-1284-2p9cwke3.jpg 1284w" sizes="" width="1284" height="1605" alt="A barista at the espresso machine holds a paper cup up to the light." loading="lazy" decoding="async">
 </picture>
 
   
 <picture>
-  <source type="image/webp" srcset="/robins-coffee/photos/espresso-patterned-cup-480-98rw62yl.webp 480w, /robins-coffee/photos/espresso-patterned-cup-640-98rw62yl.webp 640w, /robins-coffee/photos/espresso-patterned-cup-800-98rw62yl.webp 800w, /robins-coffee/photos/espresso-patterned-cup-1200-98rw62yl.webp 1200w, /robins-coffee/photos/espresso-patterned-cup-1440-98rw62yl.webp 1440w" sizes="(min-width: 48rem) 22vw, 46vw">
-  <img src="/robins-coffee/photos/espresso-patterned-cup-1440-98rw62yl.jpg" srcset="/robins-coffee/photos/espresso-patterned-cup-480-98rw62yl.jpg 480w, /robins-coffee/photos/espresso-patterned-cup-640-98rw62yl.jpg 640w, /robins-coffee/photos/espresso-patterned-cup-800-98rw62yl.jpg 800w, /robins-coffee/photos/espresso-patterned-cup-1200-98rw62yl.jpg 1200w, /robins-coffee/photos/espresso-patterned-cup-1440-98rw62yl.jpg 1440w" sizes="(min-width: 48rem) 22vw, 46vw" width="1440" height="1800" alt="A hand holds an espresso in a brightly patterned cup and saucer above the cobblestones." loading="lazy" decoding="async">
+  <source type="image/webp" srcset="/robins-coffee/photos/espresso-patterned-cup-480-98rw62yl.webp 480w, /robins-coffee/photos/espresso-patterned-cup-640-98rw62yl.webp 640w, /robins-coffee/photos/espresso-patterned-cup-800-98rw62yl.webp 800w, /robins-coffee/photos/espresso-patterned-cup-1200-98rw62yl.webp 1200w, /robins-coffee/photos/espresso-patterned-cup-1440-98rw62yl.webp 1440w" sizes="">
+  <img src="/robins-coffee/photos/espresso-patterned-cup-1440-98rw62yl.jpg" srcset="/robins-coffee/photos/espresso-patterned-cup-480-98rw62yl.jpg 480w, /robins-coffee/photos/espresso-patterned-cup-640-98rw62yl.jpg 640w, /robins-coffee/photos/espresso-patterned-cup-800-98rw62yl.jpg 800w, /robins-coffee/photos/espresso-patterned-cup-1200-98rw62yl.jpg 1200w, /robins-coffee/photos/espresso-patterned-cup-1440-98rw62yl.jpg 1440w" sizes="" width="1440" height="1800" alt="A hand holds an espresso in a brightly patterned cup and saucer above the cobblestones." loading="lazy" decoding="async">
 </picture>
 
   
 <picture>
-  <source type="image/webp" srcset="/robins-coffee/photos/latte-art-pour-480-12y5pbkg.webp 480w, /robins-coffee/photos/latte-art-pour-640-12y5pbkg.webp 640w, /robins-coffee/photos/latte-art-pour-800-12y5pbkg.webp 800w, /robins-coffee/photos/latte-art-pour-1200-12y5pbkg.webp 1200w, /robins-coffee/photos/latte-art-pour-1440-12y5pbkg.webp 1440w" sizes="(min-width: 48rem) 22vw, 46vw">
-  <img src="/robins-coffee/photos/latte-art-pour-1440-12y5pbkg.jpg" srcset="/robins-coffee/photos/latte-art-pour-480-12y5pbkg.jpg 480w, /robins-coffee/photos/latte-art-pour-640-12y5pbkg.jpg 640w, /robins-coffee/photos/latte-art-pour-800-12y5pbkg.jpg 800w, /robins-coffee/photos/latte-art-pour-1200-12y5pbkg.jpg 1200w, /robins-coffee/photos/latte-art-pour-1440-12y5pbkg.jpg 1440w" sizes="(min-width: 48rem) 22vw, 46vw" width="1440" height="1800" alt="Milk is poured into a cappuccino, drawing a pattern on the foam." loading="lazy" decoding="async">
+  <source type="image/webp" srcset="/robins-coffee/photos/latte-art-pour-480-12y5pbkg.webp 480w, /robins-coffee/photos/latte-art-pour-640-12y5pbkg.webp 640w, /robins-coffee/photos/latte-art-pour-800-12y5pbkg.webp 800w, /robins-coffee/photos/latte-art-pour-1200-12y5pbkg.webp 1200w, /robins-coffee/photos/latte-art-pour-1440-12y5pbkg.webp 1440w" sizes="">
+  <img src="/robins-coffee/photos/latte-art-pour-1440-12y5pbkg.jpg" srcset="/robins-coffee/photos/latte-art-pour-480-12y5pbkg.jpg 480w, /robins-coffee/photos/latte-art-pour-640-12y5pbkg.jpg 640w, /robins-coffee/photos/latte-art-pour-800-12y5pbkg.jpg 800w, /robins-coffee/photos/latte-art-pour-1200-12y5pbkg.jpg 1200w, /robins-coffee/photos/latte-art-pour-1440-12y5pbkg.jpg 1440w" sizes="" width="1440" height="1800" alt="Milk is poured into a cappuccino, drawing a pattern on the foam." loading="lazy" decoding="async">
 </picture>
 
   
 <picture>
-  <source type="image/webp" srcset="/robins-coffee/photos/espresso-blue-cup-480-5usvhce1.webp 480w, /robins-coffee/photos/espresso-blue-cup-640-5usvhce1.webp 640w, /robins-coffee/photos/espresso-blue-cup-800-5usvhce1.webp 800w, /robins-coffee/photos/espresso-blue-cup-1200-5usvhce1.webp 1200w, /robins-coffee/photos/espresso-blue-cup-1326-5usvhce1.webp 1326w" sizes="(min-width: 48rem) 22vw, 46vw">
-  <img src="/robins-coffee/photos/espresso-blue-cup-1326-5usvhce1.jpg" srcset="/robins-coffee/photos/espresso-blue-cup-480-5usvhce1.jpg 480w, /robins-coffee/photos/espresso-blue-cup-640-5usvhce1.jpg 640w, /robins-coffee/photos/espresso-blue-cup-800-5usvhce1.jpg 800w, /robins-coffee/photos/espresso-blue-cup-1200-5usvhce1.jpg 1200w, /robins-coffee/photos/espresso-blue-cup-1326-5usvhce1.jpg 1326w" sizes="(min-width: 48rem) 22vw, 46vw" width="1326" height="1658" alt="A hand holds an espresso in a turquoise cup and saucer above the cobblestones." loading="lazy" decoding="async">
+  <source type="image/webp" srcset="/robins-coffee/photos/espresso-blue-cup-480-5usvhce1.webp 480w, /robins-coffee/photos/espresso-blue-cup-640-5usvhce1.webp 640w, /robins-coffee/photos/espresso-blue-cup-800-5usvhce1.webp 800w, /robins-coffee/photos/espresso-blue-cup-1200-5usvhce1.webp 1200w, /robins-coffee/photos/espresso-blue-cup-1326-5usvhce1.webp 1326w" sizes="">
+  <img src="/robins-coffee/photos/espresso-blue-cup-1326-5usvhce1.jpg" srcset="/robins-coffee/photos/espresso-blue-cup-480-5usvhce1.jpg 480w, /robins-coffee/photos/espresso-blue-cup-640-5usvhce1.jpg 640w, /robins-coffee/photos/espresso-blue-cup-800-5usvhce1.jpg 800w, /robins-coffee/photos/espresso-blue-cup-1200-5usvhce1.jpg 1200w, /robins-coffee/photos/espresso-blue-cup-1326-5usvhce1.jpg 1326w" sizes="" width="1326" height="1658" alt="A hand holds an espresso in a turquoise cup and saucer above the cobblestones." loading="lazy" decoding="async">
 </picture>
 
 </div>
@@ -697,10 +697,10 @@
       <thead><tr><th scope="col">Layout</th><th scope="col">What it is</th></tr></thead>
       <tbody>
         <tr><th scope="row"><code>layouts/base</code></th><td>base: the frame of every page: head (meta, link preview, favicons, theme script), header, main, footer, the one script. Every other layout fills its `content` block.</td></tr>
-        <tr><th scope="row"><code>layouts/editor</code></th><td>editor: the frame of the editor at /edit/. The screens are drawn by edit/editor.js (src/editor/); it reads the site&#39;s files from edit/site.json. The editor speaks English and German and picks by the browser (src/editor/strings.ts); this frame is the same for both. noindex.</td></tr>
         <tr><th scope="row"><code>layouts/events</code></th><td>events: the events of the next 60 days, grouped by month, with the calendar link.</td></tr>
         <tr><th scope="row"><code>layouts/gallery</code></th><td>gallery: every moment, albums first, each grid one lightbox group.</td></tr>
         <tr><th scope="row"><code>layouts/home</code></th><td>home: the sections named in home.yml. The page is written in the night order (`sections`), which is also what a visitor without JavaScript gets; by day the script below puts them in the `sections_day` order before the page is first drawn, and again whenever the theme switch is used. It moves the DOM itself, so reading and tab order follow what is seen. A list marked data-arrange (the guest cards) is put in its data-day order the same way.</td></tr>
+        <tr><th scope="row"><code>layouts/moved</code></th><td>moved: the note at /edit/, where the retired phone editor lived. It says in English and German that the editor is now ROBIN&#39;s Studio, links to the install page, and removes the key, the draft and the worker the old editor left on the phone. noindex.</td></tr>
         <tr><th scope="row"><code>layouts/notfound</code></th><td>notfound: the 404 page. It is shown at any address, so it cannot know the visitor&#39;s language: every language gets its block, and site.js moves the right one to the top when the address says which.</td></tr>
         <tr><th scope="row"><code>layouts/page</code></th><td>page: a plain text page from a Markdown file: title and prose.</td></tr>
         <tr><th scope="row"><code>layouts/styleguide</code></th><td>styleguide: this page. Tokens are listed straight from tokens.json, so a new token shows up by itself. Components and sections are listed from the template folders with the comment each file starts with; a new one needs its example added in the `case` below (a test fails while it is missing). This page is internal: English only, noindex.</td></tr>
@@ -719,7 +719,7 @@
 
 <section class="section section--surface" id="about">
   <div class="wrap about">
-    <img class="about__roundel theme-invert" src="/robins-coffee/assets/brand/logo-roundel-white.png?v=2oqoktcy" alt="" width="173" height="173" loading="lazy">
+    <img class="about__roundel theme-invert" src="/robins-coffee/assets/brand/logo-roundel-white.png?v=3t18netn" alt="" width="173" height="173" loading="lazy">
     <div class="prose">
       <h2 class="h-xl">Stay a while</h2>
       <p>ROBIN&#39;s coffee was established in 2022 by Dennis Cobarrubias and the Sallahi family.</p>
@@ -732,26 +732,26 @@
 <div class="photo-strip">
   
 <picture>
-  <source type="image/webp" srcset="/robins-coffee/photos/barista-at-the-machine-480-2p9cwke3.webp 480w, /robins-coffee/photos/barista-at-the-machine-640-2p9cwke3.webp 640w, /robins-coffee/photos/barista-at-the-machine-800-2p9cwke3.webp 800w, /robins-coffee/photos/barista-at-the-machine-1200-2p9cwke3.webp 1200w, /robins-coffee/photos/barista-at-the-machine-1284-2p9cwke3.webp 1284w" sizes="(min-width: 48rem) 22vw, 46vw">
-  <img src="/robins-coffee/photos/barista-at-the-machine-1284-2p9cwke3.jpg" srcset="/robins-coffee/photos/barista-at-the-machine-480-2p9cwke3.jpg 480w, /robins-coffee/photos/barista-at-the-machine-640-2p9cwke3.jpg 640w, /robins-coffee/photos/barista-at-the-machine-800-2p9cwke3.jpg 800w, /robins-coffee/photos/barista-at-the-machine-1200-2p9cwke3.jpg 1200w, /robins-coffee/photos/barista-at-the-machine-1284-2p9cwke3.jpg 1284w" sizes="(min-width: 48rem) 22vw, 46vw" width="1284" height="1605" alt="A barista at the espresso machine holds a paper cup up to the light." loading="lazy" decoding="async">
+  <source type="image/webp" srcset="/robins-coffee/photos/barista-at-the-machine-480-2p9cwke3.webp 480w, /robins-coffee/photos/barista-at-the-machine-640-2p9cwke3.webp 640w, /robins-coffee/photos/barista-at-the-machine-800-2p9cwke3.webp 800w, /robins-coffee/photos/barista-at-the-machine-1200-2p9cwke3.webp 1200w, /robins-coffee/photos/barista-at-the-machine-1284-2p9cwke3.webp 1284w" sizes="">
+  <img src="/robins-coffee/photos/barista-at-the-machine-1284-2p9cwke3.jpg" srcset="/robins-coffee/photos/barista-at-the-machine-480-2p9cwke3.jpg 480w, /robins-coffee/photos/barista-at-the-machine-640-2p9cwke3.jpg 640w, /robins-coffee/photos/barista-at-the-machine-800-2p9cwke3.jpg 800w, /robins-coffee/photos/barista-at-the-machine-1200-2p9cwke3.jpg 1200w, /robins-coffee/photos/barista-at-the-machine-1284-2p9cwke3.jpg 1284w" sizes="" width="1284" height="1605" alt="A barista at the espresso machine holds a paper cup up to the light." loading="lazy" decoding="async">
 </picture>
 
   
 <picture>
-  <source type="image/webp" srcset="/robins-coffee/photos/espresso-patterned-cup-480-98rw62yl.webp 480w, /robins-coffee/photos/espresso-patterned-cup-640-98rw62yl.webp 640w, /robins-coffee/photos/espresso-patterned-cup-800-98rw62yl.webp 800w, /robins-coffee/photos/espresso-patterned-cup-1200-98rw62yl.webp 1200w, /robins-coffee/photos/espresso-patterned-cup-1440-98rw62yl.webp 1440w" sizes="(min-width: 48rem) 22vw, 46vw">
-  <img src="/robins-coffee/photos/espresso-patterned-cup-1440-98rw62yl.jpg" srcset="/robins-coffee/photos/espresso-patterned-cup-480-98rw62yl.jpg 480w, /robins-coffee/photos/espresso-patterned-cup-640-98rw62yl.jpg 640w, /robins-coffee/photos/espresso-patterned-cup-800-98rw62yl.jpg 800w, /robins-coffee/photos/espresso-patterned-cup-1200-98rw62yl.jpg 1200w, /robins-coffee/photos/espresso-patterned-cup-1440-98rw62yl.jpg 1440w" sizes="(min-width: 48rem) 22vw, 46vw" width="1440" height="1800" alt="A hand holds an espresso in a brightly patterned cup and saucer above the cobblestones." loading="lazy" decoding="async">
+  <source type="image/webp" srcset="/robins-coffee/photos/espresso-patterned-cup-480-98rw62yl.webp 480w, /robins-coffee/photos/espresso-patterned-cup-640-98rw62yl.webp 640w, /robins-coffee/photos/espresso-patterned-cup-800-98rw62yl.webp 800w, /robins-coffee/photos/espresso-patterned-cup-1200-98rw62yl.webp 1200w, /robins-coffee/photos/espresso-patterned-cup-1440-98rw62yl.webp 1440w" sizes="">
+  <img src="/robins-coffee/photos/espresso-patterned-cup-1440-98rw62yl.jpg" srcset="/robins-coffee/photos/espresso-patterned-cup-480-98rw62yl.jpg 480w, /robins-coffee/photos/espresso-patterned-cup-640-98rw62yl.jpg 640w, /robins-coffee/photos/espresso-patterned-cup-800-98rw62yl.jpg 800w, /robins-coffee/photos/espresso-patterned-cup-1200-98rw62yl.jpg 1200w, /robins-coffee/photos/espresso-patterned-cup-1440-98rw62yl.jpg 1440w" sizes="" width="1440" height="1800" alt="A hand holds an espresso in a brightly patterned cup and saucer above the cobblestones." loading="lazy" decoding="async">
 </picture>
 
   
 <picture>
-  <source type="image/webp" srcset="/robins-coffee/photos/latte-art-pour-480-12y5pbkg.webp 480w, /robins-coffee/photos/latte-art-pour-640-12y5pbkg.webp 640w, /robins-coffee/photos/latte-art-pour-800-12y5pbkg.webp 800w, /robins-coffee/photos/latte-art-pour-1200-12y5pbkg.webp 1200w, /robins-coffee/photos/latte-art-pour-1440-12y5pbkg.webp 1440w" sizes="(min-width: 48rem) 22vw, 46vw">
-  <img src="/robins-coffee/photos/latte-art-pour-1440-12y5pbkg.jpg" srcset="/robins-coffee/photos/latte-art-pour-480-12y5pbkg.jpg 480w, /robins-coffee/photos/latte-art-pour-640-12y5pbkg.jpg 640w, /robins-coffee/photos/latte-art-pour-800-12y5pbkg.jpg 800w, /robins-coffee/photos/latte-art-pour-1200-12y5pbkg.jpg 1200w, /robins-coffee/photos/latte-art-pour-1440-12y5pbkg.jpg 1440w" sizes="(min-width: 48rem) 22vw, 46vw" width="1440" height="1800" alt="Milk is poured into a cappuccino, drawing a pattern on the foam." loading="lazy" decoding="async">
+  <source type="image/webp" srcset="/robins-coffee/photos/latte-art-pour-480-12y5pbkg.webp 480w, /robins-coffee/photos/latte-art-pour-640-12y5pbkg.webp 640w, /robins-coffee/photos/latte-art-pour-800-12y5pbkg.webp 800w, /robins-coffee/photos/latte-art-pour-1200-12y5pbkg.webp 1200w, /robins-coffee/photos/latte-art-pour-1440-12y5pbkg.webp 1440w" sizes="">
+  <img src="/robins-coffee/photos/latte-art-pour-1440-12y5pbkg.jpg" srcset="/robins-coffee/photos/latte-art-pour-480-12y5pbkg.jpg 480w, /robins-coffee/photos/latte-art-pour-640-12y5pbkg.jpg 640w, /robins-coffee/photos/latte-art-pour-800-12y5pbkg.jpg 800w, /robins-coffee/photos/latte-art-pour-1200-12y5pbkg.jpg 1200w, /robins-coffee/photos/latte-art-pour-1440-12y5pbkg.jpg 1440w" sizes="" width="1440" height="1800" alt="Milk is poured into a cappuccino, drawing a pattern on the foam." loading="lazy" decoding="async">
 </picture>
 
   
 <picture>
-  <source type="image/webp" srcset="/robins-coffee/photos/espresso-blue-cup-480-5usvhce1.webp 480w, /robins-coffee/photos/espresso-blue-cup-640-5usvhce1.webp 640w, /robins-coffee/photos/espresso-blue-cup-800-5usvhce1.webp 800w, /robins-coffee/photos/espresso-blue-cup-1200-5usvhce1.webp 1200w, /robins-coffee/photos/espresso-blue-cup-1326-5usvhce1.webp 1326w" sizes="(min-width: 48rem) 22vw, 46vw">
-  <img src="/robins-coffee/photos/espresso-blue-cup-1326-5usvhce1.jpg" srcset="/robins-coffee/photos/espresso-blue-cup-480-5usvhce1.jpg 480w, /robins-coffee/photos/espresso-blue-cup-640-5usvhce1.jpg 640w, /robins-coffee/photos/espresso-blue-cup-800-5usvhce1.jpg 800w, /robins-coffee/photos/espresso-blue-cup-1200-5usvhce1.jpg 1200w, /robins-coffee/photos/espresso-blue-cup-1326-5usvhce1.jpg 1326w" sizes="(min-width: 48rem) 22vw, 46vw" width="1326" height="1658" alt="A hand holds an espresso in a turquoise cup and saucer above the cobblestones." loading="lazy" decoding="async">
+  <source type="image/webp" srcset="/robins-coffee/photos/espresso-blue-cup-480-5usvhce1.webp 480w, /robins-coffee/photos/espresso-blue-cup-640-5usvhce1.webp 640w, /robins-coffee/photos/espresso-blue-cup-800-5usvhce1.webp 800w, /robins-coffee/photos/espresso-blue-cup-1200-5usvhce1.webp 1200w, /robins-coffee/photos/espresso-blue-cup-1326-5usvhce1.webp 1326w" sizes="">
+  <img src="/robins-coffee/photos/espresso-blue-cup-1326-5usvhce1.jpg" srcset="/robins-coffee/photos/espresso-blue-cup-480-5usvhce1.jpg 480w, /robins-coffee/photos/espresso-blue-cup-640-5usvhce1.jpg 640w, /robins-coffee/photos/espresso-blue-cup-800-5usvhce1.jpg 800w, /robins-coffee/photos/espresso-blue-cup-1200-5usvhce1.jpg 1200w, /robins-coffee/photos/espresso-blue-cup-1326-5usvhce1.jpg 1326w" sizes="" width="1326" height="1658" alt="A hand holds an espresso in a turquoise cup and saucer above the cobblestones." loading="lazy" decoding="async">
 </picture>
 
 </div>
@@ -1237,7 +1237,7 @@
 <footer class="site-footer">
   <div class="wrap site-footer__grid">
     <div>
-      <img class="theme-invert" src="/robins-coffee/assets/brand/wordmark-white.png?v=2oqoktcy" alt="ROBIN&#39;s" width="146" height="50" loading="lazy">
+      <img class="theme-invert" src="/robins-coffee/assets/brand/wordmark-white.png?v=3t18netn" alt="ROBIN&#39;s" width="146" height="50" loading="lazy">
       <p>Zähringerstrasse 33<br>8001 Zürich</p>
     </div>
     <div>
@@ -1259,7 +1259,7 @@
 </footer>
 
 <script type="application/json" id="hours-data">{"regular":[{"days":["mo","tu","we","th"],"open":"16:00","close":"00:00"},{"days":["fr"],"open":"16:00","close":"02:00"},{"days":["sa"],"open":"10:00","close":"02:00"},{"days":["su"],"open":"10:00","close":"00:00"}],"exceptions":[]}</script>
-<script type="application/json" id="i18n-data">{"nav_home":"Home","open_now":"Open now","opens_at":"Opens {time}","until_late":"until late","closed_today":"Closed today","closed":"Closed","og_locale":"en_GB","notfound_title":"This page is not here","notfound_text":"The address may be old or mistyped. The bar is still where it always was.","notfound_home":"To the home page","hours":"Opening hours","address":"Address","contact":"Contact","call":"Call","email":"Email","map":"Open in Google Maps","instagram":"Instagram","skip":"Skip to content","lang_switch":"Deutsch","days":{"mo":"Monday","tu":"Tuesday","we":"Wednesday","th":"Thursday","fr":"Friday","sa":"Saturday","su":"Sunday"},"days_short":{"mo":"Mon","tu":"Tue","we":"Wed","th":"Thu","fr":"Fri","sa":"Sat","su":"Sun"},"range_sep":" to ","months":["January","February","March","April","May","June","July","August","September","October","November","December"],"months_short":["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"date_short":"{day} {month} {year}","date_event":"{weekday} {day} {month}","nav_events":"What's on","nav_gallery":"Photos","gallery_all":"All photos","gallery_loose":"More from the bar","photo_enlarge":"View larger","lightbox_label":"Photo viewer","lightbox_close":"Close","lightbox_prev":"Previous photo","lightbox_next":"Next photo","events_title":"What's on","events_all":"See everything on","today":"Today","price_from":"Tickets from CHF {price}.","price_some_free":"Some shows are free.","hero_whats_on":"What's on","hero_drinks":"The cocktails","events_none":"Nothing is announced right now. Come by anyway.","events_subscribe":"Add all events to your calendar","tickets":"Tickets","event_walk_in":"Just come by","menu_title":"On the menu","free_entry":"Free entry","event_languages":{"en":"","de":"in German","it":"in Italian","fr":"in French","es":"in Spanish"},"open_until":"Open until {time}","ticker_pause":"Pause the moving text","theme_switch":"Night colours","google_rating":"{value} out of 5 on Google, from {count} reviews","contact_title":"Write to us","form_name":"Name","form_phone":"Phone","form_message":"Message","form_optional":"optional","form_send":"Write the email","form_hint":"This opens your email app with the message ready to send to {email}.","form_subject":"Message from the website","ticker":["Coffee","Cocktails","Comedy","Live Music","Chess","Zähringerstrasse 33","Zürich Old Town"]}</script>
-<script src="/robins-coffee/assets/js/site.js?v=2oqoktcy" defer></script>
+<script type="application/json" id="i18n-data">{"nav_home":"Home","open_now":"Open now","opens_at":"Opens {time}","until_late":"until late","closed_today":"Closed today","closed":"Closed","og_locale":"en_GB","notfound_title":"This page is not here","notfound_text":"The address may be old or mistyped. The bar is still where it always was.","notfound_home":"To the home page","hours":"Opening hours","address":"Address","contact":"Contact","call":"Call","email":"Email","map":"Open in Google Maps","instagram":"Instagram","skip":"Skip to content","lang_name":"English","lang_menu":"Language","days":{"mo":"Monday","tu":"Tuesday","we":"Wednesday","th":"Thursday","fr":"Friday","sa":"Saturday","su":"Sunday"},"days_short":{"mo":"Mon","tu":"Tue","we":"Wed","th":"Thu","fr":"Fri","sa":"Sat","su":"Sun"},"range_sep":" to ","months":["January","February","March","April","May","June","July","August","September","October","November","December"],"months_short":["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"date_short":"{day} {month} {year}","date_event":"{weekday} {day} {month}","nav_events":"What's on","nav_gallery":"Photos","gallery_all":"All photos","gallery_loose":"More from the bar","photo_enlarge":"View larger","lightbox_label":"Photo viewer","lightbox_close":"Close","lightbox_prev":"Previous photo","lightbox_next":"Next photo","events_title":"What's on","events_all":"See everything on","today":"Today","price_from":"Tickets from CHF {price}.","price_some_free":"Some shows are free.","hero_whats_on":"What's on","hero_drinks":"The cocktails","events_none":"Nothing is announced right now. Come by anyway.","events_subscribe":"Add all events to your calendar","tickets":"Tickets","event_walk_in":"Just come by","menu_title":"On the menu","free_entry":"Free entry","event_languages":{"en":"","de":"in German","it":"in Italian","fr":"in French","es":"in Spanish"},"open_until":"Open until {time}","ticker_pause":"Pause the moving text","theme_switch":"Night colours","google_rating":"{value} out of 5 on Google, from {count} reviews","contact_title":"Write to us","form_name":"Name","form_phone":"Phone","form_message":"Message","form_optional":"optional","form_send":"Write the email","form_hint":"This opens your email app with the message ready to send to {email}.","form_subject":"Message from the website","ticker":["Coffee","Cocktails","Comedy","Live Music","Chess","Zähringerstrasse 33","Zürich Old Town"]}</script>
+<script src="/robins-coffee/assets/js/site.js?v=3t18netn" defer></script>
 </body>
 </html>

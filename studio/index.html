@@ -24,10 +24,28 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#150a17" data-night="#150a17" data-day="#1b110b">
 <link rel="icon" href="/robins-coffee/favicon.ico" sizes="32x32">
-<link rel="icon" type="image/png" sizes="192x192" href="/robins-coffee/assets/icons/icon-192.png?v=2oqoktcy">
-<link rel="apple-touch-icon" href="/robins-coffee/assets/icons/apple-touch-icon.png?v=2oqoktcy">
+<link rel="icon" type="image/png" sizes="192x192" href="/robins-coffee/assets/icons/icon-192.png?v=3t18netn">
+<link rel="apple-touch-icon" href="/robins-coffee/assets/icons/apple-touch-icon.png?v=3t18netn">
+<script>
+// The first visit to an English page goes to the same page in the language the browser
+// asks for first, when the site has it. A choice made in the language menu is kept
+// (site.js stores it) and wins over the browser. A page in another language never moves.
+(function () {
+  try {
+    var urls = { "en": "/robins-coffee/studio/", "de": "/robins-coffee/de/studio/" };
+    var chosen = null;
+    try { chosen = localStorage.getItem("lang"); } catch (e) {}
+    var want = chosen;
+    if (!want) {
+      var asked = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ""];
+      for (var i = 0; i < asked.length && !want; i++) { var code = String(asked[i]).toLowerCase().split("-")[0]; if (urls[code]) want = code; }
+    }
+    if (want && want !== "en" && urls[want]) location.replace(urls[want] + location.search + location.hash);
+  } catch (e) {}
+})();
+</script>
 <link rel="preload" href="/robins-coffee/assets/fonts/alfa-slab-one.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/robins-coffee/assets/site.css?v=2oqoktcy">
+<link rel="stylesheet" href="/robins-coffee/assets/site.css?v=3t18netn">
 <script>
 // Day or night: the page follows the Zürich clock, like the bar does (coffee colours
 // by day, cocktail colours at night). The switch in the header overrules the clock for
@@ -55,8 +73,8 @@
 <header class="site-header">
   <div class="wrap site-header__row">
     <a class="brand" href="/robins-coffee/" aria-label="ROBIN&#39;s Bar &amp; Coffee">
-      <img class="brand__mark theme-invert" src="/robins-coffee/assets/brand/logo-roundel-white.png?v=2oqoktcy" alt="" width="44" height="44">
-      <img class="brand__word theme-invert" src="/robins-coffee/assets/brand/wordmark-white.png?v=2oqoktcy" alt="ROBIN&#39;s" width="117" height="40">
+      <img class="brand__mark theme-invert" src="/robins-coffee/assets/brand/logo-roundel-white.png?v=3t18netn" alt="" width="44" height="44">
+      <img class="brand__word theme-invert" src="/robins-coffee/assets/brand/wordmark-white.png?v=3t18netn" alt="ROBIN&#39;s" width="117" height="40">
     </a>
     <div class="site-header__side">
       <a class="nav-link" href="/robins-coffee/events/">What&#39;s on</a>
@@ -65,7 +83,13 @@
 <span class="pill" data-open-pill hidden><span class="pill__dot" aria-hidden="true"></span><span data-open-text></span></span>
 
       <button class="theme-switch" type="button" role="switch" aria-checked="true" aria-label="Night colours" data-theme-switch hidden><span data-theme-side="day" aria-hidden="true">☕</span><span data-theme-side="night" aria-hidden="true">🍸</span></button>
-      <a class="lang" href="/robins-coffee/de/studio/" hreflang="de" lang="de">Deutsch</a>
+      <details class="langs" data-langs>
+        <summary class="langs__now" aria-label="Language: English">EN<span class="langs__arrow" aria-hidden="true"></span></summary>
+        <ul class="langs__menu">
+          <li><a class="langs__item" href="/robins-coffee/studio/" hreflang="en" lang="en" data-lang="en" aria-current="page"><span class="langs__code" aria-hidden="true">EN</span> English</a></li>
+          <li><a class="langs__item" href="/robins-coffee/de/studio/" hreflang="de" lang="de" data-lang="de"><span class="langs__code" aria-hidden="true">DE</span> Deutsch</a></li>
+        </ul>
+      </details>
     </div>
   </div>
 </header>
@@ -79,6 +103,7 @@
 <h2>What you need</h2>
 <ul>
 <li><strong>A Mac</strong> with macOS 12 or newer. To check, click the Apple sign at the top left of the screen, then <strong>About This Mac</strong>.</li>
+<li><strong>macOS 26 (Tahoe) or newer for the translations.</strong> You write every text in English; the Mac turns it into German, French and Italian. On an older Mac the Studio still works, and the website shows English where a translation is missing.</li>
 <li><strong>An internet connection</strong>, for the install and each time you publish.</li>
 <li><strong>An email address</strong> you can open now. GitHub sends a code to it.</li>
 <li><strong>A free GitHub account that Harry has invited, and a key from it.</strong> GitHub is the service that keeps the website&#39;s files. The three steps under &quot;Prerequisites&quot; set this up. Without them you can install the Studio and look around, but you cannot publish.</li>
@@ -129,6 +154,14 @@
 <p>It asks for no password. The first start takes a minute, because the Studio builds the site once.</p>
 <h3>Find it again</h3>
 <p>The app is called <strong>ROBINs Studio</strong> and sits in the Applications folder inside your home folder. Press Command and Space, type <code>Studio</code>, press Enter. Drag its icon to the Dock to keep it there.</p>
+<h3>Add the languages for the translations</h3>
+<p>The Studio translates on this Mac with Apple&#39;s own translation, so nothing you write is sent anywhere. The Mac needs three languages downloaded for it, once:</p>
+<ol>
+<li>Open <strong>System Settings</strong>, then <strong>General</strong>, then <strong>Language &amp; Region</strong>.</li>
+<li>Near the bottom, click <strong>Translation Languages</strong>.</li>
+<li>Click the download button next to <strong>German</strong>, <strong>French</strong> and <strong>Italian</strong>. Wait until each one is done.</li>
+</ol>
+<p>The Studio also tells you when a language is missing, with a button that opens this page. Until a language is there, the website shows the English text in it.</p>
 <h2>Publish for the first time</h2>
 <ol>
 <li>In the Studio, open <strong>Settings</strong>.</li>
@@ -141,6 +174,7 @@
 <h2>Good to know</h2>
 <ul>
 <li>The Studio keeps itself up to date. Each time it starts it looks for a newer version.</li>
+<li>Write in English. The translations are in a closed fold under each text; open it to read them or to change a word. Leave one empty and the Mac makes it again when you save.</li>
 <li>Nothing goes live until you press Publish. Until then your changes are only on this Mac.</li>
 <li>To install again, or to repair it, run the same line again. It keeps your unpublished changes.</li>
 <li>To remove it: drag ROBINs Studio from Applications to the Trash, and delete the folder <code>Library/Application Support/ROBINs Studio</code> in your home folder.</li>
@@ -191,7 +225,7 @@
 <footer class="site-footer">
   <div class="wrap site-footer__grid">
     <div>
-      <img class="theme-invert" src="/robins-coffee/assets/brand/wordmark-white.png?v=2oqoktcy" alt="ROBIN&#39;s" width="146" height="50" loading="lazy">
+      <img class="theme-invert" src="/robins-coffee/assets/brand/wordmark-white.png?v=3t18netn" alt="ROBIN&#39;s" width="146" height="50" loading="lazy">
       <p>Zähringerstrasse 33<br>8001 Zürich</p>
     </div>
     <div>
@@ -213,7 +247,7 @@
 </footer>
 
 <script type="application/json" id="hours-data">{"regular":[{"days":["mo","tu","we","th"],"open":"16:00","close":"00:00"},{"days":["fr"],"open":"16:00","close":"02:00"},{"days":["sa"],"open":"10:00","close":"02:00"},{"days":["su"],"open":"10:00","close":"00:00"}],"exceptions":[]}</script>
-<script type="application/json" id="i18n-data">{"nav_home":"Home","open_now":"Open now","opens_at":"Opens {time}","until_late":"until late","closed_today":"Closed today","closed":"Closed","og_locale":"en_GB","notfound_title":"This page is not here","notfound_text":"The address may be old or mistyped. The bar is still where it always was.","notfound_home":"To the home page","hours":"Opening hours","address":"Address","contact":"Contact","call":"Call","email":"Email","map":"Open in Google Maps","instagram":"Instagram","skip":"Skip to content","lang_switch":"Deutsch","days":{"mo":"Monday","tu":"Tuesday","we":"Wednesday","th":"Thursday","fr":"Friday","sa":"Saturday","su":"Sunday"},"days_short":{"mo":"Mon","tu":"Tue","we":"Wed","th":"Thu","fr":"Fri","sa":"Sat","su":"Sun"},"range_sep":" to ","months":["January","February","March","April","May","June","July","August","September","October","November","December"],"months_short":["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"date_short":"{day} {month} {year}","date_event":"{weekday} {day} {month}","nav_events":"What's on","nav_gallery":"Photos","gallery_all":"All photos","gallery_loose":"More from the bar","photo_enlarge":"View larger","lightbox_label":"Photo viewer","lightbox_close":"Close","lightbox_prev":"Previous photo","lightbox_next":"Next photo","events_title":"What's on","events_all":"See everything on","today":"Today","price_from":"Tickets from CHF {price}.","price_some_free":"Some shows are free.","hero_whats_on":"What's on","hero_drinks":"The cocktails","events_none":"Nothing is announced right now. Come by anyway.","events_subscribe":"Add all events to your calendar","tickets":"Tickets","event_walk_in":"Just come by","menu_title":"On the menu","free_entry":"Free entry","event_languages":{"en":"","de":"in German","it":"in Italian","fr":"in French","es":"in Spanish"},"open_until":"Open until {time}","ticker_pause":"Pause the moving text","theme_switch":"Night colours","google_rating":"{value} out of 5 on Google, from {count} reviews","contact_title":"Write to us","form_name":"Name","form_phone":"Phone","form_message":"Message","form_optional":"optional","form_send":"Write the email","form_hint":"This opens your email app with the message ready to send to {email}.","form_subject":"Message from the website","ticker":["Coffee","Cocktails","Comedy","Live Music","Chess","Zähringerstrasse 33","Zürich Old Town"]}</script>
-<script src="/robins-coffee/assets/js/site.js?v=2oqoktcy" defer></script>
+<script type="application/json" id="i18n-data">{"nav_home":"Home","open_now":"Open now","opens_at":"Opens {time}","until_late":"until late","closed_today":"Closed today","closed":"Closed","og_locale":"en_GB","notfound_title":"This page is not here","notfound_text":"The address may be old or mistyped. The bar is still where it always was.","notfound_home":"To the home page","hours":"Opening hours","address":"Address","contact":"Contact","call":"Call","email":"Email","map":"Open in Google Maps","instagram":"Instagram","skip":"Skip to content","lang_name":"English","lang_menu":"Language","days":{"mo":"Monday","tu":"Tuesday","we":"Wednesday","th":"Thursday","fr":"Friday","sa":"Saturday","su":"Sunday"},"days_short":{"mo":"Mon","tu":"Tue","we":"Wed","th":"Thu","fr":"Fri","sa":"Sat","su":"Sun"},"range_sep":" to ","months":["January","February","March","April","May","June","July","August","September","October","November","December"],"months_short":["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"date_short":"{day} {month} {year}","date_event":"{weekday} {day} {month}","nav_events":"What's on","nav_gallery":"Photos","gallery_all":"All photos","gallery_loose":"More from the bar","photo_enlarge":"View larger","lightbox_label":"Photo viewer","lightbox_close":"Close","lightbox_prev":"Previous photo","lightbox_next":"Next photo","events_title":"What's on","events_all":"See everything on","today":"Today","price_from":"Tickets from CHF {price}.","price_some_free":"Some shows are free.","hero_whats_on":"What's on","hero_drinks":"The cocktails","events_none":"Nothing is announced right now. Come by anyway.","events_subscribe":"Add all events to your calendar","tickets":"Tickets","event_walk_in":"Just come by","menu_title":"On the menu","free_entry":"Free entry","event_languages":{"en":"","de":"in German","it":"in Italian","fr":"in French","es":"in Spanish"},"open_until":"Open until {time}","ticker_pause":"Pause the moving text","theme_switch":"Night colours","google_rating":"{value} out of 5 on Google, from {count} reviews","contact_title":"Write to us","form_name":"Name","form_phone":"Phone","form_message":"Message","form_optional":"optional","form_send":"Write the email","form_hint":"This opens your email app with the message ready to send to {email}.","form_subject":"Message from the website","ticker":["Coffee","Cocktails","Comedy","Live Music","Chess","Zähringerstrasse 33","Zürich Old Town"]}</script>
+<script src="/robins-coffee/assets/js/site.js?v=3t18netn" defer></script>
 </body>
 </html>

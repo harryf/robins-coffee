@@ -4,36 +4,96 @@
     <loc>https://harryf.github.io/robins-coffee/</loc>
     <xhtml:link rel="alternate" hreflang="en" href="https://harryf.github.io/robins-coffee/"/>
     <xhtml:link rel="alternate" hreflang="de" href="https://harryf.github.io/robins-coffee/de/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://harryf.github.io/robins-coffee/fr/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://harryf.github.io/robins-coffee/it/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://harryf.github.io/robins-coffee/"/>
   </url>
   <url>
     <loc>https://harryf.github.io/robins-coffee/de/</loc>
     <xhtml:link rel="alternate" hreflang="en" href="https://harryf.github.io/robins-coffee/"/>
     <xhtml:link rel="alternate" hreflang="de" href="https://harryf.github.io/robins-coffee/de/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://harryf.github.io/robins-coffee/fr/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://harryf.github.io/robins-coffee/it/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://harryf.github.io/robins-coffee/"/>
   </url>
   <url>
     <loc>https://harryf.github.io/robins-coffee/de/events/</loc>
     <xhtml:link rel="alternate" hreflang="de" href="https://harryf.github.io/robins-coffee/de/events/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://harryf.github.io/robins-coffee/events/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://harryf.github.io/robins-coffee/fr/events/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://harryf.github.io/robins-coffee/it/events/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://harryf.github.io/robins-coffee/events/"/>
   </url>
   <url>
     <loc>https://harryf.github.io/robins-coffee/de/gallery/</loc>
     <xhtml:link rel="alternate" hreflang="de" href="https://harryf.github.io/robins-coffee/de/gallery/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://harryf.github.io/robins-coffee/fr/gallery/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://harryf.github.io/robins-coffee/gallery/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://harryf.github.io/robins-coffee/it/gallery/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://harryf.github.io/robins-coffee/gallery/"/>
   </url>
   <url>
     <loc>https://harryf.github.io/robins-coffee/events/</loc>
     <xhtml:link rel="alternate" hreflang="de" href="https://harryf.github.io/robins-coffee/de/events/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://harryf.github.io/robins-coffee/events/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://harryf.github.io/robins-coffee/fr/events/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://harryf.github.io/robins-coffee/it/events/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://harryf.github.io/robins-coffee/events/"/>
+  </url>
+  <url>
+    <loc>https://harryf.github.io/robins-coffee/fr/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://harryf.github.io/robins-coffee/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://harryf.github.io/robins-coffee/de/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://harryf.github.io/robins-coffee/fr/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://harryf.github.io/robins-coffee/it/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://harryf.github.io/robins-coffee/"/>
+  </url>
+  <url>
+    <loc>https://harryf.github.io/robins-coffee/fr/events/</loc>
+    <xhtml:link rel="alternate" hreflang="de" href="https://harryf.github.io/robins-coffee/de/events/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://harryf.github.io/robins-coffee/events/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://harryf.github.io/robins-coffee/fr/events/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://harryf.github.io/robins-coffee/it/events/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://harryf.github.io/robins-coffee/events/"/>
+  </url>
+  <url>
+    <loc>https://harryf.github.io/robins-coffee/fr/gallery/</loc>
+    <xhtml:link rel="alternate" hreflang="de" href="https://harryf.github.io/robins-coffee/de/gallery/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://harryf.github.io/robins-coffee/fr/gallery/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://harryf.github.io/robins-coffee/gallery/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://harryf.github.io/robins-coffee/it/gallery/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://harryf.github.io/robins-coffee/gallery/"/>
   </url>
   <url>
     <loc>https://harryf.github.io/robins-coffee/gallery/</loc>
     <xhtml:link rel="alternate" hreflang="de" href="https://harryf.github.io/robins-coffee/de/gallery/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://harryf.github.io/robins-coffee/fr/gallery/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://harryf.github.io/robins-coffee/gallery/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://harryf.github.io/robins-coffee/it/gallery/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://harryf.github.io/robins-coffee/gallery/"/>
+  </url>
+  <url>
+    <loc>https://harryf.github.io/robins-coffee/it/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://harryf.github.io/robins-coffee/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://harryf.github.io/robins-coffee/de/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://harryf.github.io/robins-coffee/fr/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://harryf.github.io/robins-coffee/it/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://harryf.github.io/robins-coffee/"/>
+  </url>
+  <url>
+    <loc>https://harryf.github.io/robins-coffee/it/events/</loc>
+    <xhtml:link rel="alternate" hreflang="de" href="https://harryf.github.io/robins-coffee/de/events/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://harryf.github.io/robins-coffee/events/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://harryf.github.io/robins-coffee/fr/events/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://harryf.github.io/robins-coffee/it/events/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://harryf.github.io/robins-coffee/events/"/>
+  </url>
+  <url>
+    <loc>https://harryf.github.io/robins-coffee/it/gallery/</loc>
+    <xhtml:link rel="alternate" hreflang="de" href="https://harryf.github.io/robins-coffee/de/gallery/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://harryf.github.io/robins-coffee/fr/gallery/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://harryf.github.io/robins-coffee/gallery/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://harryf.github.io/robins-coffee/it/gallery/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://harryf.github.io/robins-coffee/gallery/"/>
   </url>
 </urlset>
