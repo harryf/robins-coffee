@@ -42,7 +42,7 @@ const body = h("div", { class: "section" });
 const changes = h("aside", { class: "changes" });
 app.append(
   h("div", { class: "shell" },
-    h("aside", { class: "side" }, sideHead, nav, sideVersion),
+    h("aside", { class: "side" }, h("div", { class: "side__head" }, h("img", { class: "side__logo", src: "/_studio/logo.png", alt: "", width: 48, height: 48 }), sideHead), nav, sideVersion),
     h("main", { class: "main" }, h("header", { class: "bar" }, title, buildPill, previewButton), buildProblem, body),
     changes,
   ),

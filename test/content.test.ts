@@ -271,9 +271,11 @@ describe("studio: content routes", () => {
     const shot = { base64: await picture(), focus: [0.5, 0.5] };
     expect((await call("POST drink", { part: "signatures", drink: { name: "Hot Toddy", text: { en: "Whisky", de: "Whisky" }, price_chf: 14, alt: { en: "A", de: "B" } }, picture: shot }))!.data).toEqual({ ok: true, photo: "photos/menu-hot-toddy.jpg" });
     expect((await call("POST drink", { part: "signatures", drink: { name: "X", text: { en: "a", de: "b" }, price_chf: 1, photo: "photos/nope.jpg", alt: { en: "A", de: "B" } } }))!.data.error).toBe("event_image_wrong");
-    expect((await call("DELETE drink", { part: "signatures", name: "Hot Toddy" }))!.status).toBe(200);
     const made = (await call("POST event", { event: { title: "Board Games", date: "2026-12-03", from: "19:00", image: "photos/menu-hot-toddy.jpg" } }))!;
     expect(made.data.path).toBe("site/events/2026-12-03-board-games.md");
+    // The drink goes, its picture stays: the event still uses it.
+    expect((await call("DELETE drink", { part: "signatures", name: "Hot Toddy" }))!.status).toBe(200);
+    expect(exists2(join(root, "site/photos/menu-hot-toddy.jpg"))).toBe(true);
     expect((await call("POST event", { event: { title: "Board Games", date: "2026-12-03" } }))!.data.error).toBe("event_exists");
     expect((await call("POST event", { event: { title: "", date: "x" } }))!.data.problems).toEqual(expect.arrayContaining(["event_title_missing", "event_date_wrong"]));
     const seen = (await call("GET content"))!.data;
@@ -281,8 +283,10 @@ describe("studio: content routes", () => {
     expect(seen.tools.map((x: any) => x.name)).toContain("git");
     expect((await call("DELETE event", { path: "site/events/../data/menu.yml" }))!.status).toBe(404);
     expect((await call("DELETE event", { path: made.data.path }))!.status).toBe(200);
-    expect(removed).toBe(1);
+    // The event went, and with it the picture that nothing uses any more: two things told to the screen.
+    expect(removed).toBe(2);
     expect(exists2(join(root, made.data.path))).toBe(false);
+    expect(exists2(join(root, "site/photos/menu-hot-toddy.jpg"))).toBe(false);
   });
   test("an album is added through the route", async () => {
     expect((await call("POST album", { title: { en: "Live Music", de: "Live-Musik" } }))!.data.slug).toBe("live-music");

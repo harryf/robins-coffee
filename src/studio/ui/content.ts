@@ -245,8 +245,14 @@ const photos = screen("photos", (t) => t.sec_photos, (ctx, ui) => {
     h("span", { class: "muted" }, dayShort(m.date, t)),
     m.feed ? null : h("span", { class: "tag" }, t.photo_not_on_home),
   );
-  const group = (title: string, list: any[]) => h("section", { class: "group" },
-    h("h3", { class: "group__title" }, title, h("span", { class: "muted" }, t.photos_count(list.length))),
+  const renameForm = (album: any) => {
+    const title = pair(t, t.album_title);
+    title.en.value = album.title?.en ?? "";
+    title.de.value = album.title?.de ?? "";
+    return card(ctx, ui, { title: t.album_rename_title, kids: [title.el], done: t.album_renamed, submit: () => api("PUT", "album", { slug: album.slug, title: title.value() }) });
+  };
+  const group = (title: string, list: any[], album?: any) => h("section", { class: "group" },
+    h("h3", { class: "group__title" }, title, h("span", { class: "muted" }, t.photos_count(list.length)), album ? h("button", { class: "button button--quiet", type: "button", onclick: () => ui.open(renameForm(album)) }, t.album_rename) : null),
     list.length ? h("div", { class: "tiles" }, ...list.map(tile)) : h("p", { class: "muted" }, t.album_empty),
   );
 
@@ -260,7 +266,7 @@ const photos = screen("photos", (t) => t.sec_photos, (ctx, ui) => {
       const loose = content.moments.filter((m: any) => !m.album || !known.has(m.album));
       return [
         h("p", { class: "muted" }, t.photos_help),
-        ...content.albums.map((a: any) => group(loc(a.title), content.moments.filter((m: any) => m.album === a.slug))),
+        ...content.albums.map((a: any) => group(loc(a.title), content.moments.filter((m: any) => m.album === a.slug), a)),
         loose.length || !content.albums.length ? group(t.photos_no_album, loose) : null,
       ];
     },

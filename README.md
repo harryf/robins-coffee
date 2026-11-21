@@ -74,6 +74,8 @@ The code is in `src/editor/` and is bundled by the normal build into `dist/edit/
 
 ## The Studio (Mac)
 
+To put it on a Mac that has nothing yet, give the person this page: https://harryf.github.io/robins-coffee/studio/ (source: `site/content/en/studio.md`, `site/content/de/studio.md`). Its one line runs `scripts/install-studio.sh`, which installs Apple's tools and bun when missing, clones the site into `~/Library/Application Support/ROBINs Studio/site`, builds the app into `~/Applications` and writes both places to `config.json` beside the clone.
+
 ```
 bun run studio            # updates the folder when main moved, then: editing screen at http://127.0.0.1:4750/_studio/, preview at http://localhost:4750/
 bun run studio:app        # builds "ROBINs Studio.app", a window around the same thing

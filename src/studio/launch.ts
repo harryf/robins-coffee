@@ -6,7 +6,8 @@
 //   bun src/studio/launch.ts [the server's options] [--offline]
 import { existsSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { readConfig } from "./config";
 import { authEnv } from "./git";
 import { keychain } from "./keychain";
 import { readReport, reportPath, selfUpdate, type UpdateReport } from "./update";
@@ -24,6 +25,10 @@ const run = async (cmd: string[], env: Record<string, string> = {}, timeoutMs = 
   return out;
 };
 
+// The app sits in this folder when it was built by hand, or where the installer put it (config.json knows).
+const installed = (await readConfig()).app;
+const appDir = installed && existsSync(installed) && resolve(installed).endsWith("/ROBINs Studio.app") ? dirname(resolve(installed)) : root;
+
 let report: UpdateReport;
 if (offline) report = { result: "skipped", reason: "offline", at: new Date().toISOString() };
 else {
@@ -36,8 +41,8 @@ else {
       git: (a, remote) => run(["git", ...a], { GIT_LITERAL_PATHSPECS: "1", GIT_TERMINAL_PROMPT: "0", ...(remote ? authEnv(token) : {}) }, remote ? 30_000 : 60_000),
       uncommitted: async () => [...(await names(["git", "diff", "--name-only", "--no-renames", "-z", "HEAD", "--"])), ...(await names(["git", "ls-files", "--others", "--exclude-standard", "-z"]))],
       install: async () => void (await run([process.execPath, "install", "--frozen-lockfile"], {}, 180_000)),
-      rebuildApp: async () => void (await run([process.execPath, join("scripts", "build-app.ts")], {}, 180_000)),
-      hasApp: () => existsSync(join(root, "ROBINs Studio.app")),
+      rebuildApp: async () => void (await run([process.execPath, join("scripts", "build-app.ts"), "--out", appDir], {}, 180_000)),
+      hasApp: () => existsSync(join(appDir, "ROBINs Studio.app")),
     });
   } catch (error) {
     report = { result: "failed", reason: "merge", at: new Date().toISOString() };

@@ -378,7 +378,9 @@ describe("studio screens: the routes", () => {
     const moved = (await call("PUT event", { path: made.data.path, event: { ...event, date: "2026-12-10", image: made.data.image }, picture: await shot("#102030") }))!;
     expect(moved.data).toEqual({ ok: true, path: "site/events/2026-12-10-board-game-night.md", image: "photos/event-board-game-night-2.jpg" });
     expect([has(made.data.path), has(moved.data.path)]).toEqual([false, true]);
-    expect(changed).toBe(before + 1);
+    // Two things went away and were told to the screen: the old file, and the old picture nothing uses any more.
+    expect(changed).toBe(before + 2);
+    expect(has("site/" + made.data.image)).toBe(false);
     // The series from the poster: its notes, its short name and its organiser stay when only the text changes.
     const pong = (await call("GET content"))!.data.events.find((e: any) => e.path === "site/events/beer-pong.md");
     expect(pong).toMatchObject({ title: "Beer Pong at ROBIN's", source: "hand", fields: { name: "Beer Pong", every: "we", image: "photos/event-beer-pong.jpg" } });

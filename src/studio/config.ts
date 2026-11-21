@@ -9,12 +9,13 @@ import { dirname, isAbsolute, join, resolve } from "node:path";
 /** Where the setting is kept. STUDIO_CONFIG moves it, for tests. */
 export const configPath = (env: Record<string, string | undefined> = process.env) => env.STUDIO_CONFIG || join(homedir(), "Library", "Application Support", "ROBINs Studio", "config.json");
 
-export type Config = { folder?: string };
+/** `folder`: the copy of the site the app edits. `app`: where the app itself is, when the installer put it outside that folder. */
+export type Config = { folder?: string; app?: string };
 
 export async function readConfig(path = configPath()): Promise<Config> {
   try {
     const data = JSON.parse(await Bun.file(path).text());
-    return typeof data?.folder === "string" ? { folder: data.folder } : {};
+    return { ...(typeof data?.folder === "string" ? { folder: data.folder } : {}), ...(typeof data?.app === "string" ? { app: data.app } : {}) };
   } catch {
     return {};
   }
@@ -39,6 +40,7 @@ export async function saveFolder(folder: string, path = configPath()): Promise<s
   if (problem) throw new Error(problem);
   const full = resolve(folder.trim().replace(/^~(?=\/|$)/, homedir()));
   await mkdir(dirname(path), { recursive: true });
-  await Bun.write(path, JSON.stringify({ folder: full }, null, 2) + "\n");
+  // Whatever else the file holds (where the app is) stays.
+  await Bun.write(path, JSON.stringify({ ...(await readConfig(path)), folder: full }, null, 2) + "\n");
   return full;
 }

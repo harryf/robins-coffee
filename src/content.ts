@@ -96,6 +96,18 @@ export function addAlbum(yamlText: string, a: AlbumInput): { text: string; slug:
   return { text: doc.toString({ lineWidth: 0 }), slug };
 }
 
+/** albums.yml with one album's name changed. The slug stays, so every photo of the album stays in it. */
+export function renameAlbum(yamlText: string, slug: string, title: { en: string; de: string }): string {
+  if (typeof title?.en !== "string" || typeof title?.de !== "string" || !title.en.trim() || !title.de.trim()) throw new Error("both_languages");
+  const doc = parseDocument(yamlText);
+  const album = (doc.get("albums") as any)?.items?.find((a: any) => a.get("slug") === slug);
+  if (!album) throw new Error("album_unknown");
+  const node = doc.createNode({ en: title.en.trim(), de: noSharpS(title.de.trim()) }) as any;
+  node.flow = true;
+  album.set("title", node);
+  return doc.toString({ lineWidth: 0 });
+}
+
 export type DrinkInput = { name: string; text: { en: string; de: string }; price_chf: number; photo?: string; alt?: { en: string; de: string } };
 
 export function drinkProblems(d: DrinkInput): string[] {

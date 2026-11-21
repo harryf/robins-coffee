@@ -10,7 +10,7 @@ import { cleanPhoto } from "../../scripts/add-photo";
 import { inEditScope } from "../editor/scope";
 import { momentMarkdown } from "../moment";
 import { parseFrontMatter } from "../render";
-import { eventFile, eventProblems, eventFields, keepComments, addAlbum, setDrink, changeDrink, hasDrink, removeDrink, drinkProblems, editMoment, dropCover, photoDay, slugify, type EventInput } from "../content";
+import { eventFile, eventProblems, eventFields, keepComments, addAlbum, setDrink, changeDrink, hasDrink, removeDrink, drinkProblems, editMoment, dropCover, photoDay, slugify, type EventInput, renameAlbum } from "../content";
 import { importFromPage, listOrganiserEvents, eventfrogImage, eventfrogUrl, fetchChecked, type Imported } from "../eventfrog";
 import { draftAlt, type Focus } from "../focus";
 import { look as realLook, toolReport, type Seen } from "../vision";
@@ -213,6 +213,33 @@ export function contentApi(deps: ContentDeps) {
     }
   }
 
+  const drinkPhoto = (menu: string, part: string, name: string): string | null => {
+    const drink = (parseYaml(menu)?.sections ?? []).find((s: any) => s?.slug === part)?.drinks?.find((d: any) => d?.name === name);
+    return typeof drink?.photo === "string" ? drink.photo : null;
+  };
+
+  /**
+   * A picture the Studio made for a drink or an event (photos/menu-*.jpg, photos/event-*.jpg)
+   * goes when nothing names it any more: no data file, no event, no page text. Pictures of
+   * any other name were put there by hand for a page and are never touched.
+   */
+  async function sweepPictures(candidates: (string | null | undefined)[]): Promise<string[]> {
+    const gone: string[] = [];
+    const mine = [...new Set(candidates)].filter((p): p is string => typeof p === "string" && /^photos\/(menu|event)-[a-z0-9-]+\.jpg$/.test(p) && there(`site/${p}`));
+    if (!mine.length) return gone;
+    let words = "";
+    for (const glob of ["data/*.yml", "events/*.md", "content/*/*.md", "moments/*.md"]) for await (const p of new Bun.Glob(glob).scan({ cwd: join(root, "site") })) if (p !== "data/focus.yml") words += await text(`site/${p}`) + "\n";
+    for (const p of mine) {
+      if (words.includes(p)) continue;
+      await remove(`site/${p}`);
+      const focus = await text("site/data/focus.yml"), without = dropFocus(focus, p);
+      if (without !== focus) await deps.write("site/data/focus.yml", without);
+      gone.push(p);
+    }
+    if (gone.length) deps.changed();
+    return gone;
+  }
+
   /** Answers a content route, or null when the route is not one of these. */
   return async function handle(route: string, body: () => Promise<any>): Promise<Response | null> {
     switch (route) {
@@ -292,6 +319,14 @@ export function contentApi(deps: ContentDeps) {
         } catch (error) { return refuse(422, reason(error, "album_wrong")); }
       }
 
+      case "PUT album": {
+        const b = await body();
+        try {
+          await deps.write("site/data/albums.yml", renameAlbum(await text("site/data/albums.yml"), String(b.slug ?? ""), b.title));
+          return json({ ok: true });
+        } catch (error) { return refuse(422, reason(error, "album_wrong")); }
+      }
+
       case "POST drink": {
         const b = await body();
         const was = b.was == null ? null : { part: String(b.was.part ?? ""), name: String(b.was.name ?? "") };
@@ -304,6 +339,7 @@ export function contentApi(deps: ContentDeps) {
         if (picture === "none" && drink.photo && !there(`site/${drink.photo}`)) return refuse(422, "event_image_wrong");
         try {
           const menu = await text("site/data/menu.yml");
+          const before = was ? drinkPhoto(menu, was.part, was.name) : null;
           const part = b.part ? String(b.part) : slugify(String(b.partTitle?.en ?? ""));
           // A dry run first: a refusal must not leave a picture behind.
           const change = (d: typeof drink) => (was ? changeDrink(menu, was, part, d, b.partTitle) : setDrink(menu, part, d, b.partTitle));
@@ -311,6 +347,7 @@ export function contentApi(deps: ContentDeps) {
           change(drink);
           if (picture !== "none") drink.photo = await writePicture("menu", String(drink.name), picture);
           await deps.write("site/data/menu.yml", change(drink));
+          await sweepPictures([before]);
           return json({ ok: true, photo: drink.photo ?? null });
         } catch (error) { return refuse(422, reason(error, "drink_wrong")); }
       }
@@ -318,7 +355,10 @@ export function contentApi(deps: ContentDeps) {
       case "DELETE drink": {
         const b = await body();
         try {
-          await deps.write("site/data/menu.yml", removeDrink(await text("site/data/menu.yml"), String(b.part), String(b.name)));
+          const menu = await text("site/data/menu.yml");
+          const before = drinkPhoto(menu, String(b.part), String(b.name));
+          await deps.write("site/data/menu.yml", removeDrink(menu, String(b.part), String(b.name)));
+          await sweepPictures([before]);
           return json({ ok: true });
         } catch (error) { return refuse(422, reason(error, "drink_not_found")); }
       }
@@ -348,13 +388,16 @@ export function contentApi(deps: ContentDeps) {
         const file = eventFile(event);
         await deps.write(path, editing ? keepComments(oldText, file.text) : file.text);
         if (editing && path !== old) { await remove(old); deps.changed(); }
+        await sweepPictures([kept?.image ?? null]);
         return json({ ok: true, path, image: event.image ?? null });
       }
 
       case "DELETE event": {
         const path = String((await body()).path ?? "");
         if (!EVENT_PATH.test(path) || !there(path)) return refuse(404, "event_not_found");
+        const image = parseFrontMatter(await text(path)).data.image;
         await remove(path);
+        await sweepPictures([typeof image === "string" ? image : null]);
         deps.changed();
         return json({ ok: true });
       }
