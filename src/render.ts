@@ -283,6 +283,8 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
     // The menu in the page language. A drink links to its page when this language has the menu page.
     const say = (v: Record<string, string | undefined> | undefined) => words(v, page.lang);
     const menuUrl = pages.some((p) => p.slug === "menu" && p.lang === page.lang) ? langUrl(page.lang, "/menu/") : null;
+    // A season is told by its months, without days or year: "September to February".
+    const monthLabel = (day: string) => capital(t.months[Number(day.slice(5, 7)) - 1]);
     const dayLabel = (day: string) => fillDate(t.date_short, wallClock(new Date(day + "T12:00:00Z"), "UTC"), t);
     const drinkView = (d: Drink) => ({
       slug: d.slug, name: d.name, text: say(d.text), price_label: `CHF ${d.price_chf}`, url: menuUrl ? `${menuUrl}${d.slug}/` : null,
@@ -291,7 +293,7 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
     });
     const seasonView = (s: Season) => {
       const state = seasonState(s, today);
-      return { slug: s.slug, name: say(s.name), description: say(s.description), dates_label: `${dayLabel(s.start)}${t.range_sep}${dayLabel(s.end)}`, state, state_label: t[`season_${state}`], drinks: s.drinks.map((slug) => drinkView(menu.drinks.find((d) => d.slug === slug)!)) };
+      return { slug: s.slug, name: say(s.name), description: say(s.description), dates_label: `${monthLabel(s.start)}${t.range_sep}${monthLabel(s.end)}`, state, state_label: t[`season_${state}`], drinks: s.drinks.map((slug) => drinkView(menu.drinks.find((d) => d.slug === slug)!)) };
     };
     const drinkPage = (() => {
       const d = page.data.drink ? menu.drinks.find((x) => x.slug === page.data.drink) : undefined;

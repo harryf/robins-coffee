@@ -92,7 +92,7 @@ describe("the menu on the site", () => {
     for (const out of ["menu/index.html", "de/menu/index.html", "fr/menu/index.html", "it/menu/index.html"]) expect(pages.map((p) => p.out)).toContain(out);
     const en = pages.find((p) => p.out === "menu/index.html")!.html;
     expect(en.indexOf("Autumn/Winter 2026")).toBeLessThan(en.indexOf("Summer 2026"));
-    expect(en).toContain("1 Jun 2026 to 31 Aug 2026");
+    expect(en).toContain("<p class=\"season__dates\">June to August</p>");
     expect(en).toContain("Long light evenings.");
     expect(en).toContain('id="summer-2026"');
     const de = pages.find((p) => p.out === "de/menu/index.html")!.html;

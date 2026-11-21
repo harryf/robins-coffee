@@ -64,11 +64,13 @@ code { font-size: var(--size-code); color: var(--c-amber); }
 .site-header { position: absolute; inset: 0 0 auto 0; z-index: var(--z-header); padding-block: var(--space-4); }
 .site-header__row, .site-header__side { display: flex; align-items: center; gap: var(--space-4); }
 .site-header__row { justify-content: space-between; }
+/* The three places of the site, as pills; on a phone they get a row of their own. */
+.site-nav { display: flex; align-items: center; gap: var(--space-2); margin-inline-start: auto; }
 .brand { display: flex; align-items: center; gap: var(--space-3); min-height: var(--target-min); }
 .brand__mark { width: var(--target-min); height: var(--target-min); }
 .brand__word { width: auto; height: 34px; }
-.nav-link { display: inline-flex; align-items: center; min-height: var(--target-min); padding-inline: var(--space-2); font-weight: var(--weight-bold); font-size: var(--size-sm); color: var(--c-text); text-decoration: none; }
-.nav-link:hover { color: var(--c-neon); }
+.nav-link { display: inline-flex; align-items: center; min-height: var(--target-min); padding-inline: var(--space-4); border: var(--border-thin) solid var(--c-line); border-radius: var(--radius-pill); background: var(--c-raised); font-weight: var(--weight-bold); font-size: var(--size-sm); color: var(--c-text); text-decoration: none; white-space: nowrap; transition: border-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease); }
+.nav-link:hover { color: var(--c-neon); border-color: var(--c-neon); }
 /* language menu: the current code opens a list of the four languages, each in its own words */
 .langs { position: relative; }
 .langs__now { display: inline-flex; align-items: center; gap: var(--space-1); min-height: var(--target-min); min-width: var(--target-min); justify-content: center; padding-inline: var(--space-2); font-weight: var(--weight-bold); font-size: var(--size-sm); color: var(--c-text); cursor: pointer; list-style: none; }
@@ -105,7 +107,11 @@ main > :first-child:not(.hero) { padding-top: var(--space-24); }
   .site-header .theme-switch { margin-inline: var(--space-1); }
   .site-header__row, .brand { gap: var(--space-2); }
   .site-header__side { gap: 0; }
-  .site-header .nav-link, .site-header .langs__now { padding-inline: var(--space-1); }
+  .site-header .langs__now { padding-inline: var(--space-1); }
+  .site-header__row { flex-wrap: wrap; row-gap: var(--space-2); }
+  .site-nav { order: 3; flex-basis: 100%; margin-inline-start: 0; justify-content: center; }
+  .site-header .nav-link { padding-inline: var(--space-3); }
+  main > :first-child:not(.hero) { padding-top: calc(var(--space-24) + var(--target-min) + var(--space-6)); }
   .brand { flex: none; }
   .brand__word { height: 26px; }
 }
@@ -316,6 +322,9 @@ a.event__thumb { cursor: zoom-in; }
 .season::after, .menu-card::after { right: var(--space-4); }
 .season > * + * { margin-top: var(--space-6); }
 .season + .season, .season + .h-lg { margin-top: var(--space-8); }
+/* A season's drinks sit in the middle of the card, however many there are. */
+.season .drinks { display: flex; flex-wrap: wrap; justify-content: center; }
+.season .drinks > * { flex: 1 1 9.5rem; max-width: var(--measure-card); }
 .season__head { text-align: center; }
 .season__state, .menu-card__season { color: var(--c-rust); font: var(--weight-bold) var(--size-xs)/var(--leading-label) var(--font-body); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
 .season__name { font: var(--weight-regular) var(--size-xl)/var(--leading-display) var(--font-display); letter-spacing: var(--tracking-display); margin-top: var(--space-2); text-wrap: balance; }

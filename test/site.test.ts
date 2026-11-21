@@ -138,8 +138,8 @@ describe("gallery", () => {
   test("the header and the home feed link to the gallery in both languages", async () => {
     const en = await page("index.html");
     const de = await page("de/index.html");
-    expect(en).toContain('<a class="nav-link" href="/robins-coffee/gallery/">Photos</a>');
-    expect(de).toContain('<a class="nav-link" href="/robins-coffee/de/gallery/">Fotos</a>');
+    expect(en).toContain('<a class="nav-link" href="/robins-coffee/gallery/">Moments</a>');
+    expect(de).toContain('<a class="nav-link" href="/robins-coffee/de/gallery/">Momente</a>');
     expect(en.split('id="moments"')[1]!.split("</section>")[0]).toContain('href="/robins-coffee/gallery/"');
     expect(de.split('id="moments"')[1]!.split("</section>")[0]).toContain('href="/robins-coffee/de/gallery/"');
   });
