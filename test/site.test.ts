@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import sharp from "sharp";
 import { join } from "node:path";
+import { parse as parseYaml } from "yaml";
 import { renderSite, sitemapXml, resolveUrl, hoursRows, parseFrontMatter, wallClock, groupGallery, type Files, type Photo } from "../src/render";
 import { checkLinks } from "../scripts/check-links";
 import { mkdtemp, mkdir, rm } from "node:fs/promises";
@@ -319,7 +320,7 @@ describe("events", () => {
     const pages = await renderSite(withEvents(imported), { base: "/", photos, now: NOW });
     for (const out of ["events/index.html", "de/events/index.html"]) {
       const html = pages.find((p) => p.out === out)!.html;
-      const ends = [...html.matchAll(/class="event" data-end="([^"]+)"/g)].map((m) => m[1]);
+      const ends = [...html.matchAll(/class="event" data-start="[^"]+" data-end="([^"]+)"/g)].map((m) => m[1]);
       expect(ends.length).toBe(want.length);
       expect(ends).toEqual(want.map((e) => e.end));
       const ld = JSON.parse(/<script type="application\/ld\+json">(\{"@context":"https:\/\/schema.org","@graph".*?)<\/script>/s.exec(html)![1]!);
@@ -674,5 +675,69 @@ describe("menu", () => {
   test("a menu photo that is missing fails the build", async () => {
     const broken = { ...files, "data/menu.yml": files["data/menu.yml"]!.replace("photos/menu-lazy-monkey.jpg", "photos/nope.jpg") };
     expect(renderSite(broken, { base: "/", photos })).rejects.toThrow(/photo photos\/nope.jpg of "Lazy Monkey" is missing/);
+  });
+});
+
+describe("home page: day and night, and the guests it speaks to", () => {
+  const feed = JSON.parse(require("node:fs").readFileSync(join(import.meta.dir, "fixtures/iyf-events.json"), "utf8"));
+  const NOW = new Date("2026-11-15T22:00:00+01:00");
+  const home = async (f: Files, lang = "en") => (await renderSite(f, { base: "/", photos, now: NOW })).find((p) => p.out === (lang === "en" ? "index.html" : "de/index.html"))!.html;
+  // Only the events given: the hand-written ones of the frozen copy are left out.
+  const withEvents = (events: SiteEvent[]) => ({ ...Object.fromEntries(Object.entries(files).filter(([p]) => !p.startsWith("events/"))), "data/events.json": JSON.stringify({ events }) });
+  const cards = (html: string) => [...html.matchAll(/class="card guest" data-key="([a-z]+)"/g)].map((m) => m[1]);
+
+  test("the page is written in the night order, and the day order is the same sections moved about", async () => {
+    const yml = parseYaml(files["data/home.yml"]!);
+    expect([...yml.sections_day].sort()).toEqual([...yml.sections].sort());
+    // Night: what's on and the drinks come before the guests; by day the guests and the calm side come first.
+    expect(yml.sections.indexOf("events")).toBeLessThan(yml.sections.indexOf("guests"));
+    expect(yml.sections_day.indexOf("guests")).toBeLessThan(yml.sections_day.indexOf("events"));
+    expect(yml.sections_day.indexOf("about")).toBeLessThan(yml.sections_day.indexOf("menu"));
+    const html = await home(withEvents(fromIyfFeed(feed)));
+    const ids = [...html.matchAll(/<section class="section[^"]*" id="([a-z]+)"/g)].map((m) => m[1]);
+    expect(ids).toEqual(yml.sections.filter((s: string) => !["hero", "ticker"].includes(s)));
+    expect(html).toContain(`day: ${JSON.stringify(yml.sections_day)}`);
+  });
+
+  test("ANTI: a day order that loses or adds a section stops the build", async () => {
+    const bad = { ...files, "data/home.yml": files["data/home.yml"]!.replace(/^sections_day: .*$/m, "sections_day: [hero, ticker, guests, about]") };
+    await expect(renderSite(bad, { base: "/", photos })).rejects.toThrow("sections_day");
+  });
+
+  test("both languages have the same five guest cards, with the day order in the page", async () => {
+    const yml = parseYaml(files["data/home.yml"]!);
+    for (const lang of ["en", "de"]) {
+      const html = await home(files, lang);
+      expect(cards(html)).toHaveLength(5);
+      expect([...cards(html)].sort()).toEqual([...yml.guests_day].sort());
+      expect(html).toContain(`data-day="${yml.guests_day.join(",")}"`);
+      expect(html).not.toContain("{prices}");
+    }
+    const bad = { ...files, "content/de/index.md": files["content/de/index.md"]!.replace("key: regulars", "key: locals") };
+    await expect(renderSite(bad, { base: "/", photos })).rejects.toThrow("guests_day");
+  });
+
+  test("what the shows cost comes from the events: the cheapest ticket, and whether some are free", async () => {
+    const [a, b, c] = fromIyfFeed(feed).filter((e) => new Date(e.start) > NOW);
+    const priced = [{ ...a!, price_chf: 12 }, { ...b!, price_chf: 5 }, { ...c!, price_chf: 0 }];
+    expect(await home(withEvents(priced))).toContain("Tickets from CHF 5. Some shows are free.");
+    expect(await home(withEvents(priced), "de")).toContain("Tickets ab CHF 5. Manche Shows sind gratis.");
+    const unknown = await home(withEvents(priced.map((e) => ({ ...e, price_chf: null }))));
+    expect(unknown).not.toMatch(/>Tickets from CHF /);
+    expect(unknown).toContain("<p>Come early for a good seat");
+  });
+
+  test("each theme has its own headline and buttons; a question mark ends the first sentence too", async () => {
+    const html = await home(withEvents(fromIyfFeed(feed)));
+    expect(html).toContain('<h1 class="hero__title" data-theme-only="night">Nothing to do in Zürich tonight? <span class="neon-word">Now there is.</span></h1>');
+    expect(html).toMatch(/<h1 class="hero__title" data-theme-only="day">[^<]+<span class="neon-word">/);
+    expect(html).toContain('href="#events">What&#39;s on</a>');
+    // Without events the night button goes to the way here, never to a missing anchor.
+    expect(await home(withEvents([]))).not.toContain('href="#events"');
+  });
+
+  test("the menu says What's on, not Events", async () => {
+    expect(await home(files)).toMatch(/class="nav-link" href="[^"]*">What&#39;s on</);
+    expect(await home(files, "de")).toMatch(/class="nav-link" href="[^"]*">Programm</);
   });
 });

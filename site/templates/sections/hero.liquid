@@ -1,4 +1,4 @@
-{% comment %} hero: page (kicker, headline, visit_title), home (hero_photo, hero_photo_day), photos, site, t. Full-height photo with the headline; always light on dark (on-photo). With hero_photo_day set, the day theme shows that photo and the night theme the other; only the one on show is loaded. The last sentence of the headline becomes the neon sign. {% endcomment %}
+{% comment %} hero: page (kicker, headline, headline_day, visit_title), home (hero_photo, hero_photo_day), photos, site, t, events_next, menu. Full-height photo with the headline; always light on dark (on-photo). By day (coffee) it shows hero_photo_day, headline_day and the way here; by night (cocktails) hero_photo, headline and what's on. Only the photo on show is loaded. The last sentence of a headline becomes the neon sign. {% endcomment %}
 <section class="hero on-photo">
   <div class="hero__photo">
     {%- if home.hero_photo_day %}
@@ -10,9 +10,24 @@
   </div>
   <div class="wrap hero__body">
     <p class="eyebrow">{{ page.kicker }}</p>
+    {%- if page.headline_day %}
+    <h1 class="hero__title" data-theme-only="night">{{ page.headline | neon_last | raw }}</h1>
+    <h1 class="hero__title" data-theme-only="day">{{ page.headline_day | neon_last | raw }}</h1>
+    {%- else %}
     <h1 class="hero__title">{{ page.headline | neon_last | raw }}</h1>
+    {%- endif %}
     <p class="hero__status">{% render 'components/open-pill', t: t %}</p>
-    <p class="hero__actions">
+    <p class="hero__actions" data-theme-only="night">
+      {%- if events_next.size > 0 %}
+      <a class="btn btn--neon" href="#events">{{ t.hero_whats_on }}</a>
+      {%- else %}
+      <a class="btn btn--neon" href="#visit">{{ page.visit_title }}</a>
+      {%- endif %}
+      {%- if menu.size > 0 %}
+      <a class="btn" href="#menu">{{ t.hero_drinks }}</a>
+      {%- endif %}
+    </p>
+    <p class="hero__actions" data-theme-only="day">
       <a class="btn btn--neon" href="#visit">{{ page.visit_title }}</a>
       <a class="btn" href="{{ site.phone | tel }}">{{ t.call }}</a>
     </p>

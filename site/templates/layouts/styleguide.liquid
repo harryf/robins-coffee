@@ -146,7 +146,7 @@
     </table>
 
     <h2 class="h-xl sg-part" id="sections">Sections</h2>
-    <p>The home page is a stack of these, in the order of <code>site/data/home.yml</code>. Each is shown below at full width with the home page's own words.</p>
+    <p>The home page is a stack of these, in the order of <code>site/data/home.yml</code>: <code>sections</code> by night, <code>sections_day</code> by day. Each is shown below at full width with the home page's own words.</p>
   </div>
 </section>
 {%- for s in guide.sections %}
@@ -155,6 +155,6 @@
   <p class="sg-entry__doc">{{ s.doc }}</p>
 </div>
 {% assign tpl = s.path %}
-{% render tpl, site: site, t: t, page: guide.sample, home: home, photos: photos, moments: moments, hours_rows: hours_rows, events_next: events_next, events_url: events_url, gallery_url: gallery_url, menu: menu %}
+{% render tpl, site: site, t: t, page: guide.sample, home: home, photos: photos, moments: moments, hours_rows: hours_rows, events_next: events_next, events_url: events_url, gallery_url: gallery_url, menu: menu, price_note: price_note %}
 {%- endfor %}
 {% endblock %}

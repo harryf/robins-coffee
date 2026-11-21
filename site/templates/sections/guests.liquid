@@ -1,0 +1,23 @@
+{% comment %} guests: page (guests_title, guests: key, who, title, text, link, link_label), home (guests_day), price_note, events_url, gallery_url. One card per kind of guest, each with a way in. The page's list is the night order; by day the page script follows home.yml's guests_day. "{prices}" in a text becomes what the shows cost, worked out from the events. A link is events, gallery or a section of the home page. {% endcomment %}
+{%- if page.guests.size > 0 %}
+<section class="section" id="guests">
+  <div class="wrap">
+    <h2 class="h-xl">{{ page.guests_title }}</h2>
+    <div class="guests" data-arrange data-day="{{ home.guests_day | join: ',' }}">
+      {%- for g in page.guests %}
+      <article class="card guest" data-key="{{ g.key }}">
+        <p class="eyebrow">{{ g.who }}</p>
+        <h3 class="guest__title">{{ g.title }}</h3>
+        <p>{{ g.text | replace: '{prices}', price_note | strip }}</p>
+        {%- case g.link %}
+        {%- when 'events' %}{% assign href = events_url | url %}
+        {%- when 'gallery' %}{% assign href = gallery_url | url %}
+        {%- else %}{% assign href = '#' | append: g.link %}
+        {%- endcase %}
+        <p class="guest__go"><a href="{{ href }}">{{ g.link_label }} <span aria-hidden="true">→</span></a></p>
+      </article>
+      {%- endfor %}
+    </div>
+  </div>
+</section>
+{%- endif %}

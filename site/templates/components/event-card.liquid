@@ -1,5 +1,5 @@
-{% comment %} event-card: e (an event view: name, when_label, start, end, meta_label, text, ticket_url, more_url, img), t. Without a ticket link it says that people can just come. Hidden by site.js once the event has ended. {% endcomment %}
-<article class="event" data-end="{{ e.end }}">
+{% comment %} event-card: e (an event view: name, when_label, start, end, meta_label, text, ticket_url, more_url, img), t. Without a ticket link it says that people can just come. Hidden by site.js once the event has ended; on its own day site.js marks it "Today". {% endcomment %}
+<article class="event" data-start="{{ e.start }}" data-end="{{ e.end }}">
   {%- if e.img %}
   <div class="event__thumb">{% render 'components/photo', img: e.img, alt: '', sizes: '6rem' %}</div>
   {%- endif %}

@@ -1,8 +1,26 @@
 {% layout 'layouts/base' %}
-{% comment %} home: the sections named in home.yml, top to bottom. {% endcomment %}
+{% comment %} home: the sections named in home.yml. The page is written in the night order (`sections`), which is also what a visitor without JavaScript gets; by day the script below puts them in the `sections_day` order before the page is first drawn, and again whenever the theme switch is used. It moves the DOM itself, so reading and tab order follow what is seen. A list marked data-arrange (the guest cards) is put in its data-day order the same way. {% endcomment %}
 {% block content %}
 {%- for name in home.sections %}
 {% assign tpl = 'sections/' | append: name %}
-{% render tpl, site: site, t: t, page: page, home: home, photos: photos, moments: moments, hours_rows: hours_rows, events_next: events_next, events_url: events_url, gallery_url: gallery_url, menu: menu %}
+{% render tpl, site: site, t: t, page: page, home: home, photos: photos, moments: moments, hours_rows: hours_rows, events_next: events_next, events_url: events_url, gallery_url: gallery_url, menu: menu, price_note: price_note %}
 {%- endfor %}
+<template data-sections-end></template>
+<script>
+(function () {
+  var order = { night: {{ home.sections | json | raw }}, day: {{ home.sections_day | json | raw }} };
+  var end = document.querySelector("[data-sections-end]");
+  var lists = document.querySelectorAll("[data-arrange]");
+  var night = [].map.call(lists, function (list) { return [].map.call(list.children, function (c) { return c.getAttribute("data-key"); }); });
+  window.robinsArrange = function () {
+    var theme = document.documentElement.dataset.theme === "day" ? "day" : "night";
+    (order[theme] || order.night).forEach(function (id) { var el = document.getElementById(id); if (el) end.parentNode.insertBefore(el, end); });
+    [].forEach.call(lists, function (list, i) {
+      var keys = theme === "day" && list.getAttribute("data-day") ? list.getAttribute("data-day").split(",") : night[i];
+      keys.forEach(function (k) { var c = list.querySelector('[data-key="' + k + '"]'); if (c) list.appendChild(c); });
+    });
+  };
+  window.robinsArrange();
+})();
+</script>
 {% endblock %}

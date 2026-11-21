@@ -52,7 +52,8 @@ Look at the result in a real browser at desktop and 390 px, in both themes (`?th
 | A batch of photos from the group | `bun scripts/review-photos.ts`, tick and save on `inbox/review.html`, `bun scripts/import-selection.ts <robins-selection.json>`, then replace every `TODO` (see README) |
 | An album | An entry in `site/data/albums.yml` (slug, title in EN and DE, optional cover), then `album: <slug>` on its moments |
 | A photo for a page section | `bun scripts/add-photo.ts <file> --plain --slug <name>`, then name it with EN and DE alt text where it is used |
-| A home page section | `site/templates/sections/<name>.liquid`, then its name in `site/data/home.yml`, then a style guide entry |
+| A home page section | `site/templates/sections/<name>.liquid`, then its name in both lists of `site/data/home.yml` (`sections` is the night order, `sections_day` the day order; the page script moves them by the clock), then a style guide entry |
+| A kind of guest on the home page | A card under `guests:` in both `content/<lang>/index.md` with the same `key`, and the key in `guests_day` in `home.yml`; the build stops when they differ |
 | A component | `site/templates/components/<name>.liquid` with its parameters in a top comment (the style guide prints it), plus its example in the `case` block of `layouts/styleguide.liquid`; a test fails without both |
 | A token | A line in `site/data/tokens.json`; it becomes `--<group>-<name>` and appears in the style guide by itself |
 | A page | `site/content/en/<slug>.md` and `site/content/de/<slug>.md`; `og_photo:` picks its link preview picture, `permalink:` names its output file (only 404 uses it) |

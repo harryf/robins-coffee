@@ -165,6 +165,11 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
   for (const m of moments) if (!opts.photos[m.photo]) throw new Error(`moment ${m.id}: photo ${m.photo} is missing`);
   const gallery = groupGallery(moments, data.albums?.albums ?? []);
   for (const p of data.home?.about_photos ?? []) if (!opts.photos[p.photo]) throw new Error(`home.yml about_photos: photo ${p.photo} is missing`);
+  // The day order is the same sections as the night order, moved about: none added, none lost.
+  if (data.home?.sections_day) {
+    const same = (a: string[], b: string[]) => [...a].sort().join() === [...b].sort().join();
+    if (!same(data.home.sections_day, data.home.sections ?? [])) throw new Error("home.yml: sections_day must name the same sections as sections");
+  }
 
   let current = { depth: 0 };
   const engine = new Liquid({ templates, extname: "", strictFilters: true, strictVariables: false, outputEscape: "escape" });
@@ -180,10 +185,10 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
   engine.registerFilter("largest", (vs: Variant[]) => photoUrl(vs.at(-1)!.path));
   engine.registerFilter("json", (v: unknown) => JSON.stringify(v).replace(/</g, "\\u003c"));
   const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" })[c]!);
-  // "Coffee by day. Cocktails by night." -> the last sentence becomes the neon sign.
+  // "Nothing to do in Zürich tonight? Now there is." -> what follows the first sentence becomes the neon sign.
   engine.registerFilter("neon_last", (s: string) => {
-    const i = String(s).indexOf(". ");
-    return i < 0 ? esc(String(s)) : `${esc(s.slice(0, i + 1))} <span class="neon-word">${esc(s.slice(i + 2))}</span>`;
+    const m = /[.?!] /.exec(String(s));
+    return !m ? esc(String(s)) : `${esc(s.slice(0, m.index + 1))} <span class="neon-word">${esc(s.slice(m.index + 2))}</span>`;
   });
   engine.registerFilter("tel", (s: string) => "tel:" + String(s).replace(/[^+\d]/g, ""));
 
@@ -193,6 +198,12 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
   const ahead = upcoming(allEvents, now, 60);
   for (const e of ahead) if (e.image && !/^https?:/.test(e.image) && !opts.photos[e.image]) throw new Error(`event ${e.id}: photo ${e.image} is missing`);
   for (const s of data.menu?.sections ?? []) for (const d of s.drinks ?? []) if (d.photo && !opts.photos[d.photo]) throw new Error(`menu.yml: photo ${d.photo} of "${d.name}" is missing`);
+  /** What the shows ahead cost, in words: "Tickets from CHF 5. Some shows are free." Empty when no event says. */
+  const priceNote = (t: any) => {
+    const prices = ahead.map((e) => e.price_chf).filter((p): p is number => typeof p === "number");
+    const paid = prices.filter((p) => p > 0);
+    return [paid.length ? t.price_from.replace("{price}", String(Math.min(...paid))) : "", prices.includes(0) ? t.price_some_free : ""].filter(Boolean).join(" ");
+  };
   const eventView = (e: SiteEvent, lang: string, t: any) => {
     const p = wallClock(new Date(e.start), site.timezone);
     const price = e.price_chf === null ? "" : e.price_chf === 0 ? t.free_entry : `CHF ${e.price_chf}`;
@@ -222,6 +233,11 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
     // `permalink` names the output file itself (404.html must sit at the root for GitHub Pages).
     const out = fm.permalink ? pageFile(fm.permalink, path) : dir + "index.html";
     pages.push({ lang: lang!, slug, url: fm.permalink ? "/" + out : "/" + dir, out, depth: out.split("/").length - 1, data: fm, html: marked.parse(body, { async: false }) as string });
+  }
+
+  for (const page of pages.filter((p) => p.slug === "" && Array.isArray(p.data.guests))) {
+    const keys = page.data.guests.map((g: any) => g.key);
+    if (data.home?.guests_day && [...keys].sort().join() !== [...data.home.guests_day].sort().join()) throw new Error(`content/${page.lang}/index.md: guests must have the keys of home.yml guests_day`);
   }
 
   const out: Page[] = [];
@@ -261,6 +277,7 @@ export async function renderSite(files: Files, opts: RenderOptions): Promise<Pag
       gallery_url: page.lang === defaultLang ? "/gallery/" : `/${page.lang}/gallery/`,
       events_url: page.lang === defaultLang ? "/events/" : `/${page.lang}/events/`,
       events_next: views.slice(0, data.home?.events_count ?? 4),
+      price_note: priceNote(t),
       events_months: months,
       // The drinks menu in the page language; a drink without a picture is a card with words only.
       menu: (data.menu?.sections ?? []).map((s: any) => ({
