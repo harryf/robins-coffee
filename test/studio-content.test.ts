@@ -492,7 +492,8 @@ describe("studio screens: restoring an old version", () => {
 
   test("C108: the content files become what they were at that commit: changed back, added since removed, removed since brought back", async () => {
     const { root, first, git } = repo();
-    expect((await git.history()).map((e) => e.what)).toEqual(["Second version", "First version"]);
+    // Both commits carry code beside the content: a restore may go back to them, the history does not list them.
+    expect(await git.history()).toEqual([]);
     expect(await git.restoreContent(first)).toEqual({ changed: 2, back: 1, removed: 2 });
     expect(file(root, "site/data/hours.yml").toString()).toBe(A.hours);
     expect(file(root, "site/events/2026-12-01-x.md").toString()).toBe(A.event);
@@ -565,7 +566,7 @@ describe("studio screens: restoring an old version", () => {
     expect(refs(root)).toBe(before);
     expect(sh(root, "status", "--porcelain")).toBe("");
     // The newest entry is what the folder has: nothing to do.
-    expect(await git.restoreContent((await git.history())[0]!.sha)).toEqual({ changed: 0, back: 0, removed: 0 });
+    expect(await git.restoreContent(sh(root, "rev-parse", "origin/main").trim())).toEqual({ changed: 0, back: 0, removed: 0 });
   });
 
   test("C109 ANTI: a link or a file of another kind that an old commit holds in a content folder is not written", async () => {
@@ -655,8 +656,8 @@ describe("studio screens: the server", () => {
 
   test("C108: restore through the screen's route: refused with unpublished changes, then the old hours come back as an unpublished change and the preview is rebuilt", async () => {
     const { entries } = await (await call("GET", "history")).json();
-    expect(entries.map((e: any) => e.what)).toEqual(["Earlier doors", "First version"]);
-    const old = entries[1].sha;
+    expect(entries.map((e: any) => e.what)).toEqual(["Earlier doors"]);
+    const old = sh(root, "rev-parse", "origin/main~1").trim();
     expect((await state()).changes).toEqual([]);
     // With a change of the person's own in the folder.
     expect((await call("POST", "album", { title: { en: "Live Music", de: "Live-Musik" } })).status).toBe(200);

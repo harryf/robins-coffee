@@ -31,6 +31,18 @@ const HOURS = "site/data/hours.yml";
 const ALBUMS = "site/data/albums.yml";
 /** Added to every HTML page of the preview as it is served, never to a built file. */
 export const RELOAD_SCRIPT = `<script>new EventSource("/_studio/events").addEventListener("reload",function(){location.reload()})</script>`;
+/**
+ * What marks a preview page as the copy on this Mac: the words in the tab's title and a
+ * pill in the bottom left corner, where no page has anything to press. Added as the page is served, so the built files stay what
+ * goes live. The pill takes its looks from the site's own tokens and lets clicks through.
+ */
+export function previewMark(html: string, words: string): string {
+  const safe = words.replace(/[<>&"]/g, "");
+  const pill = `<style>.studio-preview-pill{position:fixed;bottom:var(--space-4);left:var(--space-4);z-index:2147483647;pointer-events:none;padding:var(--space-1) var(--space-4);border-radius:var(--radius-pill);background:var(--c-amber);color:var(--c-bg);font-family:var(--font-body);font-size:var(--size-sm);font-weight:var(--weight-bold);letter-spacing:var(--tracking-label);text-transform:uppercase;white-space:nowrap;box-shadow:0 0 0 var(--border-thick) var(--c-bg)}@media print{.studio-preview-pill{display:none}}</style><div class="studio-preview-pill" role="note">${safe}</div>`;
+  const titled = html.replace(/<title>/i, () => `<title>${safe} · `);
+  const at = titled.lastIndexOf("</body>");
+  return at < 0 ? titled + pill + RELOAD_SCRIPT : titled.slice(0, at) + pill + RELOAD_SCRIPT + titled.slice(at);
+}
 
 export type StudioOptions = {
   root: string;
@@ -56,7 +68,8 @@ export type StudioState = {
   branch: string;
   changes: (FileChange & { publishable: boolean })[];
   keys: Record<string, boolean> | null;
-  publish: { running: boolean; steps: Step[]; result: PublishResult | null };
+  /** `started` is when the running or the last publish began, in milliseconds, so the screen can count. */
+  publish: { running: boolean; steps: Step[]; result: PublishResult | null; started?: number; ended?: number };
   preview: string;
   /** The Studio's own version, the commit the folder is on, and what the look for a newer one found at start. */
   version: { number: string; commit: string; update: UpdateReport | null };
@@ -164,13 +177,13 @@ export async function startStudio(options: StudioOptions) {
   }
 
   async function runPublish() {
-    publishing = { running: true, steps: [], result: null };
+    publishing = { running: true, steps: [], result: null, started: Date.now() };
     send("state");
     const token = await keys.read("github").catch(() => null);
     const result: PublishResult = token
       ? await publish({ git: hinted, github: makeGitHub(repo, token), details, report: (step) => { publishing.steps.push(step); send("state"); } })
       : { ok: false, reason: "no_key" };
-    publishing = { running: false, steps: publishing.steps, result };
+    publishing = { running: false, steps: publishing.steps, result, started: publishing.started, ended: Date.now() };
     send("state");
   }
 
@@ -263,7 +276,7 @@ export async function startStudio(options: StudioOptions) {
         }
       }
       case "GET history":
-        return json({ entries: await git.history() });
+        return json({ entries: (await git.history()).map((e) => (e.pull ? { ...e, url: `https://github.com/${repo}/pull/${e.pull}` } : e)) });
       case "POST open": {
         // Only the preview, and only a path inside it: this endpoint must not become "open anything".
         const path = String((await body()).path ?? "/");
@@ -301,8 +314,9 @@ export async function startStudio(options: StudioOptions) {
     }
     if (!file.endsWith(".html")) return new Response(Bun.file(file), { status, headers: { "Cache-Control": "no-store" } });
     const html = await Bun.file(file).text();
-    const at = html.lastIndexOf("</body>");
-    return new Response(at < 0 ? html + RELOAD_SCRIPT : html.slice(0, at) + RELOAD_SCRIPT + html.slice(at), { status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
+    // In the language of the page: a German page says it in German.
+    const words = STRINGS[/<html[^>]*\blang="de"/i.test(html) ? "de" : "en"].preview_mark;
+    return new Response(previewMark(html, words), { status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
   }
 
   const self: Self = { port: options.port ?? DEFAULT_PORT, token: crypto.randomUUID() + crypto.randomUUID() };
