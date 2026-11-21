@@ -86,6 +86,15 @@ function failText(result: Extract<PublishResult, { ok: false }>): string {
   }
 }
 
+/** 75000 ms as "1:15". */
+const clock = (ms: number) => `${Math.floor(Math.max(0, ms) / 60000)}:${String(Math.floor(Math.max(0, ms) / 1000) % 60).padStart(2, "0")}`;
+// While a publish runs the clock is redrawn each second; nothing else on the screen moves.
+setInterval(() => {
+  const pub = state?.publish;
+  const at = document.querySelector(".steps__clock");
+  if (pub?.running && at) at.textContent = t.publish_elapsed(clock(Date.now() - (pub.started ?? Date.now())));
+}, 1000);
+
 function drawChanges() {
   const list = state?.changes ?? [];
   const mine = list.filter((c) => c.publishable);
@@ -128,10 +137,12 @@ function drawChanges() {
 
   const pub = state?.publish;
   if (pub && (pub.running || pub.result)) {
+    // How long it has been, and how long it usually is: a publish waits on GitHub and looks stuck without it.
+    if (pub.running) kids.push(h("p", { class: "muted" }, t.publish_takes), h("p", { class: "steps__clock", role: "timer" }, t.publish_elapsed(clock(Date.now() - (pub.started ?? Date.now())))));
     kids.push(h("ol", { class: "steps" }, ...pub.steps.map((step, i) => h("li", { class: i === pub.steps.length - 1 && pub.running ? "steps__now" : "steps__done" }, t[`step_${step}`]))));
     const result = pub.result;
     if (result?.ok) {
-      kids.push(h("p", { class: "ok", role: "status" }, result.state === "live" ? t.done_live : t.done_waiting));
+      kids.push(h("p", { class: "ok", role: "status" }, result.state === "live" ? t.done_live : t.done_waiting, pub.started && pub.ended ? ` ${t.publish_took(clock(pub.ended - pub.started))}` : ""));
       if (result.syncProblem) kids.push(h("p", { class: "problem" }, t.done_sync_note(result.syncProblem)));
     } else if (result) kids.push(h("p", { class: "problem", role: "alert" }, failText(result)));
     if (result?.pull) kids.push(h("p", {}, h("a", { href: result.pull.url, target: "_blank", rel: "noopener" }, `${t.see_pull} (#${result.pull.number})`)));

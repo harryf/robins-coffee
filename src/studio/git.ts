@@ -10,7 +10,7 @@ import { existsSync } from "node:fs";
 import { lstat, mkdir, realpath, rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type { FileChange, Status } from "./describe";
-import { HISTORY_FORMAT, HISTORY_LIMIT, parseHistory, type HistoryEntry } from "./history";
+import { HISTORY_FORMAT, HISTORY_SCAN, parseHistory, type HistoryEntry } from "./history";
 import type { PublishGit } from "./publish";
 
 /** The content paths: the same reach as inEditScope, as git pathspecs. */
@@ -110,7 +110,19 @@ export function studioGit(root: string, options: GitOptions) {
     deleteBranch: async (name) => void (await run(["branch", "--quiet", "-D", name])),
   };
 
-  const history = async (): Promise<HistoryEntry[]> => parseHistory(await run(["log", `-${HISTORY_LIMIT}`, `--format=${HISTORY_FORMAT}`, MAIN_REF, "--", ...SCOPE_PATHSPEC]));
+  const history = async (): Promise<HistoryEntry[]> => {
+    // Every file of every commit is asked for: whether a commit is content only cannot be told from the content paths alone.
+    const entries = parseHistory(await run(["log", `-${HISTORY_SCAN}`, "--no-renames", "--name-only", "-z", `--format=${HISTORY_FORMAT}`, MAIN_REF]));
+    // The newest row is "what is live" only when no work on the code changed the content after it.
+    if (entries[0]) entries[0].live = await ok(["diff", "--quiet", entries[0].sha, MAIN_REF, "--", ...SCOPE_PATHSPEC]);
+    return entries;
+  };
+  /**
+   * What a restore may go back to: a commit of origin/main that touched content. Wider than
+   * the rows of the history on purpose: the screen offers only the rows, and a restore
+   * writes only content files whatever else the commit held.
+   */
+  const restorable = async (sha: string): Promise<boolean> => (await run(["log", `-${HISTORY_SCAN}`, "--format=%H", MAIN_REF, "--", ...SCOPE_PATHSPEC])).split("\n").includes(sha);
   /** A file of a commit as bytes: a photo is not text. */
   const blob = async (sha: string, path: string): Promise<Uint8Array> => {
     const proc = Bun.spawn([bin, "cat-file", "blob", `${sha}:${path}`], { cwd: root, stdin: "ignore", stdout: "pipe", stderr: "pipe" });
@@ -133,10 +145,10 @@ export function studioGit(root: string, options: GitOptions) {
      * back. Only paths inside the edit scope are read, written or removed. Nothing is
      * staged or committed and no branch moves, so the result is an unpublished change
      * like any other. Refused (RestoreRefused) while other unpublished changes exist and
-     * for a commit that is not one of the history's own entries.
+     * for a commit that is not a content change on origin/main.
      */
     async restoreContent(sha: string): Promise<{ changed: number; back: number; removed: number }> {
-      if (typeof sha !== "string" || !/^[0-9a-f]{40}$/.test(sha) || !(await history()).some((e) => e.sha === sha)) throw new RestoreRefused("restore_unknown");
+      if (typeof sha !== "string" || !/^[0-9a-f]{40}$/.test(sha) || !(await restorable(sha))) throw new RestoreRefused("restore_unknown");
       if ((await against(await base())).length) throw new RestoreRefused("restore_changes");
       // What the commit holds: ordinary files only, never a link or a nested repository.
       const then = new Set<string>();

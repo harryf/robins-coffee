@@ -78,6 +78,9 @@ input.time { width: 5.5rem; text-align: center; font-variant-numeric: tabular-nu
 .change__path { color: var(--c-muted); font-size: var(--size-xs); overflow-wrap: anywhere; }
 .change__confirm { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); font-size: var(--size-sm); }
 .change__confirm p { flex-basis: 100%; }
+.steps__clock { font-size: var(--size-sm); font-weight: var(--weight-semi); color: var(--c-amber); font-variant-numeric: tabular-nums; }
+.version__notes { display: grid; gap: var(--space-1); padding-left: var(--space-4); list-style: disc; font-size: var(--size-sm); color: var(--c-muted); overflow-wrap: anywhere; }
+.version__link { font-size: var(--size-sm); }
 .steps { display: grid; gap: var(--space-1); font-size: var(--size-sm); }
 .steps li::before { content: "\2713"; display: inline-block; width: 1.25rem; color: var(--c-green); }
 .steps .steps__now { color: var(--c-amber); }

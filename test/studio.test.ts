@@ -8,7 +8,7 @@ import { checkState, studioGitHub } from "../src/studio/checks";
 import { branchName, describeChanges, type FileChange } from "../src/studio/describe";
 import { authEnv, parseNameStatus, studioGit } from "../src/studio/git";
 import { previewFile, refuseApi, safeEditPath, TOKEN_HEADER } from "../src/studio/guard";
-import { parseHistory } from "../src/studio/history";
+import { notesOf, parseHistory } from "../src/studio/history";
 import { keychain, validKey, type Keychain, type KeyName } from "../src/studio/keychain";
 import { publish, type CheckState, type PublishGit, type PublishGitHub, type Step } from "../src/studio/publish";
 import { RELOAD_SCRIPT, startStudio, type StudioState } from "../src/studio/server";
@@ -224,32 +224,57 @@ describe("studio: what a publish is called", () => {
 // ---------- history ----------
 
 describe("studio: history", () => {
-  const log = ["aaa1\x1f2026-11-20T21:00:00+01:00\x1fHarry Fuecks\x1fOpening hours updated (#21)\x1e", "bbb2\x1f2026-11-16T13:47:54+01:00\x1fElias\x1fTicker: live music, chess (and more)\x1e", ""].join("\n");
+  const rec = (sha: string, date: string, who: string, subject: string, body: string, files: string[]) => `\x1e${sha}\x1f${date}\x1f${who}\x1f${subject}\x1f${body}\x1f\n${files.join("\0")}\0`;
+  const log = [
+    rec("aaa1", "2026-11-20T21:00:00+01:00", "Harry Fuecks", "1 photo added, album added (#21)", '- Photo added: `x.jpg`, "Open mic"\n- Album added: "Comedy"\n\nCo-authored-by: Someone <s@example.org>\n', ["site/moments/x.jpg", "site/moments/x.md", "site/data/albums.yml"]),
+    rec("ccc3", "2026-11-19T10:00:00+01:00", "Harry Fuecks", "Studio 0.9.4: tests and the install page (#22)", "", ["src/studio/detail.ts", "site/content/en/studio.md"]),
+    rec("ddd4", "2026-11-18T10:00:00+01:00", "Harry Fuecks", "New design tokens", "", ["site/data/tokens.json"]),
+    rec("bbb2", "2026-11-16T13:47:54+01:00", "Elias", "Ticker: live music, chess (and more)", "", ["site/data/home.yml"]),
+    rec("eee5", "2026-11-15T10:00:00+01:00", "Harry Fuecks", "A merge", "", []),
+  ].join("");
 
-  test("git's log becomes rows, newest first as git gives them", () => {
+  test("git's log becomes rows, newest first, with the lines of the description and the pull request number", () => {
     expect(parseHistory(log)).toEqual([
-      { sha: "aaa1", date: "2026-11-20T21:00:00+01:00", who: "Harry Fuecks", what: "Opening hours updated", pull: 21 },
-      { sha: "bbb2", date: "2026-11-16T13:47:54+01:00", who: "Elias", what: "Ticker: live music, chess (and more)", pull: null },
+      { sha: "aaa1", date: "2026-11-20T21:00:00+01:00", who: "Harry Fuecks", what: "1 photo added, album added", pull: 21, notes: ['Photo added: `x.jpg`, "Open mic"', 'Album added: "Comedy"'] },
+      { sha: "bbb2", date: "2026-11-16T13:47:54+01:00", who: "Elias", what: "Ticker: live music, chess (and more)", pull: null, notes: [] },
     ]);
     expect(parseHistory("")).toEqual([]);
+    // GitHub's squash of several commits starts its body with the title again: said once.
+    expect(parseHistory(rec("f", "2026-01-01T00:00:00Z", "A", "Menu updated (#5)", "* Menu updated\n* Price mended", ["site/data/menu.yml"]))[0]!.notes).toEqual(["Price mended"]);
   });
 
-  test("at most 50 rows", () => {
-    expect(parseHistory(Array.from({ length: 60 }, (_, i) => `s${i}\x1f2026-01-01T00:00:00Z\x1fA\x1fChange ${i}\x1e`).join("\n")).length).toBe(50);
+  test("ANTI: work on the code is not a row, even when it carried a text along; nor are design tokens or a commit without files", () => {
+    expect(parseHistory(log).map((e) => e.sha)).not.toContain("ccc3");
+    expect(parseHistory(log).map((e) => e.sha)).not.toContain("ddd4");
+    expect(parseHistory(log).map((e) => e.sha)).not.toContain("eee5");
   });
 
-  test("the real command lists only commits on origin/main that touched content", async () => {
+  test("at most 50 rows, and a long description is cut to twelve lines", () => {
+    expect(parseHistory(Array.from({ length: 60 }, (_, i) => rec(`s${i}`, "2026-01-01T00:00:00Z", "A", `Change ${i}`, "", ["site/data/hours.yml"])).join("")).length).toBe(50);
+    expect(notesOf(Array.from({ length: 30 }, (_, i) => `* line ${i}`).join("\n"))).toHaveLength(12);
+    expect(notesOf("\n- one\n\n  - two\nSigned-off-by: x\n")).toEqual(["one", "two"]);
+  });
+
+  test("the real command lists only content changes on origin/main, and says whether the newest is what is live", async () => {
     const { root } = tinyRepo();
     writeFileSync(join(root, "README.md"), "Read me again\n");
     sh(root, "commit", "--quiet", "-am", "Code only");
     writeFileSync(join(root, "site", "data", "hours.yml"), HOURS_YML.replace("16:00", "17:00"));
-    sh(root, "commit", "--quiet", "-am", "Opening hours updated (#3)");
+    sh(root, "commit", "--quiet", "-am", "Opening hours updated (#3)", "-m", "- Opening hours now: mo 17:00 to 00:00");
     sh(root, "push", "--quiet", "origin", "main");
     writeFileSync(join(root, "site", "data", "hours.yml"), HOURS_YML.replace("16:00", "18:00"));
     sh(root, "commit", "--quiet", "-am", "Not on origin yet");
-    const entries = await studioGit(root, { remote: "origin" }).history();
-    expect(entries.map((e) => e.what)).toEqual(["Opening hours updated", "First version"]);
-    expect(entries[0]).toMatchObject({ who: "Test", pull: 3 });
+    const git = studioGit(root, { remote: "origin" });
+    // The first commit of the folder holds code too, so it is not a row.
+    expect(await git.history()).toMatchObject([{ what: "Opening hours updated", who: "Test", pull: 3, notes: ["Opening hours now: mo 17:00 to 00:00"], live: true }]);
+
+    // Work on the code that also changes a content file comes after: the row stays, but it is no longer what is live.
+    sh(root, "reset", "--quiet", "--hard", "origin/main");
+    writeFileSync(join(root, "README.md"), "Read me a third time\n");
+    writeFileSync(join(root, "site", "data", "hours.yml"), HOURS_YML.replace("16:00", "19:00"));
+    sh(root, "commit", "--quiet", "-am", "Code and hours together");
+    sh(root, "push", "--quiet", "origin", "main");
+    expect(await git.history()).toMatchObject([{ what: "Opening hours updated", live: false }]);
   });
 });
 
@@ -897,7 +922,8 @@ describe("studio: the server", () => {
 
   test("history comes from git, newest first", async () => {
     const { entries } = await (await call("GET", "history")).json();
-    expect(entries).toEqual([{ sha: sh(root, "rev-parse", "origin/main").trim(), date: expect.any(String), who: "Test", what: "First version", pull: null }]);
+    // The folder's one commit holds the code too, so it is not a content change.
+    expect(entries).toEqual([]);
   });
 
   test("ANTI: the raw file route takes text for text files only; bytes and pictures have no way in through it", async () => {
@@ -925,7 +951,8 @@ describe("studio: the server", () => {
     // 11:40 where the hand edit test ran before this one (macOS), 11:35 where it is skipped.
     expect(hoursFile()).toMatch(/11:(35|40)/);
     const { entries } = await (await call("GET", "history")).json();
-    expect(entries.map((e: { what: string }) => e.what)).toEqual(["Opening hours updated", "First version"]);
+    expect(entries.map((e: { what: string }) => e.what)).toEqual(["Opening hours updated"]);
+    expect(entries[0]).toMatchObject({ pull: null, live: true, notes: [expect.stringContaining("Opening hours now:")] });
     expect(JSON.stringify(after)).not.toContain(DUMMY_TOKEN);
   }, 60_000);
 });
@@ -1006,5 +1033,26 @@ describe("studio: the lines under a publish", () => {
     const [line] = detailLines([{ path: "site/moments/a.md", status: "modified", before: null, after: bad }]);
     expect(line).toBe('Photo updated: `a.jpg`, "one two @ someone"');
     expect(detailLines([{ path: "site/data/menu.yml", status: "modified", before: ": : :", after: "[" }])).toEqual(["Menu updated"]);
+  });
+});
+
+// ---------- the mark on a preview page ----------
+
+describe("studio: a preview page says that it is the local copy", () => {
+  const { previewMark, RELOAD_SCRIPT } = require("../src/studio/server") as typeof import("../src/studio/server");
+  test("the words lead the tab's title and sit in a pill that lets clicks through, before the reload script", () => {
+    const html = previewMark('<html lang="en"><head><title>ROBIN\'s Bar</title></head><body><h1>Hi</h1></body></html>', STRINGS.en.preview_mark);
+    expect(html).toContain("<title>Local preview · ROBIN's Bar</title>");
+    expect(html).toContain('<div class="studio-preview-pill" role="note">Local preview</div>');
+    expect(html).toContain("pointer-events:none");
+    expect(html.indexOf("studio-preview-pill")).toBeLessThan(html.indexOf(RELOAD_SCRIPT));
+    expect(html.endsWith(RELOAD_SCRIPT + "</body></html>")).toBe(true);
+    // No raw colour: the pill uses the site's own tokens.
+    expect(html).not.toMatch(/#[0-9a-f]{3,8}\b|rgb\(/i);
+    expect(STRINGS.de.preview_mark).toBe("Lokale Vorschau");
+  });
+  test("ANTI: the words cannot bring markup along, and a page without a body or a title still gets its mark", () => {
+    expect(previewMark("<p>x</p>", '<script>alert(1)</script>"')).not.toContain("<script>alert");
+    expect(previewMark("<p>x</p>", "Local preview")).toContain("studio-preview-pill");
   });
 });
