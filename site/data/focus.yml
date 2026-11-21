@@ -1,5 +1,6 @@
 # Where a photo is cut when a shape does not fit it: two numbers from 0 to 1, across and
 # down (0.5, 0.5 is the middle). Found by Apple Vision in the Studio, or typed by hand.
 # A photo that is not listed is cut around its middle.
-"photos/event-queens-gambit.jpg": [0.5, 0.18]
-"photos/event-beer-pong.jpg": [0.5, 0.47]
+"photos/event-queens-gambit.jpg": [ 0.5, 0.18 ]
+"photos/event-beer-pong.jpg": [ 0.5, 0.47 ]
+moments/2025-08-28-comedy-from-the-street.jpg: [ 0.46, 0.58 ]
