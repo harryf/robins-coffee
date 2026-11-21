@@ -95,13 +95,34 @@
 <p>Es fragt nach keinem Passwort. Der erste Start dauert eine Minute, weil das Studio die Website einmal baut.</p>
 <h2>Wiederfinden</h2>
 <p>Die App heisst <strong>ROBINs Studio</strong> und liegt im Ordner Programme in deinem Benutzerordner. Drücke Command und Leertaste, tippe <code>Studio</code>, drücke Enter. Ziehe ihr Symbol ins Dock, damit es dort bleibt.</p>
+<h2>Deinen GitHub-Schlüssel erstellen</h2>
+<p>Das Studio veröffentlicht über GitHub, und GitHub verlangt einen Schlüssel (dort heisst er &quot;Token&quot;), der sagt, dass das Studio das für dich tun darf. Du erstellst ihn einmal, im Browser. Melde dich zuerst bei GitHub an.</p>
+<p><strong>Wenn das Repository der Website in deinem eigenen GitHub-Konto liegt</strong> (das ist Harry):</p>
+<ol>
+<li>Öffne <a href="https://github.com/settings/personal-access-tokens/new">github.com/settings/personal-access-tokens/new</a>. Von Hand: dein Bild oben rechts, <strong>Settings</strong>, unten links <strong>Developer settings</strong>, <strong>Personal access tokens</strong>, <strong>Fine-grained tokens</strong>, <strong>Generate new token</strong>.</li>
+<li><strong>Token name</strong>: tippe <code>ROBINs Studio</code>.</li>
+<li><strong>Expiration</strong>: wähle ein Datum. An diesem Tag hört das Veröffentlichen auf, bis du einen neuen Schlüssel erstellst. Wähle also eine lange Zeit.</li>
+<li><strong>Resource owner</strong>: dein eigenes Konto.</li>
+<li><strong>Repository access</strong>: wähle <strong>Only select repositories</strong> und in der Liste <code>robins-coffee</code>.</li>
+<li><strong>Permissions</strong>, dann <strong>Repository permissions</strong>: stelle <strong>Contents</strong> auf <strong>Read and write</strong> und <strong>Pull requests</strong> auf <strong>Read and write</strong>. &quot;Metadata&quot; stellt sich von selbst auf nur lesen; alles andere bleibt, wie es ist.</li>
+<li>Klicke auf <strong>Generate token</strong>. GitHub zeigt den Schlüssel einmal: eine lange Zeile, die mit <code>github_pat_</code> beginnt. Kopiere sie.</li>
+</ol>
+<p><strong>Wenn Harry dich zum Repository eingeladen hat</strong> (das sind alle anderen): GitHub lässt den Schlüssel von oben nicht auf einem Repository in einem fremden Konto arbeiten, darum erstellst du die ältere Art.</p>
+<ol>
+<li>Nimm zuerst Harrys Einladung an: Sie ist in deiner E-Mail oder unter <a href="https://github.com/harryf/robins-coffee/invitations">github.com/harryf/robins-coffee/invitations</a>.</li>
+<li>Öffne <a href="https://github.com/settings/tokens/new">github.com/settings/tokens/new</a>. Von Hand: dein Bild, <strong>Settings</strong>, <strong>Developer settings</strong>, <strong>Personal access tokens</strong>, <strong>Tokens (classic)</strong>, <strong>Generate new token (classic)</strong>.</li>
+<li><strong>Note</strong>: tippe <code>ROBINs Studio</code>. <strong>Expiration</strong>: wähle eine lange Zeit.</li>
+<li>Setze unter <strong>Select scopes</strong> nur einen Haken: <strong>public_repo</strong>.</li>
+<li>Klicke unten auf <strong>Generate token</strong>. Kopiere die Zeile, die mit <code>ghp_</code> beginnt.</li>
+</ol>
+<p>Behandle den Schlüssel wie ein Passwort: Schick ihn niemandem und speichere ihn nicht in einer Notiz. Wenn du ihn verlierst, lösche ihn auf derselben GitHub-Seite und erstelle einen neuen.</p>
 <h2>Zum ersten Mal veröffentlichen</h2>
 <ol>
 <li>Öffne im Studio die <strong>Einstellungen</strong>.</li>
-<li>Füge deinen GitHub-Schlüssel ins Feld &quot;GitHub-Schlüssel&quot; ein und speichere. Der Schlüssel bleibt im Schlüsselbund dieses Macs.</li>
+<li>Füge deinen Schlüssel ins Feld &quot;GitHub-Schlüssel&quot; ein und speichere. Der Schlüssel bleibt im Schlüsselbund dieses Macs.</li>
 <li>Ändere etwas, schau es dir unter <strong>Vorschau öffnen</strong> an und drücke dann <strong>Veröffentlichen</strong>.</li>
 </ol>
-<p>Noch kein Schlüssel? Öffne auf GitHub Settings, Developer settings, Personal access tokens und erstelle ein Token für das Repository der Website, das Inhalte und Pull Requests lesen und schreiben darf. Harry kann das mit dir machen.</p>
+<p>Wenn das Studio meldet, dass GitHub den Schlüssel abgelehnt hat, fehlt ein Recht. Öffne <a href="https://github.com/settings/personal-access-tokens">deine Schlüssel bei GitHub</a>, klicke auf den Schlüssel, prüfe die zwei Rechte aus Schritt 6 und speichere. Du musst ihn nicht noch einmal einfügen.</p>
 <h2>Gut zu wissen</h2>
 <ul>
 <li>Das Studio hält sich selbst aktuell. Bei jedem Start sucht es nach einer neueren Version.</li>

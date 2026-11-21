@@ -95,13 +95,34 @@
 <p>It asks for no password. The first start takes a minute, because the Studio builds the site once.</p>
 <h2>Find it again</h2>
 <p>The app is called <strong>ROBINs Studio</strong> and sits in the Applications folder inside your home folder. Press Command and Space, type <code>Studio</code>, press Enter. Drag its icon to the Dock to keep it there.</p>
+<h2>Make your GitHub key</h2>
+<p>The Studio publishes through GitHub, and GitHub wants a key (it calls it a &quot;token&quot;) that says the Studio may do this for you. You make it once, in the browser. Sign in to GitHub first.</p>
+<p><strong>If the website&#39;s repository is in your own GitHub account</strong> (that is Harry):</p>
+<ol>
+<li>Open <a href="https://github.com/settings/personal-access-tokens/new">github.com/settings/personal-access-tokens/new</a>. By hand: your picture at the top right, <strong>Settings</strong>, <strong>Developer settings</strong> at the bottom left, <strong>Personal access tokens</strong>, <strong>Fine-grained tokens</strong>, <strong>Generate new token</strong>.</li>
+<li><strong>Token name</strong>: type <code>ROBINs Studio</code>.</li>
+<li><strong>Expiration</strong>: pick a date. On that day publishing stops until you make a new key, so pick a long time.</li>
+<li><strong>Resource owner</strong>: your own account.</li>
+<li><strong>Repository access</strong>: choose <strong>Only select repositories</strong> and pick <code>robins-coffee</code> from the list.</li>
+<li><strong>Permissions</strong>, then <strong>Repository permissions</strong>: set <strong>Contents</strong> to <strong>Read and write</strong>, and <strong>Pull requests</strong> to <strong>Read and write</strong>. &quot;Metadata&quot; switches itself to read-only; leave everything else as it is.</li>
+<li>Click <strong>Generate token</strong>. GitHub shows the key once: a long line that starts with <code>github_pat_</code>. Copy it.</li>
+</ol>
+<p><strong>If Harry invited you to the repository</strong> (that is everyone else): GitHub does not let the key above work on a repository in someone else&#39;s account, so you make the older kind.</p>
+<ol>
+<li>Accept Harry&#39;s invitation first: it is in your email, or at <a href="https://github.com/harryf/robins-coffee/invitations">github.com/harryf/robins-coffee/invitations</a>.</li>
+<li>Open <a href="https://github.com/settings/tokens/new">github.com/settings/tokens/new</a>. By hand: your picture, <strong>Settings</strong>, <strong>Developer settings</strong>, <strong>Personal access tokens</strong>, <strong>Tokens (classic)</strong>, <strong>Generate new token (classic)</strong>.</li>
+<li><strong>Note</strong>: type <code>ROBINs Studio</code>. <strong>Expiration</strong>: pick a long time.</li>
+<li>Under <strong>Select scopes</strong>, tick one box only: <strong>public_repo</strong>.</li>
+<li>Click <strong>Generate token</strong> at the bottom. Copy the line that starts with <code>ghp_</code>.</li>
+</ol>
+<p>Treat the key like a password: do not send it to anyone and do not save it in a note. If you lose it, delete it on the same GitHub page and make a new one.</p>
 <h2>Publish for the first time</h2>
 <ol>
 <li>In the Studio, open <strong>Settings</strong>.</li>
-<li>Paste your GitHub key into the field &quot;GitHub key&quot; and save. The key stays in this Mac&#39;s Keychain.</li>
+<li>Paste your key into the field &quot;GitHub key&quot; and save. The key stays in this Mac&#39;s Keychain.</li>
 <li>Change something, look at it under <strong>Open preview</strong>, then press <strong>Publish</strong>.</li>
 </ol>
-<p>No key yet? On GitHub, open Settings, Developer settings, Personal access tokens, and make a token for the site&#39;s repository that may read and write contents and pull requests. Harry can do this with you.</p>
+<p>If the Studio says GitHub refused the key, a permission is missing. Open <a href="https://github.com/settings/personal-access-tokens">your keys on GitHub</a>, click the key, check the two permissions from step 6 and save. You do not need to paste it again.</p>
 <h2>Good to know</h2>
 <ul>
 <li>The Studio keeps itself up to date. Each time it starts it looks for a newer version.</li>
