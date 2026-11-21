@@ -103,7 +103,7 @@
       {%- when 'contact-form' %}
       <div class="sg-narrow">{% render 'components/contact-form', site: site, t: t %}</div>
       {%- when 'nav-icon' %}
-      <p>{% render 'components/nav-icon', name: 'events' %} {% render 'components/nav-icon', name: 'moments' %} {% render 'components/nav-icon', name: 'menu' %} The header's three places. On a phone the pill shows the icon only; the words stay for screen readers.</p>
+      <p>{% render 'components/nav-icon', name: 'events' %} {% render 'components/nav-icon', name: 'moments' %} {% render 'components/nav-icon', name: 'menu' %} {% render 'components/nav-icon', name: 'coffee' %} The header's three places, and the coffee cup and cocktail of the theme switch. On a phone the pill shows the icon only; the words stay for screen readers.</p>
       {%- when 'drink-card' %}
       <div class="drinks sg-narrow">{% render 'components/drink-card', d: menu.drinks[0] %}</div>
       {%- when 'event-card' %}

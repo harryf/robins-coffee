@@ -1,4 +1,4 @@
-{% comment %} nav-icon: name ('events', 'moments' or 'menu'). A small badge in the manner of the ROBIN's roundel: a ring, a dotted inner ring like the logo's ornament, and a line drawing in the middle: a calendar for what's on, an eye for the moments, a cocktail glass for the menu. Drawn in currentColor, so it follows the text colour and the theme; decorative (aria-hidden), the link carries the words. {% endcomment %}
+{% comment %} nav-icon: name ('events', 'moments', 'menu' or 'coffee'). A small badge in the manner of the ROBIN's roundel: a ring, a dotted inner ring like the logo's ornament, and a line drawing in the middle: a calendar for what's on, an eye for the moments, a cocktail glass for the menu (and the night side of the theme switch), a coffee cup for the day side. Drawn in currentColor, so it follows the text colour and the theme; decorative (aria-hidden), the link carries the words. {% endcomment %}
 <svg class="nav-icon" viewBox="0 0 32 32" width="32" height="32" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
   <circle cx="16" cy="16" r="14.6" stroke-width="1.6"/>
   <circle cx="16" cy="16" r="12.2" stroke-width="1.1" stroke-dasharray="0.1 2.4"/>
@@ -15,5 +15,9 @@
   <path d="M9.4 10.4h13.2L16 17.4z" stroke-width="1.6"/>
   <path d="M16 17.4v4.6M12.8 22.4h6.4M19.6 8.2l-2.4 4.4" stroke-width="1.6"/>
   <circle cx="20.2" cy="7.6" r="1.1" fill="currentColor" stroke="none"/>
+  {%- when 'coffee' %}
+  <path d="M9.6 13.6h10.4v4.2a4.4 4.4 0 0 1-4.4 4.4h-1.6a4.4 4.4 0 0 1-4.4-4.4z" stroke-width="1.6"/>
+  <path d="M20 15h.9a2 2 0 0 1 0 4H20M8.4 24h13.2" stroke-width="1.6"/>
+  <path d="M13 8.4c-.7.8.7 1.6 0 2.6M16.6 8.4c-.7.8.7 1.6 0 2.6" stroke-width="1.3"/>
   {%- endcase %}
 </svg>
