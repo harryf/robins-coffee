@@ -192,3 +192,11 @@ input[type="file"] { width: 100%; min-width: 0; max-width: 100%; }
 /* the bar's roundel beside the Studio's name */
 .side__head { display: flex; align-items: center; gap: var(--space-3); }
 .side__logo { flex: none; width: 3rem; height: 3rem; }
+
+/* the drink form: ingredient rows (amount, measure, what) and the list of pictures */
+.recipe-rows, .pictures { display: grid; gap: var(--space-2); list-style: none; padding: 0; margin: 0; }
+.recipe-row { display: grid; grid-template-columns: 6rem 8rem minmax(0, 1fr) auto; gap: var(--space-2); align-items: center; }
+.pictures__row { display: grid; grid-template-columns: 4rem minmax(0, 1fr); gap: var(--space-3); align-items: start; padding: var(--space-3); background: var(--c-surface); border: var(--border-thin) solid var(--c-line); border-radius: var(--radius-sm); }
+.pictures__row .thumb { object-fit: contain; }
+.pictures__main { display: grid; gap: var(--space-2); }
+fieldset.field { border: 0; padding: 0; margin: 0; }

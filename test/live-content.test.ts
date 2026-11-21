@@ -7,6 +7,7 @@ import { join } from "node:path";
 import { parse as parseYaml } from "yaml";
 import { renderSite, parseFrontMatter, type Files, type Photo } from "../src/render";
 import { readFocus } from "../src/focus";
+import { readMenu } from "../src/menu";
 import { LIVE_SITE } from "./frozen";
 
 const files: Files = {};
@@ -40,10 +41,24 @@ describe("the live content", () => {
     expect(new Set(albums.map((a: any) => a.slug)).size).toBe(albums.length);
   });
 
-  test("every drink has a name, a text in English and a price; with a picture, alt text", () => {
-    for (const part of parseYaml(files["data/menu.yml"]!)?.sections ?? []) {
-      expect(told(part.title, 2)).toBe(true);
-      for (const d of part.drinks ?? []) expect([d.name, told(d.text, 3), typeof d.price_chf === "number" && d.price_chf > 0, !d.photo || told(d.alt, 10)]).toEqual([d.name, true, true, true]);
+  test("the menu reads: every season has a name, real days and real words; every drink a name, a short line in English and a price; every text, step and picture is told", () => {
+    const menu = readMenu(parseYaml(files["data/menu.yml"]!));
+    for (const s of menu.seasons) expect([s.slug, told(s.name, 2), !s.description || told(s.description, 10), s.start <= s.end]).toEqual([s.slug, true, true, true]);
+    for (const d of menu.drinks) {
+      expect([d.slug, told(d.text, 3), typeof d.price_chf === "number" && d.price_chf > 0, !d.experience || told(d.experience, 10)]).toEqual([d.slug, true, true, true]);
+      for (const x of d.ingredients) expect([d.slug, told(x.item, 1)]).toEqual([d.slug, true]);
+      for (const step of d.method) expect([d.slug, told(step, 3)]).toEqual([d.slug, true]);
+      for (const p of d.pictures) expect([p.photo, told(p.alt, 10), pictures.includes(p.photo)]).toEqual([p.photo, true, true]);
+    }
+  });
+
+  test("the menu page and every drink's page render in every language", async () => {
+    const pages = (await renderSite(files, { base: "/", photos })).map((p) => p.out);
+    const menu = readMenu(parseYaml(files["data/menu.yml"]!));
+    const listed = menu.drinks.filter((d) => menu.seasons.some((s) => s.drinks.includes(d.slug)));
+    for (const lang of ["", "de/", "fr/", "it/"]) {
+      expect(pages).toContain(`${lang}menu/index.html`);
+      for (const d of listed) expect(pages).toContain(`${lang}menu/${d.slug}/index.html`);
     }
   });
 

@@ -17,7 +17,7 @@ Goals:
 - `main` is the only deploy branch and is protected.
 - Later: the same data files feed the Google Business Profile (hours first, then photos and the menu).
 
-Not in scope: a server-side CMS or database, ticket sales (they stay on Eventfrog), a native app, a menu page (for now), venue hire copy (for now).
+Not in scope: a server-side CMS or database, ticket sales (they stay on Eventfrog), a native app, venue hire copy (for now). A menu page came on 21 Nov 2026 (`decisions/2026-11-21-menu-seasons.md`).
 
 ## 2. Stages
 

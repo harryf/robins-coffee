@@ -13,6 +13,7 @@ import { tokensCss } from "./tokens";
 import { parse as parseYaml } from "yaml";
 import { fromIyfFeed, fromManual, mergeEvents, upcoming, toIcs, type SiteEvent } from "./events";
 import { cropBox, readFocus, type Focus } from "./focus";
+import { readMenu } from "./menu";
 
 const ROOT = join(import.meta.dir, "..");
 const SITE = join(ROOT, "site");
@@ -97,6 +98,9 @@ async function buildOg(files: Files, photos: Record<string, Photo>, focus: Recor
   const night = JSON.parse(files["data/tokens.json"]!).color.night;
   const keys = new Set<string>([parseYaml(files["data/home.yml"]!).hero_photo]);
   for (const [p, text] of Object.entries(files)) if (p.startsWith("content/") && parseFrontMatter(text).data.og_photo) keys.add(parseFrontMatter(text).data.og_photo);
+  // A drink's page shows its drawing: whole, on the dark of the drawing, never cut to the wide shape.
+  const drawings = new Set(readMenu(parseYaml(files["data/menu.yml"] ?? "")).drinks.flatMap((d) => d.pictures.slice(0, 1).map((p) => p.photo)));
+  for (const p of drawings) keys.add(p);
   const { width, height } = OG_SIZE;
   const shade = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0.35" stop-color="${night.bg}" stop-opacity="0"/><stop offset="1" stop-color="${night.bg}" stop-opacity="0.9"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/></svg>`);
   const wordmark = await sharp(join(SITE, "assets", "brand", "wordmark-white.png")).resize({ width: 420 }).toBuffer({ resolveWithObject: true });
@@ -106,7 +110,7 @@ async function buildOg(files: Files, photos: Record<string, Photo>, focus: Recor
     const bytes = new Uint8Array(await Bun.file(join(SITE, key)).arrayBuffer());
     const file = `og/${key.slice(key.indexOf("/") + 1, -4)}-${Bun.hash(bytes).toString(36).slice(0, 8)}.jpg`;
     // Cut around the photo's focus when it has one; otherwise keep the top, where faces usually are.
-    const cut = focus[key] ? sharp(bytes).extract(cropBox(photos[key]!.width, photos[key]!.height, width / height, focus[key])).resize({ width, height }) : sharp(bytes).resize({ width, height, fit: "cover", position: "north" });
+    const cut = drawings.has(key) ? sharp(bytes).resize({ width, height, fit: "contain", background: night.ink ?? night.bg }) : focus[key] ? sharp(bytes).extract(cropBox(photos[key]!.width, photos[key]!.height, width / height, focus[key])).resize({ width, height }) : sharp(bytes).resize({ width, height, fit: "cover", position: "north" });
     await cut
       .composite([{ input: shade }, { input: wordmark.data, left: 64, top: height - wordmark.info.height - 52 }])
       .jpeg({ quality: 82, mozjpeg: true }).toFile(join(OUT, file));

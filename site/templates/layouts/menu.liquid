@@ -1,0 +1,20 @@
+{% layout 'layouts/base' %}
+{% comment %} menu: the cocktail menu, season by season: the season shown today first with its drinks, then the seasons to come and those that are over. {% endcomment %}
+{% block content %}
+<section class="section">
+  <div class="wrap">
+    <h1 class="h-xl">{{ page.heading }}</h1>
+    <div class="prose">{{ page.content | raw }}</div>
+    {%- for s in menu_seasons %}
+    {%- if forloop.first %}
+    {% render 'components/menu-season', s: s, t: t, heading: 'h2' %}
+    {%- if menu_seasons.size > 1 %}
+    <h2 class="h-lg">{{ t.menu_seasons_other }}</h2>
+    {%- endif %}
+    {%- else %}
+    {% render 'components/menu-season', s: s, t: t, heading: 'h3' %}
+    {%- endif %}
+    {%- endfor %}
+  </div>
+</section>
+{% endblock %}

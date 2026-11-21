@@ -2,6 +2,18 @@
 
 The newest version comes first. Each version says what changed for the person using the Studio.
 
+## 0.12.0
+
+21 November 2026
+
+- The menu has seasons. A season has a name, a first and a last day, and a few words about it. The site shows the season that runs today.
+- Add, change and remove seasons in Menu. A season can only be removed when no drink is in it.
+- A drink can be in one season or in several. Tick its seasons in the drink's form.
+- A drink now has more fields, in this order: name, price, short line, what drinking it is like, ingredients (amount, measure, what), how to make it, and pictures.
+- A drink can have several pictures. The first is the one on the menu card; add real photos after it, each with its alt text. Move them up or down, or take one off.
+- Some texts are marked "Draft by Claude: please check it". Read them, change what is wrong, and save: the mark goes.
+- Every drink has its own page on the site, and the menu page lists every season.
+
 ## 0.11.0
 
 21 November 2026

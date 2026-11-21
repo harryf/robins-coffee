@@ -12,7 +12,8 @@ import { cleanPhoto } from "../../scripts/add-photo";
 import { inEditScope } from "../scope";
 import { momentMarkdown } from "../moment";
 import { parseFrontMatter } from "../render";
-import { eventFile, eventProblems, eventFields, keepComments, addAlbum, setDrink, changeDrink, hasDrink, removeDrink, drinkProblems, editMoment, dropCover, photoDay, slugify, type EventInput, renameAlbum, planTexts, hasEnglish, textsShape, cleanTexts, LANG, type Texts } from "../content";
+import { readMenu } from "../menu";
+import { eventFile, eventProblems, eventFields, keepComments, addAlbum, saveDrink, removeDrink, drinkProblems, saveSeason, removeSeason, seasonProblems, type DrinkInput, editMoment, dropCover, photoDay, slugify, type EventInput, renameAlbum, planTexts, hasEnglish, textsShape, cleanTexts, LANG, type Texts } from "../content";
 import { importFromPage, listOrganiserEvents, eventfrogImage, eventfrogUrl, fetchChecked, type Imported } from "../eventfrog";
 import { draftAlt, type Focus } from "../focus";
 import { look as realLook, toolReport, type Seen } from "../vision";
@@ -210,7 +211,7 @@ export function contentApi(deps: ContentDeps) {
       languages: await languages(),
       albums: (await albumList()).map((a: any) => ({ slug: a.slug, title: a.title })),
       moments,
-      menu: (parseYaml(await text("site/data/menu.yml"))?.sections ?? []).map((s: any) => ({ slug: s.slug, title: s.title, drinks: (s.drinks ?? []).map((d: any) => ({ name: d.name, price_chf: d.price_chf, text: d.text, photo: d.photo ?? null, alt: d.alt ?? null })) })),
+      menu: await menuNow(),
       events, tools: toolReport(),
     };
   }
@@ -293,11 +294,17 @@ export function contentApi(deps: ContentDeps) {
     }
   }
 
-  const drinkOf = (menu: string, part: string, name: string): any => (parseYaml(menu)?.sections ?? []).find((s: any) => s?.slug === part)?.drinks?.find((d: any) => d?.name === name) ?? null;
-  const drinkPhoto = (menu: string, part: string, name: string): string | null => {
-    const drink = drinkOf(menu, part, name);
-    return typeof drink?.photo === "string" ? drink.photo : null;
+  /** The menu as the screen shows it; a file the build would refuse is said, not hidden. */
+  async function menuNow() {
+    try { return readMenu(parseYaml(await text("site/data/menu.yml"))); }
+    catch (error) { return { seasons: [], drinks: [], error: error instanceof Error ? error.message : String(error) }; }
+  }
+  /** One drink of the file as it is now, by slug; null when there is none. */
+  const drinkOf = (menu: string, slug: string): any => {
+    try { return readMenu(parseYaml(menu)).drinks.find((d) => d.slug === slug) ?? null; } catch { return null; }
   };
+  /** The translations a text had, found by its English: a row that moved keeps them. */
+  const sameEnglish = (list: { en?: string }[] | undefined, given: any) => textsOf(list?.find((x) => x?.en?.trim() && x.en.trim() === String(given?.en ?? "").trim()) ?? null);
 
   /**
    * A picture the Studio made for a drink or an event (photos/menu-*.jpg, photos/event-*.jpg)
@@ -421,33 +428,53 @@ export function contentApi(deps: ContentDeps) {
       }
 
       case "POST drink": {
+        // One drink with everything on its form: texts in English, its recipe, its pictures in
+        // order (a picture there already by its path, a new one as a file), its seasons.
         const b = await body();
-        const was = b.was == null ? null : { part: String(b.was.part ?? ""), name: String(b.was.name ?? "") };
-        const picture = await formPicture(b.picture);
-        if (!picture) return refuse(422, "photo_unreadable");
-        // With a new picture the drink is checked as if it had one already, before anything is written.
-        const drink = { ...(b.drink ?? {}), ...(picture === "none" ? {} : { photo: "photos/menu-new.jpg" }) };
+        const was = typeof b.was === "string" && NAME.test(b.was) ? b.was : null;
+        if (b.was != null && !was) return refuse(422, "drink_not_found");
+        const given = b.drink && typeof b.drink === "object" ? b.drink : {};
+        const rows: any[] = Array.isArray(b.pictures) ? b.pictures.slice(0, 12) : [];
+        const fresh: ({ data: Buffer; focus: unknown } | null)[] = [];
+        for (const row of rows) {
+          if (row?.picture == null) { fresh.push(null); continue; }
+          const made = await formPicture(row.picture);
+          if (!made || made === "none") return refuse(422, "photo_unreadable");
+          fresh.push(made);
+        }
+        // A new picture is checked as if it were on the site already, before anything is written.
+        const pictures = rows.map((row, i) => ({ photo: fresh[i] ? "photos/menu-new.jpg" : row?.photo, alt: row?.alt }));
+        const drink: DrinkInput = { name: given.name, price_chf: given.price_chf, text: given.text, experience: given.experience ?? null, ingredients: given.ingredients ?? [], method: given.method ?? [], pictures };
         const problems = drinkProblems(drink);
         if (problems.length) return refuse(422, problems[0]!, { problems });
-        if (picture === "none" && drink.photo && !there(`site/${drink.photo}`)) return refuse(422, "event_image_wrong");
+        if (pictures.some((p, i) => !fresh[i] && !there(`site/${p.photo}`))) return refuse(422, "event_image_wrong");
+        const seasons: string[] = Array.isArray(b.seasons) ? b.seasons.map(String) : [];
         try {
           const menu = await text("site/data/menu.yml");
-          const before = was ? drinkPhoto(menu, was.part, was.name) : null;
-          const part = b.part ? String(b.part) : slugify(String(b.partTitle?.en ?? ""));
-          if (!b.part && !hasEnglish(b.partTitle)) return refuse(422, "english_needed");
-          if (!was && hasDrink(menu, part, String(drink.name))) return refuse(422, "drink_exists");
-          const old = was ? drinkOf(menu, was.part, was.name) : null;
-          const filled = await fillTexts([{ given: drink.text, old: textsOf(old?.text) }, ...(drink.alt ? [{ given: drink.alt, old: textsOf(old?.alt) }] : []), ...(b.part ? [] : [{ given: b.partTitle }])]);
-          drink.text = filled.texts[0];
-          if (drink.alt) drink.alt = filled.texts[1];
-          const partTitle = b.part ? undefined : filled.texts.at(-1);
+          const old = was ? drinkOf(menu, was) : null;
+          if (was && !old) return refuse(422, "drink_not_found");
+          const steps = drink.method ?? [], parts = drink.ingredients ?? [];
+          const hasExperience = !!drink.experience && hasEnglish(drink.experience);
+          const filled = await fillTexts([
+            { given: drink.text, old: textsOf(old?.text) },
+            ...(hasExperience ? [{ given: drink.experience!, old: textsOf(old?.experience) }] : []),
+            ...parts.map((x) => ({ given: x.item, old: sameEnglish(old?.ingredients.map((y: any) => y.item), x.item) })),
+            ...steps.map((s) => ({ given: s, old: sameEnglish(old?.method, s) })),
+            ...pictures.map((p, i) => ({ given: p.alt, old: fresh[i] ? null : textsOf(old?.pictures.find((y: any) => y.photo === p.photo)?.alt) })),
+          ]);
+          const out = [...filled.texts];
+          drink.text = out.shift()!;
+          drink.experience = hasExperience ? out.shift()! : null;
+          drink.ingredients = parts.map((x) => ({ amount: x.amount ?? null, unit: x.unit || null, item: out.shift()! }));
+          drink.method = steps.map(() => out.shift()!);
+          drink.pictures = pictures.map((p) => ({ photo: p.photo, alt: out.shift()! }));
           // A dry run first: a refusal must not leave a picture behind.
-          const change = (d: typeof drink) => (was ? changeDrink(menu, was, part, d, partTitle) : setDrink(menu, part, d, partTitle));
-          change(drink);
-          if (picture !== "none") drink.photo = await writePicture("menu", String(drink.name), picture);
-          await deps.write("site/data/menu.yml", change(drink));
-          await sweepPictures([before]);
-          return json(withTold({ ok: true, photo: drink.photo ?? null }, filled.told));
+          saveDrink(menu, drink, { was, seasons });
+          for (const [i, made] of fresh.entries()) if (made) drink.pictures[i]!.photo = await writePicture("menu", String(drink.name), made);
+          const saved = saveDrink(menu, drink, { was, seasons });
+          await deps.write("site/data/menu.yml", saved.text);
+          await sweepPictures((old?.pictures ?? []).map((p: any) => p.photo));
+          return json(withTold({ ok: true, slug: saved.slug, photos: drink.pictures.map((p) => p.photo) }, filled.told));
         } catch (error) { return refuse(422, reason(error, "drink_wrong")); }
       }
 
@@ -455,11 +482,38 @@ export function contentApi(deps: ContentDeps) {
         const b = await body();
         try {
           const menu = await text("site/data/menu.yml");
-          const before = drinkPhoto(menu, String(b.part), String(b.name));
-          await deps.write("site/data/menu.yml", removeDrink(menu, String(b.part), String(b.name)));
-          await sweepPictures([before]);
+          const old = drinkOf(menu, String(b.slug ?? ""));
+          await deps.write("site/data/menu.yml", removeDrink(menu, String(b.slug ?? "")));
+          await sweepPictures((old?.pictures ?? []).map((p: any) => p.photo));
           return json({ ok: true });
         } catch (error) { return refuse(422, reason(error, "drink_not_found")); }
+      }
+
+      case "POST season": {
+        const b = await body();
+        const was = typeof b.was === "string" && NAME.test(b.was) ? b.was : null;
+        if (b.was != null && !was) return refuse(422, "season_not_found");
+        const season = b.season && typeof b.season === "object" ? b.season : {};
+        const problems = seasonProblems(season);
+        if (problems.length) return refuse(422, problems[0]!, { problems });
+        try {
+          const menu = await text("site/data/menu.yml");
+          const old = was ? readMenu(parseYaml(menu)).seasons.find((s) => s.slug === was) ?? null : null;
+          if (was && !old) return refuse(422, "season_not_found");
+          const hasDescription = !!season.description && hasEnglish(season.description);
+          const filled = await fillTexts([{ given: season.name, old: textsOf(old?.name) }, ...(hasDescription ? [{ given: season.description, old: textsOf(old?.description) }] : [])]);
+          const saved = saveSeason(menu, { name: filled.texts[0]!, start: season.start, end: season.end, description: hasDescription ? filled.texts[1]! : null }, was);
+          await deps.write("site/data/menu.yml", saved.text);
+          return json(withTold({ ok: true, slug: saved.slug }, filled.told));
+        } catch (error) { return refuse(422, reason(error, "season_wrong")); }
+      }
+
+      case "DELETE season": {
+        const b = await body();
+        try {
+          await deps.write("site/data/menu.yml", removeSeason(await text("site/data/menu.yml"), String(b.slug ?? "")));
+          return json({ ok: true });
+        } catch (error) { return refuse(422, reason(error, "season_not_found")); }
       }
 
       case "POST event":
