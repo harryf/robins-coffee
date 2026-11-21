@@ -29,12 +29,13 @@ const title = h("h1", { class: "bar__title" });
 const buildPill = h("p", { class: "pill", role: "status" });
 const previewButton = h("button", { class: "button", type: "button", onclick: () => void api("POST", "open", { path: "/" }) });
 const buildProblem = h("section", { class: "problem", hidden: true });
+const updateNote = h("section", { class: "notice", role: "status", hidden: true });
 const body = h("div", { class: "section" });
 const changes = h("aside", { class: "changes" });
 app.append(
   h("div", { class: "shell" },
     h("aside", { class: "side" }, h("div", { class: "side__head" }, h("img", { class: "side__logo", src: "/_studio/logo.png", alt: "", width: 48, height: 48 }), sideHead), nav, sideVersion),
-    h("main", { class: "main" }, h("header", { class: "bar" }, title, buildPill, previewButton), buildProblem, body),
+    h("main", { class: "main" }, h("header", { class: "bar" }, title, buildPill, previewButton), updateNote, buildProblem, body),
     changes,
   ),
 );
@@ -133,7 +134,26 @@ function drawChanges() {
   changes.replaceChildren(...kids.filter((kid): kid is Node | string => !!kid));
 }
 
+/** "ROBIN's Studio was updated to 0.11.0", once per update: closing it tells the server. */
+function drawUpdateNote() {
+  const version = state?.version;
+  const note = version?.notice;
+  updateNote.hidden = !note;
+  if (!note) return updateNote.replaceChildren();
+  updateNote.replaceChildren(...([
+    h("p", { class: "notice__text" }, t.notice_updated(note.toVersion, note.fromVersion), " ",
+      version?.changelog ? h("a", { href: version.changelog, target: "_blank", rel: "noopener" }, t.version_whats_new) : null),
+    note.appRebuilt ? h("p", {}, t.update_done_reopen) : null,
+    h("button", { class: "button button--quiet notice__close", type: "button", onclick: async () => {
+      updateNote.hidden = true;
+      await api("POST", "notice");
+      await refresh();
+    } }, t.notice_close),
+  ] as (HTMLElement | null)[]).filter((kid): kid is HTMLElement => !!kid));
+}
+
 function draw() {
+  drawUpdateNote();
   document.documentElement.lang = "en";
   document.title = t.app_name;
   sideHead.textContent = t.app_name;

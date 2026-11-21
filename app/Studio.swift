@@ -2,7 +2,9 @@
 //
 // It finds bun, starts the Studio server (src/studio/server.ts) for the repository folder
 // this app was built for, waits until the server answers, and shows /_studio/ in a web
-// view. Any other address opens in the default browser. The server stops when the app
+// view. Until then the window shows the start screen from the bundle (logo, name, and a
+// status line that follows the launcher's "studio-step:" lines). Any other address opens
+// in the default browser. The server stops when the app
 // quits: the app ends the process, and the server also watches its standard input, which
 // closes if the app dies in any other way.
 //
@@ -75,6 +77,15 @@ func freePort() -> Int? {
     return named == 0 ? Int(UInt16(bigEndian: addr.sin_port)) : nil
 }
 
+/// The launcher says what it is doing with lines "studio-step: <name>" (src/studio/startup.ts
+/// has the same prefix). Only a name made of a to z is taken; any other line is not a step.
+let stepPrefix = "studio-step: "
+func stepName(_ line: String) -> String? {
+    guard line.hasPrefix(stepPrefix) else { return nil }
+    let name = line.dropFirst(stepPrefix.count).trimmingCharacters(in: .whitespacesAndNewlines)
+    return !name.isEmpty && name.count <= 32 && name.allSatisfy({ ("a"..."z").contains($0) }) ? name : nil
+}
+
 final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDelegate {
     let words = Words.en
     var window: NSWindow!
@@ -83,6 +94,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
     var lifeline: Pipe?
     var serverSaid = ""
     var origin = ""
+    /// The start screen in the bundle (scripts/build-app.ts writes it), shown until the Studio answers.
+    let startPage = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "start")
+    var step = "checking"
+    var partLine = ""
 
     func applicationDidFinishLaunching(_ note: Notification) {
         buildMenu()
@@ -113,7 +128,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         process.standardError = output
         output.fileHandleForReading.readabilityHandler = { [weak self] handle in
             let text = String(data: handle.availableData, encoding: .utf8) ?? ""
-            DispatchQueue.main.async { self?.serverSaid = String(((self?.serverSaid ?? "") + text).suffix(2000)) }
+            DispatchQueue.main.async { self?.heard(text) }
         }
         do { try process.run() } catch { return stop(words.noServerTitle, words.noServerText(error.localizedDescription)) }
         server = process
@@ -122,6 +137,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         showWindow()
         // Long enough for an update with new packages before the server answers.
         waitForServer(until: Date().addingTimeInterval(540))
+    }
+
+    /// What the launcher and the server wrote: kept for an error alert, and read line by line for steps.
+    func heard(_ text: String) {
+        serverSaid = String((serverSaid + text).suffix(2000))
+        let lines = (partLine + text).components(separatedBy: "\n")
+        partLine = String((lines.last ?? "").suffix(200))
+        for line in lines.dropLast() {
+            if let name = stepName(line) {
+                step = name
+                showStep()
+            }
+        }
+    }
+
+    /// Moves the start screen's status line. The name is a to z only; the page has the words.
+    func showStep() {
+        guard let web = web, web.url?.isFileURL == true else { return }
+        web.evaluateJavaScript("window.studioStep && window.studioStep(\"\(step)\")", completionHandler: nil)
+    }
+
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        if webView.url?.isFileURL == true { showStep() }
     }
 
     /// The folder saved by the Settings screen (src/studio/config.ts writes this file), if any.
@@ -146,6 +184,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
             window.backgroundColor = NSColor(srgbRed: CGFloat((rgb >> 16) & 255) / 255, green: CGFloat((rgb >> 8) & 255) / 255, blue: CGFloat(rgb & 255) / 255, alpha: 1)
         }
         window.contentView = web
+        if let page = startPage { web.loadFileURL(page, allowingReadAccessTo: page.deletingLastPathComponent()) }
         window.center()
         window.setFrameAutosaveName("StudioWindow")
         window.makeKeyAndOrderFront(nil)
@@ -199,6 +238,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
     func isOwn(_ url: URL?) -> Bool {
         guard let url = url else { return false }
         if url.scheme == "about" { return true }
+        if url.isFileURL, let page = startPage { return url.standardizedFileURL == page.standardizedFileURL }
         return "\(url.scheme ?? "")://\(url.host ?? ""):\(url.port ?? 80)" == origin && (url.path == "/_studio" || url.path.hasPrefix("/_studio/"))
     }
 

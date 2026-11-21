@@ -15,13 +15,28 @@ export function updateLine(t: Strings, version: { update: { result: string; reas
   return update.reason === "offline" ? null : { text: t.update_waiting(why), tone: "problem" };
 }
 
+/** "21 November 2026" in this Mac's own time, words from strings.ts; null for a date that cannot be read. */
+export function installedDay(t: Strings, iso: string | null | undefined): string | null {
+  const at = iso ? new Date(iso) : null;
+  if (!at || Number.isNaN(at.getTime())) return null;
+  return `${at.getDate()} ${t.month(at.getMonth() + 1)} ${at.getFullYear()}`;
+}
+
 export function systemCards(ctx: Ctx): HTMLElement[] {
   const { t, api } = ctx;
   const version = h("p", {});
+  const installed = h("p", { class: "muted" });
+  const whatsNew = h("a", { target: "_blank", rel: "noopener" }, t.version_whats_new);
+  const whatsNewRow = h("p", {}, whatsNew);
   const updated = h("p", {});
   const showVersion = () => {
     const v = ctx.state()?.version;
     version.textContent = v ? t.version_line(v.number, v.commit) : t.loading;
+    const day = installedDay(t, v?.installed);
+    installed.textContent = day ? t.version_installed(day) : "";
+    installed.hidden = !day;
+    if (v?.changelog) whatsNew.href = v.changelog;
+    whatsNewRow.hidden = !v?.changelog;
     const line = updateLine(t, v);
     updated.textContent = line?.text ?? "";
     updated.className = line?.tone ?? "muted";
@@ -49,5 +64,5 @@ export function systemCards(ctx: Ctx): HTMLElement[] {
   } }, h("h3", { class: "card__title" }, t.folder_title), h("p", { class: "muted" }, t.folder_help), h("p", { class: "muted" }, t.folder_now), current,
     h("div", { class: "card__row" }, input, h("button", { class: "button", type: "submit" }, t.folder_change)), said);
 
-  return [h("div", { class: "card" }, h("h3", { class: "card__title" }, t.version_title), version, updated, h("p", { class: "muted" }, t.update_help)), folder];
+  return [h("div", { class: "card" }, h("h3", { class: "card__title" }, t.version_title), version, installed, whatsNewRow, updated, h("p", { class: "muted" }, t.update_help)), folder];
 }

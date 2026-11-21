@@ -722,6 +722,9 @@ describe("studio: the server", () => {
       mkdirSync(join(ROOT, ".cache", "photos"), { recursive: true });
       mkdirSync(join(to, ".cache"));
       symlinkSync(join(ROOT, ".cache", "photos"), join(to, ".cache", "photos"));
+      // As the launcher leaves it after an update to this version.
+      mkdirSync(join(to, ".cache", "studio"));
+      writeFileSync(join(to, ".cache", "studio", "update.json"), JSON.stringify({ result: "updated", from: "1".repeat(40), to: "2".repeat(40), fromVersion: "0.10.1", toVersion: "0.11.0", at: "2026-11-21T08:00:00.000Z" }));
     }));
     gh = fakeGitHub(bare);
     studio = await startStudio({ root, port: 0, events: FEED, remote: bare, keys, github: () => gh.github, open: (url) => void opened.push(url), translate: fakeTranslator() });
@@ -732,6 +735,20 @@ describe("studio: the server", () => {
 
   afterAll(async () => {
     await studio?.stop();
+  });
+
+  test("after an update: the note says the numbers once, Settings has the install day and the changelog at the exact commit", async () => {
+    const v = (await state()).version;
+    const head = sh(root, "rev-parse", "HEAD").trim();
+    const number = JSON.parse(readFileSync(join(ROOT, "src", "studio", "version.json"), "utf8")).version as string;
+    expect(v.notice).toEqual({ to: "2".repeat(40), fromVersion: "0.10.1", toVersion: "0.11.0", appRebuilt: undefined });
+    expect(v.changelog).toBe(`https://github.com/harryf/robins-coffee/blob/${head}/src/studio/CHANGELOG.md#${number.replace(/\./g, "")}`);
+    // The first record of a version is dated by the update that brought it.
+    expect(v.installed).toBe("2026-11-21T08:00:00.000Z");
+    expect(JSON.parse(readFileSync(join(root, ".cache", "studio", "installed.json"), "utf8"))).toEqual({ version: number, commit: head, at: "2026-11-21T08:00:00.000Z" });
+    expect((await call("POST", "notice")).status).toBe(200);
+    expect((await state()).version.notice).toBeNull();
+    expect(JSON.parse(readFileSync(join(root, ".cache", "studio", "notice.json"), "utf8"))).toEqual({ seen: "2".repeat(40) });
   });
 
   test("one server: the editing screen under /_studio/ and the preview at /", async () => {
@@ -794,7 +811,7 @@ describe("studio: the server", () => {
       ["the preview's host", { Host: `localhost:${studio.port}` }],
     ];
     for (const [name, headers] of tries) {
-      for (const [method, path, payload] of [["PUT", "file", body], ["PUT", "hours", { week: {} }], ["POST", "discard", { path: body.path }], ["POST", "publish", undefined], ["PUT", "keys/github", { value: DUMMY_TOKEN }], ["POST", "open", { path: "/" }], ["GET", "state", undefined]] as const) {
+      for (const [method, path, payload] of [["PUT", "file", body], ["PUT", "hours", { week: {} }], ["POST", "discard", { path: body.path }], ["POST", "publish", undefined], ["PUT", "keys/github", { value: DUMMY_TOKEN }], ["POST", "open", { path: "/" }], ["POST", "notice", undefined], ["GET", "state", undefined]] as const) {
         const res = await call(method, path, payload, headers);
         expect([name, method, path, res.status]).toEqual([name, method, path, 403]);
       }
