@@ -1,22 +1,6 @@
 {
- "generated_at": "2026-11-22T12:51:40.421Z",
+ "generated_at": "2026-11-23T15:20:02.116Z",
  "events": [
-  {
-   "id": "iyf-gratis-zum-mitnehmen-2026-11-22",
-   "source": "iyf",
-   "name": "Gratis Comedy Zum Mitnehmen",
-   "title": "Gratis Comedy Zum Mitnehmen - Free Entry Stand Up Comedy",
-   "start": "2026-11-22T20:00:00+01:00",
-   "end": "2026-11-22T22:00:00+01:00",
-   "price_chf": 0,
-   "ticket_url": "https://inyourfacecomedy.ch/go/?show=gratis-zum-mitnehmen&utm_source=robins&utm_medium=referral&utm_campaign=website",
-   "more_url": "https://inyourfacecomedy.ch/gratis-zum-mitnehmen/?utm_source=robins&utm_medium=referral&utm_campaign=website",
-   "image": "https://inyourfacecomedy.ch/assets/img/thumbs/gratis-zum-mitnehmen.png",
-   "category": "comedy",
-   "organiser": "IN YOUR FACE Comedy",
-   "language": "en",
-   "ref": "7492505145781047015"
-  },
   {
    "id": "iyf-jokesjokesjokes-2026-11-24",
    "source": "iyf",
