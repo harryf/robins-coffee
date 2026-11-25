@@ -1,22 +1,6 @@
 {
- "generated_at": "2026-11-24T15:16:08.280Z",
+ "generated_at": "2026-11-25T14:54:49.205Z",
  "events": [
-  {
-   "id": "iyf-jokesjokesjokes-2026-11-24",
-   "source": "iyf",
-   "name": "Jokes, Jokes, Jokes",
-   "title": "Jokes, Jokes, Jokes - English Stand-up comedy show",
-   "start": "2026-11-24T20:00:00+01:00",
-   "end": "2026-11-24T22:00:00+01:00",
-   "price_chf": 5,
-   "ticket_url": "https://inyourfacecomedy.ch/go/?show=jokesjokesjokes&utm_source=robins&utm_medium=referral&utm_campaign=website",
-   "more_url": "https://inyourfacecomedy.ch/jokesjokesjokes/?utm_source=robins&utm_medium=referral&utm_campaign=website",
-   "image": "https://inyourfacecomedy.ch/assets/img/uploads/jokes-jokes-jokes_square.png",
-   "category": "comedy",
-   "organiser": "IN YOUR FACE Comedy",
-   "language": "en",
-   "ref": "7519756165779055364"
-  },
   {
    "source": "manual",
    "name": "Beer Pong",
@@ -713,6 +697,29 @@
    "all_day": true,
    "start": "2027-01-31T00:00:00+01:00",
    "end": "2027-02-01T00:00:00+01:00"
+  },
+  {
+   "source": "manual",
+   "name": "Beer Pong",
+   "title": "Beer Pong at ROBIN's",
+   "price_chf": null,
+   "ticket_url": "",
+   "more_url": null,
+   "image": "photos/event-beer-pong.jpg",
+   "category": "other",
+   "organiser": null,
+   "language": "",
+   "text": {
+    "en": "Every Wednesday. Beer for CHF 5 for students.",
+    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende.",
+    "fr": "Tous les mercredis. Bière pour CHF 5 pour les étudiants.",
+    "it": "Ogni mercoledì. Birra per CHF 5 per gli studenti."
+   },
+   "ref": null,
+   "id": "manual-beer-pong-2027-02-03",
+   "all_day": true,
+   "start": "2027-02-03T00:00:00+01:00",
+   "end": "2027-02-04T00:00:00+01:00"
   },
   {
    "id": "iyf-comedybrew-2027-02-04",
