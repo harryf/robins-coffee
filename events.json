@@ -1,29 +1,6 @@
 {
- "generated_at": "2026-11-25T14:54:49.205Z",
+ "generated_at": "2026-11-26T14:24:22.973Z",
  "events": [
-  {
-   "source": "manual",
-   "name": "Beer Pong",
-   "title": "Beer Pong at ROBIN's",
-   "price_chf": null,
-   "ticket_url": "",
-   "more_url": null,
-   "image": "photos/event-beer-pong.jpg",
-   "category": "other",
-   "organiser": null,
-   "language": "",
-   "text": {
-    "en": "Every Wednesday. Beer for CHF 5 for students.",
-    "de": "Jeden Mittwoch. Bier für CHF 5 für Studierende.",
-    "fr": "Tous les mercredis. Bière pour CHF 5 pour les étudiants.",
-    "it": "Ogni mercoledì. Birra per CHF 5 per gli studenti."
-   },
-   "ref": null,
-   "id": "manual-beer-pong-2026-11-25",
-   "all_day": true,
-   "start": "2026-11-25T00:00:00+01:00",
-   "end": "2026-11-26T00:00:00+01:00"
-  },
   {
    "id": "iyf-comedybrew-2026-11-26",
    "source": "iyf",
